@@ -3,39 +3,347 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello</title>
+    <title>社交人格面具切换器</title>
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            background: linear-gradient(135deg, #ffa07a 0%, #ff6b6b 100%);
+            transition: background 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 背景动画装饰 */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: backgroundMove 20s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes backgroundMove {
+            0% {
+                transform: translate(0, 0);
+            }
+            100% {
+                transform: translate(50px, 50px);
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
         }
 
         h1 {
             color: white;
-            font-size: 72px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-            animation: fadeIn 1s ease-in;
+            font-size: 2.5rem;
+            margin-bottom: 60px;
+            text-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
+            font-weight: 300;
+            letter-spacing: 2px;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
+        .avatar-container {
+            margin: 0 auto 60px;
+            width: 300px;
+            height: 300px;
+            position: relative;
+        }
+
+        .avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
+                        0 0 0 10px rgba(255, 255, 255, 0.1),
+                        0 0 0 20px rgba(255, 255, 255, 0.05);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            animation: avatarPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes avatarPulse {
+            0%, 100% {
+                transform: scale(1);
             }
-            to {
+            50% {
+                transform: scale(1.02);
+            }
+        }
+
+        .avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4),
+                        0 0 0 10px rgba(255, 255, 255, 0.15),
+                        0 0 0 20px rgba(255, 255, 255, 0.08);
+        }
+
+        /* 切换动画效果 */
+        .avatar.switching {
+            animation: switchAnimation 0.6s ease-in-out;
+        }
+
+        @keyframes switchAnimation {
+            0% {
+                transform: scale(1) rotateY(0deg);
                 opacity: 1;
-                transform: translateY(0);
             }
+            50% {
+                transform: scale(0.8) rotateY(90deg);
+                opacity: 0.3;
+            }
+            100% {
+                transform: scale(1) rotateY(0deg);
+                opacity: 1;
+            }
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .persona-button {
+            padding: 20px 30px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            border: none;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .persona-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        .persona-button:hover::before {
+            transform: translateX(100%);
+        }
+
+        .persona-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .persona-button:active {
+            transform: translateY(0);
+        }
+
+        .persona-button.active {
+            background: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2),
+                        inset 0 2px 10px rgba(255, 255, 255, 0.2);
+            transform: scale(0.98);
+        }
+
+        /* 状态指示器 */
+        .status-indicator {
+            margin-top: 40px;
+            color: white;
+            font-size: 1.2rem;
+            opacity: 0.9;
+            text-shadow: 1px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 40px;
+            }
+
+            .avatar-container {
+                width: 250px;
+                height: 250px;
+                margin-bottom: 40px;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+                max-width: 300px;
+            }
+
+            .persona-button {
+                font-size: 1rem;
+                padding: 18px 25px;
+            }
+        }
+
+        /* 不同状态的背景色 */
+        body.family {
+            background: linear-gradient(135deg, #ffa07a 0%, #ff6b6b 100%);
+        }
+
+        body.friend {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        body.colleague {
+            background: linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%);
+        }
+
+        body.stranger {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
     </style>
 </head>
-<body>
-    <h1>Hello</h1>
+<body class="family">
+    <div class="container">
+        <h1>社交人格面具切换器</h1>
+
+        <div class="avatar-container">
+            <img id="avatar" class="avatar"
+                 src="https://api.dicebear.com/7.x/lorelei/svg?seed=family&backgroundColor=ffdfbf&radius=50"
+                 alt="社交人格头像">
+        </div>
+
+        <div class="button-group">
+            <button class="persona-button active" data-persona="family">👨‍👩‍👧‍👦 家人</button>
+            <button class="persona-button" data-persona="friend">🎉 朋友</button>
+            <button class="persona-button" data-persona="colleague">💼 同事</button>
+            <button class="persona-button" data-persona="stranger">🎭 陌生人</button>
+        </div>
+
+        <div class="status-indicator">
+            当前状态：<span id="currentStatus">家人模式</span>
+        </div>
+    </div>
+
+    <script>
+        // 不同人格状态的配置
+        const personas = {
+            family: {
+                name: '家人模式',
+                avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=family&backgroundColor=ffdfbf&radius=50',
+                emoji: '👨‍👩‍👧‍👦'
+            },
+            friend: {
+                name: '朋友模式',
+                avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=friend&backgroundColor=b6e3f4&radius=50',
+                emoji: '🎉'
+            },
+            colleague: {
+                name: '同事模式',
+                avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=colleague&backgroundColor=d1d4f9&radius=50',
+                emoji: '💼'
+            },
+            stranger: {
+                name: '陌生人模式',
+                avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=stranger&backgroundColor=c0aede&radius=50',
+                emoji: '🎭'
+            }
+        };
+
+        // 获取DOM元素
+        const avatarElement = document.getElementById('avatar');
+        const statusElement = document.getElementById('currentStatus');
+        const buttons = document.querySelectorAll('.persona-button');
+        const body = document.body;
+
+        // 切换人格状态
+        function switchPersona(personaKey) {
+            const persona = personas[personaKey];
+
+            // 添加切换动画
+            avatarElement.classList.add('switching');
+
+            // 延迟更换头像，以配合动画
+            setTimeout(() => {
+                avatarElement.src = persona.avatar;
+            }, 300);
+
+            // 移除动画类
+            setTimeout(() => {
+                avatarElement.classList.remove('switching');
+            }, 600);
+
+            // 更新背景颜色
+            body.className = personaKey;
+
+            // 更新状态文字
+            statusElement.textContent = persona.name;
+
+            // 更新按钮状态
+            buttons.forEach(btn => {
+                if (btn.dataset.persona === personaKey) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        // 为每个按钮添加点击事件
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                const personaKey = button.dataset.persona;
+                switchPersona(personaKey);
+            });
+        });
+
+        // 添加键盘快捷键支持
+        document.addEventListener('keydown', (e) => {
+            const keyMap = {
+                '1': 'family',
+                '2': 'friend',
+                '3': 'colleague',
+                '4': 'stranger'
+            };
+
+            if (keyMap[e.key]) {
+                switchPersona(keyMap[e.key]);
+            }
+        });
+
+        // 预加载所有头像
+        Object.values(personas).forEach(persona => {
+            const img = new Image();
+            img.src = persona.avatar;
+        });
+    </script>
 </body>
 </html>
