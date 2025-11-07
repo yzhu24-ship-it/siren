@@ -236,9 +236,7 @@
         <h1>Social Persona Mask Switcher</h1>
 
         <div class="avatar-container">
-            <img id="avatar" class="avatar"
-                 src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><rect fill='%23ffdfbf' width='200' height='200'/><circle cx='100' cy='90' r='50' fill='%23f4c7a5'/><ellipse cx='85' cy='85' rx='5' ry='8' fill='%23000'/><ellipse cx='115' cy='85' rx='5' ry='8' fill='%23000'/><path d='M 80 105 Q 100 115 120 105' stroke='%23000' stroke-width='2' fill='none'/><path d='M 50 60 Q 50 30 100 30 Q 150 30 150 60 L 150 90 Q 150 100 140 105 L 60 105 Q 50 100 50 90 Z' fill='%238b4513'/><text x='100' y='170' font-family='Arial' font-size='14' text-anchor='middle' fill='%23000'>😊</text></svg>"
-                 alt="Social Persona Avatar">
+            <canvas id="avatar" class="avatar"></canvas>
         </div>
 
         <div class="button-group">
@@ -254,64 +252,189 @@
     </div>
 
     <script>
-        // Same woman with long hair, different expressions for different social contexts
+        // Drawing function for avatars with different expressions
+        function drawAvatar(ctx, expression, bgColor) {
+            const width = 300;
+            const height = 300;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+
+            // Background
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, width, height);
+
+            // Face
+            ctx.fillStyle = '#f4c7a5';
+            ctx.beginPath();
+            ctx.arc(150, 135, 75, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Hair (long straight hair)
+            ctx.fillStyle = '#8b4513';
+            ctx.beginPath();
+            // Top of hair
+            ctx.ellipse(150, 90, 75, 45, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Left side
+            ctx.fillRect(75, 90, 30, 120);
+            // Right side
+            ctx.fillRect(195, 90, 30, 120);
+            // Bottom wave
+            ctx.beginPath();
+            ctx.moveTo(75, 200);
+            ctx.quadraticCurveTo(90, 210, 105, 200);
+            ctx.lineTo(105, 135);
+            ctx.lineTo(75, 135);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(195, 200);
+            ctx.quadraticCurveTo(210, 210, 225, 200);
+            ctx.lineTo(225, 135);
+            ctx.lineTo(195, 135);
+            ctx.fill();
+
+            // Eyes
+            ctx.fillStyle = '#000';
+            if (expression === 'stranger') {
+                // Looking to the side
+                ctx.beginPath();
+                ctx.ellipse(120, 128, 6, 9, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(190, 128, 6, 9, 0, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (expression === 'friend') {
+                // Happy squinted eyes
+                ctx.beginPath();
+                ctx.arc(128, 123, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(172, 123, 4, 0, Math.PI * 2);
+                ctx.fill();
+                // Eyebrows raised
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(110, 110);
+                ctx.quadraticCurveTo(128, 105, 145, 110);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(155, 110);
+                ctx.quadraticCurveTo(172, 105, 190, 110);
+                ctx.stroke();
+            } else {
+                // Normal eyes
+                ctx.beginPath();
+                ctx.ellipse(128, 128, 7, 12, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(172, 128, 7, 12, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Eyebrows
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(110, 113);
+                ctx.lineTo(145, 113);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(155, 113);
+                ctx.lineTo(190, 113);
+                ctx.stroke();
+            }
+
+            // Mouth
+            ctx.strokeStyle = '#000';
+            ctx.fillStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+
+            if (expression === 'family') {
+                // Warm smile
+                ctx.moveTo(120, 158);
+                ctx.quadraticCurveTo(150, 173, 180, 158);
+            } else if (expression === 'friend') {
+                // Big laugh
+                ctx.moveTo(113, 150);
+                ctx.quadraticCurveTo(150, 180, 187, 150);
+            } else if (expression === 'colleague') {
+                // Straight line (serious)
+                ctx.moveTo(120, 162);
+                ctx.lineTo(180, 162);
+            } else if (expression === 'stranger') {
+                // Tight line (cold, indifferent)
+                ctx.moveTo(125, 162);
+                ctx.lineTo(175, 162);
+            }
+
+            ctx.stroke();
+        }
+
+        // Persona configurations
         const personas = {
             family: {
                 name: 'Family Mode',
-                // Relaxed, warm smile - comfortable with family
-                avatar: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect fill="%23ffdfbf" width="200" height="200"/><circle cx="100" cy="90" r="50" fill="%23f4c7a5"/><ellipse cx="85" cy="85" rx="5" ry="8" fill="%23000"/><ellipse cx="115" cy="85" rx="5" ry="8" fill="%23000"/><path d="M 80 105 Q 100 115 120 105" stroke="%23000" stroke-width="2" fill="none"/><path d="M 50 60 Q 50 30 100 30 Q 150 30 150 60 L 150 90 Q 150 100 140 105 L 60 105 Q 50 100 50 90 Z" fill="%238b4513"/><text x="100" y="170" font-family="Arial" font-size="14" text-anchor="middle" fill="%23000">😊</text></svg>',
+                expression: 'family',
+                bgColor: '#ffdfbf',
                 emoji: '👨‍👩‍👧‍👦'
             },
             friend: {
                 name: 'Friends Mode',
-                // Big laugh, very happy - having fun with friends
-                avatar: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect fill="%23b6e3f4" width="200" height="200"/><circle cx="100" cy="90" r="50" fill="%23f4c7a5"/><ellipse cx="85" cy="82" rx="3" ry="3" fill="%23000"/><ellipse cx="115" cy="82" rx="3" ry="3" fill="%23000"/><path d="M 75 100 Q 100 120 125 100" stroke="%23000" stroke-width="3" fill="none"/><ellipse cx="85" cy="75" rx="8" ry="4" fill="none" stroke="%23000" stroke-width="2"/><ellipse cx="115" cy="75" rx="8" ry="4" fill="none" stroke="%23000" stroke-width="2"/><path d="M 50 60 Q 50 30 100 30 Q 150 30 150 60 L 150 90 Q 150 100 140 105 L 60 105 Q 50 100 50 90 Z" fill="%238b4513"/><text x="100" y="170" font-family="Arial" font-size="14" text-anchor="middle" fill="%23000">😄</text></svg>',
+                expression: 'friend',
+                bgColor: '#b6e3f4',
                 emoji: '🎉'
             },
             colleague: {
                 name: 'Colleagues Mode',
-                // Professional, polite but reserved - at workplace
-                avatar: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect fill="%23d1d4f9" width="200" height="200"/><circle cx="100" cy="90" r="50" fill="%23f4c7a5"/><ellipse cx="85" cy="85" rx="4" ry="7" fill="%23000"/><ellipse cx="115" cy="85" rx="4" ry="7" fill="%23000"/><line x1="75" y1="105" x2="125" y2="105" stroke="%23000" stroke-width="2"/><line x1="70" y1="75" x2="90" y2="75" stroke="%23000" stroke-width="2"/><line x1="110" y1="75" x2="130" y2="75" stroke="%23000" stroke-width="2"/><path d="M 50 60 Q 50 30 100 30 Q 150 30 150 60 L 150 90 Q 150 100 140 105 L 60 105 Q 50 100 50 90 Z" fill="%238b4513"/><text x="100" y="170" font-family="Arial" font-size="14" text-anchor="middle" fill="%23000">😐</text></svg>',
+                expression: 'colleague',
+                bgColor: '#d1d4f9',
                 emoji: '💼'
             },
             stranger: {
                 name: 'Strangers Mode',
-                // Cold, indifferent - straight-line mouth, no smile, avoiding eye contact
-                avatar: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect fill="%23c0aede" width="200" height="200"/><circle cx="100" cy="90" r="50" fill="%23f4c7a5"/><ellipse cx="75" cy="85" rx="4" ry="6" fill="%23000"/><ellipse cx="125" cy="85" rx="4" ry="6" fill="%23000"/><line x1="80" y1="108" x2="120" y2="108" stroke="%23000" stroke-width="2"/><line x1="65" y1="77" x2="85" y2="77" stroke="%23000" stroke-width="1.5"/><line x1="115" y1="77" x2="135" y2="77" stroke="%23000" stroke-width="1.5"/><path d="M 50 60 Q 50 30 100 30 Q 150 30 150 60 L 150 90 Q 150 100 140 105 L 60 105 Q 50 100 50 90 Z" fill="%238b4513"/><text x="100" y="170" font-family="Arial" font-size="14" text-anchor="middle" fill="%23000">😑</text></svg>',
+                expression: 'stranger',
+                bgColor: '#c0aede',
                 emoji: '🎭'
             }
         };
 
-        // 获取DOM元素
-        const avatarElement = document.getElementById('avatar');
+        // Get DOM elements
+        const canvas = document.getElementById('avatar');
+        const ctx = canvas.getContext('2d');
         const statusElement = document.getElementById('currentStatus');
         const buttons = document.querySelectorAll('.persona-button');
         const body = document.body;
 
-        // 切换人格状态
+        // Set canvas size
+        canvas.width = 300;
+        canvas.height = 300;
+
+        // Switch persona function
         function switchPersona(personaKey) {
             const persona = personas[personaKey];
 
-            // 添加切换动画
-            avatarElement.classList.add('switching');
+            // Add switching animation
+            canvas.classList.add('switching');
 
-            // 延迟更换头像，以配合动画
+            // Draw new avatar after animation delay
             setTimeout(() => {
-                avatarElement.src = persona.avatar;
+                drawAvatar(ctx, persona.expression, persona.bgColor);
             }, 300);
 
-            // 移除动画类
+            // Remove animation class
             setTimeout(() => {
-                avatarElement.classList.remove('switching');
+                canvas.classList.remove('switching');
             }, 600);
 
-            // 更新背景颜色
+            // Update background color
             body.className = personaKey;
 
-            // 更新状态文字
+            // Update status text
             statusElement.textContent = persona.name;
 
-            // 更新按钮状态
+            // Update button states
             buttons.forEach(btn => {
                 if (btn.dataset.persona === personaKey) {
                     btn.classList.add('active');
@@ -321,7 +444,7 @@
             });
         }
 
-        // 为每个按钮添加点击事件
+        // Add click events to buttons
         buttons.forEach(button => {
             button.addEventListener('click', () => {
                 const personaKey = button.dataset.persona;
@@ -329,7 +452,7 @@
             });
         });
 
-        // 添加键盘快捷键支持
+        // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             const keyMap = {
                 '1': 'family',
@@ -343,11 +466,8 @@
             }
         });
 
-        // 预加载所有头像
-        Object.values(personas).forEach(persona => {
-            const img = new Image();
-            img.src = persona.avatar;
-        });
+        // Draw initial avatar (family mode)
+        drawAvatar(ctx, 'family', '#ffdfbf');
     </script>
 </body>
 </html>
