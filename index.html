@@ -236,7 +236,9 @@
         <h1>Social Persona Mask Switcher</h1>
 
         <div class="avatar-container">
-            <canvas id="avatar" class="avatar"></canvas>
+            <img id="avatar" class="avatar"
+                 src="https://api.dicebear.com/9.x/avataaars/svg?seed=customFemale&radius=50&hair=longHairStraight&hairColor=auburn&mouth=smile&eyes=happy&eyebrow=default&skinColor=light&backgroundColor=ffdfbf"
+                 alt="Social Persona Avatar">
         </div>
 
         <div class="button-group">
@@ -252,309 +254,55 @@
     </div>
 
     <script>
-        // Drawing function for cute avatars with different expressions
-        function drawAvatar(ctx, expression, bgColor) {
-            const width = 300;
-            const height = 300;
-
-            // Clear canvas
-            ctx.clearRect(0, 0, width, height);
-
-            // Background with gradient
-            const bgGradient = ctx.createRadialGradient(150, 150, 0, 150, 150, 150);
-            bgGradient.addColorStop(0, bgColor);
-            bgGradient.addColorStop(1, adjustBrightness(bgColor, -20));
-            ctx.fillStyle = bgGradient;
-            ctx.fillRect(0, 0, width, height);
-
-            // Face shadow (for depth)
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.beginPath();
-            ctx.arc(150, 140, 78, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Face
-            const faceGradient = ctx.createRadialGradient(150, 130, 0, 150, 140, 75);
-            faceGradient.addColorStop(0, '#ffd4b3');
-            faceGradient.addColorStop(1, '#f4c7a5');
-            ctx.fillStyle = faceGradient;
-            ctx.beginPath();
-            ctx.arc(150, 135, 75, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Hair (long wavy hair)
-            ctx.fillStyle = '#6b3410';
-            ctx.beginPath();
-            // Top bun/volume
-            ctx.ellipse(150, 85, 80, 50, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Hair highlights
-            ctx.fillStyle = '#8b4513';
-            ctx.beginPath();
-            ctx.ellipse(150, 85, 70, 43, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Left hair flow
-            ctx.fillStyle = '#6b3410';
-            ctx.beginPath();
-            ctx.moveTo(70, 90);
-            ctx.quadraticCurveTo(60, 120, 70, 180);
-            ctx.quadraticCurveTo(75, 200, 85, 215);
-            ctx.lineTo(95, 210);
-            ctx.quadraticCurveTo(85, 190, 80, 160);
-            ctx.quadraticCurveTo(75, 120, 85, 90);
-            ctx.fill();
-
-            // Right hair flow
-            ctx.beginPath();
-            ctx.moveTo(230, 90);
-            ctx.quadraticCurveTo(240, 120, 230, 180);
-            ctx.quadraticCurveTo(225, 200, 215, 215);
-            ctx.lineTo(205, 210);
-            ctx.quadraticCurveTo(215, 190, 220, 160);
-            ctx.quadraticCurveTo(225, 120, 215, 90);
-            ctx.fill();
-
-            // Blush
-            if (expression === 'family' || expression === 'friend') {
-                ctx.fillStyle = 'rgba(255, 150, 150, 0.3)';
-                ctx.beginPath();
-                ctx.ellipse(110, 145, 15, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(190, 145, 15, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // Eyes
-            if (expression === 'stranger') {
-                // Cold, looking away
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.ellipse(115, 125, 12, 15, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(185, 125, 12, 15, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.fillStyle = '#4a3728';
-                ctx.beginPath();
-                ctx.arc(112, 125, 8, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(188, 125, 8, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Flat eyebrows
-                ctx.strokeStyle = '#4a3728';
-                ctx.lineWidth = 2.5;
-                ctx.beginPath();
-                ctx.moveTo(100, 108);
-                ctx.lineTo(130, 108);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(170, 108);
-                ctx.lineTo(200, 108);
-                ctx.stroke();
-            } else if (expression === 'friend') {
-                // Super happy squinted eyes
-                ctx.fillStyle = '#4a3728';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(125, 122, 3, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(175, 122, 3, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Happy curved eyebrows
-                ctx.strokeStyle = '#4a3728';
-                ctx.lineWidth = 2.5;
-                ctx.beginPath();
-                ctx.moveTo(105, 108);
-                ctx.quadraticCurveTo(125, 102, 145, 108);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(155, 108);
-                ctx.quadraticCurveTo(175, 102, 195, 108);
-                ctx.stroke();
-            } else {
-                // Big cute eyes
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.ellipse(125, 125, 13, 16, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(175, 125, 13, 16, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Iris
-                ctx.fillStyle = '#4a3728';
-                ctx.beginPath();
-                ctx.arc(125, 128, 10, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(175, 128, 10, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Pupils with sparkle
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(125, 128, 6, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(175, 128, 6, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Eye sparkles
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.arc(122, 124, 2.5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(172, 124, 2.5, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Eyebrows
-                ctx.strokeStyle = '#4a3728';
-                ctx.lineWidth = 2.5;
-                if (expression === 'family') {
-                    ctx.beginPath();
-                    ctx.moveTo(105, 105);
-                    ctx.quadraticCurveTo(125, 103, 145, 106);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(155, 106);
-                    ctx.quadraticCurveTo(175, 103, 195, 105);
-                    ctx.stroke();
-                } else {
-                    ctx.beginPath();
-                    ctx.moveTo(105, 108);
-                    ctx.lineTo(145, 108);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(155, 108);
-                    ctx.lineTo(195, 108);
-                    ctx.stroke();
-                }
-            }
-
-            // Mouth
-            ctx.strokeStyle = '#4a3728';
-            ctx.fillStyle = '#ff6b9d';
-            ctx.lineWidth = 2.5;
-
-            if (expression === 'family') {
-                // Big happy smile
-                ctx.beginPath();
-                ctx.moveTo(115, 155);
-                ctx.quadraticCurveTo(150, 180, 185, 155);
-                ctx.stroke();
-
-                // Open mouth smile
-                ctx.fillStyle = 'rgba(255, 107, 157, 0.6)';
-                ctx.beginPath();
-                ctx.moveTo(115, 155);
-                ctx.quadraticCurveTo(150, 175, 185, 155);
-                ctx.quadraticCurveTo(150, 165, 115, 155);
-                ctx.fill();
-            } else if (expression === 'friend') {
-                // Super wide laugh
-                ctx.beginPath();
-                ctx.arc(150, 145, 30, 0.2, Math.PI - 0.2);
-                ctx.stroke();
-
-                // Open laughing mouth
-                ctx.fillStyle = 'rgba(255, 107, 157, 0.7)';
-                ctx.beginPath();
-                ctx.arc(150, 145, 28, 0.2, Math.PI - 0.2);
-                ctx.lineTo(150, 160);
-                ctx.fill();
-            } else if (expression === 'colleague') {
-                // Polite small smile
-                ctx.beginPath();
-                ctx.moveTo(130, 162);
-                ctx.quadraticCurveTo(150, 168, 170, 162);
-                ctx.stroke();
-            } else if (expression === 'stranger') {
-                // Flat line - indifferent
-                ctx.beginPath();
-                ctx.moveTo(130, 162);
-                ctx.lineTo(170, 162);
-                ctx.stroke();
-            }
-
-            // Cute nose
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.beginPath();
-            ctx.arc(150, 142, 2, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // Helper function to adjust color brightness
-        function adjustBrightness(color, amount) {
-            const hex = color.replace('#', '');
-            const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
-            const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
-            const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
-            return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
-        }
-
-        // Persona configurations
+        // Same woman with long hair, different expressions for different social contexts
         const personas = {
             family: {
                 name: 'Family Mode',
-                expression: 'family',
-                bgColor: '#ffdfbf',
+                // Relaxed, warm smile - comfortable with family
+                avatar: 'https://api.dicebear.com/9.x/avataaars/svg?seed=customFemale&radius=50&hair=longHairStraight&hairColor=auburn&mouth=smile&eyes=happy&eyebrow=default&skinColor=light&backgroundColor=ffdfbf',
                 emoji: '👨‍👩‍👧‍👦'
             },
             friend: {
                 name: 'Friends Mode',
-                expression: 'friend',
-                bgColor: '#b6e3f4',
+                // Big laugh, very happy - having fun with friends
+                avatar: 'https://api.dicebear.com/9.x/avataaars/svg?seed=customFemale&radius=50&hair=longHairStraight&hairColor=auburn&mouth=twinkle&eyes=happy&eyebrow=raisedExcited&skinColor=light&backgroundColor=b6e3f4',
                 emoji: '🎉'
             },
             colleague: {
                 name: 'Colleagues Mode',
-                expression: 'colleague',
-                bgColor: '#d1d4f9',
+                // Professional, polite but reserved - at workplace
+                avatar: 'https://api.dicebear.com/9.x/avataaars/svg?seed=customFemale&radius=50&hair=longHairStraight&hairColor=auburn&mouth=serious&eyes=default&eyebrow=default&skinColor=light&backgroundColor=d1d4f9',
                 emoji: '💼'
             },
             stranger: {
                 name: 'Strangers Mode',
-                expression: 'stranger',
-                bgColor: '#c0aede',
+                // Cold, indifferent - straight-line mouth, no smile, avoiding eye contact
+                avatar: 'https://api.dicebear.com/9.x/avataaars/svg?seed=customFemale&radius=50&hair=longHairStraight&hairColor=auburn&mouth=concerned&eyes=side&eyebrow=flatNatural&skinColor=light&backgroundColor=c0aede',
                 emoji: '🎭'
             }
         };
 
         // Get DOM elements
-        const canvas = document.getElementById('avatar');
-        const ctx = canvas.getContext('2d');
+        const avatarElement = document.getElementById('avatar');
         const statusElement = document.getElementById('currentStatus');
         const buttons = document.querySelectorAll('.persona-button');
         const body = document.body;
-
-        // Set canvas size
-        canvas.width = 300;
-        canvas.height = 300;
 
         // Switch persona function
         function switchPersona(personaKey) {
             const persona = personas[personaKey];
 
             // Add switching animation
-            canvas.classList.add('switching');
+            avatarElement.classList.add('switching');
 
-            // Draw new avatar after animation delay
+            // Delay avatar change to match animation
             setTimeout(() => {
-                drawAvatar(ctx, persona.expression, persona.bgColor);
+                avatarElement.src = persona.avatar;
             }, 300);
 
             // Remove animation class
             setTimeout(() => {
-                canvas.classList.remove('switching');
+                avatarElement.classList.remove('switching');
             }, 600);
 
             // Update background color
@@ -595,8 +343,11 @@
             }
         });
 
-        // Draw initial avatar (family mode)
-        drawAvatar(ctx, 'family', '#ffdfbf');
+        // Preload all avatars
+        Object.values(personas).forEach(persona => {
+            const img = new Image();
+            img.src = persona.avatar;
+        });
     </script>
 </body>
 </html>
