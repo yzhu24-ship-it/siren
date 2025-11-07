@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rusty Lake Mystery - The Black Cube</title>
+    <!-- Version 2.1 - Cache Bust -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <style>
         * {
             margin: 0;
@@ -28,6 +32,14 @@
             border-radius: 10px;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 50px rgba(0, 0, 0, 0.5);
             padding: 30px;
+        }
+
+        .version {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #5a4a3a;
+            font-size: 11px;
         }
 
         h1 {
@@ -273,9 +285,30 @@
             border-color: #ffb366;
         }
 
+        .item-btn.target-mode {
+            animation: targetGlow 1.5s infinite;
+            cursor: crosshair;
+        }
+
+        .item-btn.wrong-target {
+            pointer-events: none;
+            opacity: 0.4;
+        }
+
         @keyframes highlight {
             0%, 100% { box-shadow: 0 0 10px rgba(255, 179, 102, 0.3); }
             50% { box-shadow: 0 0 20px rgba(255, 179, 102, 0.8); }
+        }
+
+        @keyframes targetGlow {
+            0%, 100% {
+                box-shadow: 0 0 15px rgba(90, 234, 90, 0.5);
+                border-color: #5aea5a;
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(90, 234, 90, 1);
+                border-color: #90ff90;
+            }
         }
 
         .item-interaction-count {
@@ -321,6 +354,11 @@
             animation: newItemAppear 0.5s ease-out;
         }
 
+        .inventory-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         @keyframes newItemAppear {
             0% {
                 opacity: 0;
@@ -343,13 +381,24 @@
             transition: all 0.3s;
         }
 
-        .use-btn:hover {
+        .use-btn:hover:not(:disabled) {
             background: #6a5a4a;
             box-shadow: 0 0 10px rgba(201, 165, 111, 0.5);
         }
 
+        .use-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
         .use-btn.pulse {
             animation: btnPulse 1.5s infinite;
+        }
+
+        .use-btn.active {
+            background: #90ee90;
+            color: #1a1a2e;
+            font-weight: bold;
         }
 
         @keyframes btnPulse {
@@ -405,6 +454,11 @@
             border-left-color: #c9a56f;
             color: #c9a56f;
             font-weight: bold;
+        }
+
+        .message.error {
+            border-left-color: #d32f2f;
+            color: #ff6b6b;
         }
 
         .action-buttons {
@@ -583,6 +637,7 @@
 </head>
 <body>
     <div class="game-container">
+        <div class="version">v2.1</div>
         <h1>🌙 Rusty Lake Mystery 🌙</h1>
         <p class="subtitle">The Black Cube - A Victorian Gothic Puzzle Adventure</p>
 
@@ -616,7 +671,7 @@
         <div class="tutorial-box" id="tutorialBox">
             <h3 id="tutorialTitle">🎓 Getting Started</h3>
             <p id="tutorialText">Welcome to the mystery room. Click on items to examine them. Some items may reveal secrets after multiple interactions...</p>
-            <div class="hint" id="tutorialHint">💡 Hint: Start by examining the mysterious portrait on the wall</div>
+            <div class="hint" id="tutorialHint">💡 Hint: Start by examining the Mysterious Portrait on the wall</div>
         </div>
 
         <div class="game-layout">
@@ -688,7 +743,7 @@
     </div>
 
     <script>
-        // Rusty Lake Mystery Game - Enhanced Edition
+        // Rusty Lake Mystery Game - Enhanced Edition v2.1
         class RustyLakeGame {
             constructor() {
                 // Room items definition
@@ -794,10 +849,10 @@
 
                 // Puzzle states
                 this.puzzleStates = {
-                    portraitSolved: false,      // Portrait puzzle
-                    deskUnlocked: false,        // Desk unlocked
-                    clockRepaired: false,       // Clock repaired
-                    cabinetUnlocked: false      // Cabinet unlocked
+                    portraitSolved: false,
+                    deskUnlocked: false,
+                    clockRepaired: false,
+                    cabinetUnlocked: false
                 };
 
                 // Game state
@@ -805,7 +860,9 @@
                     gameWon: false,
                     mysteryEvents: 0,
                     totalInteractions: 0,
-                    currentStep: 1
+                    currentStep: 1,
+                    selectedItem: null,  // Item selected for use
+                    targetMode: false    // Whether we're in target selection mode
                 };
 
                 // Tutorial messages for each step
@@ -817,18 +874,18 @@
                     },
                     2: {
                         title: '🎓 Step 2: Unlock the Desk',
-                        text: 'You have the key! Now use it from your inventory to unlock the old desk.',
-                        hint: '💡 Hint: Click the "Use" button next to the Old Key in your inventory'
+                        text: 'You have the key! Click "Use" button, then click on the Old Desk to unlock it.',
+                        hint: '💡 Hint: Click "Use" on the Old Key, then click the Old Desk in the room'
                     },
                     3: {
                         title: '🎓 Step 3: Repair the Clock',
-                        text: 'The gear from the desk can repair the broken clock. Use it to reveal the next clue!',
-                        hint: '💡 Hint: Use the Precision Gear from your inventory'
+                        text: 'The gear from the desk can repair the broken clock. Use it on the clock!',
+                        hint: '💡 Hint: Click "Use" on the Precision Gear, then click the Antique Clock'
                     },
                     4: {
                         title: '🎓 Step 4: Open the Cabinet',
-                        text: 'The faded note contains a code. Use it to unlock the mysterious cabinet!',
-                        hint: '💡 Hint: Use the Faded Note and enter the code: 376'
+                        text: 'The faded note contains a code. Use it on the cabinet to unlock it!',
+                        hint: '💡 Hint: Click "Use" on the Faded Note, then click the Mysterious Cabinet'
                     }
                 };
 
@@ -889,6 +946,15 @@
                         btn.classList.add('highlighted');
                     }
 
+                    // Target mode highlighting
+                    if (this.gameState.targetMode) {
+                        if (this.isValidTarget(key)) {
+                            btn.classList.add('target-mode');
+                        } else {
+                            btn.classList.add('wrong-target');
+                        }
+                    }
+
                     btn.textContent = item.name;
 
                     // Show interaction count if > 0
@@ -899,7 +965,13 @@
                         btn.appendChild(badge);
                     }
 
-                    btn.onclick = () => this.examineItem(key);
+                    btn.onclick = () => {
+                        if (this.gameState.targetMode) {
+                            this.useItemOnTarget(key);
+                        } else {
+                            this.examineItem(key);
+                        }
+                    };
                     grid.appendChild(btn);
                 }
             }
@@ -912,9 +984,21 @@
                 return false;
             }
 
+            // Check if item is a valid target for selected inventory item
+            isValidTarget(itemKey) {
+                if (!this.gameState.selectedItem) return false;
+
+                const selectedId = this.gameState.selectedItem;
+
+                if (selectedId === 'key' && itemKey === 'desk') return true;
+                if (selectedId === 'gear' && itemKey === 'clock') return true;
+                if (selectedId === 'code_paper' && itemKey === 'cabinet') return true;
+
+                return false;
+            }
+
             // Highlight next item for guidance
             highlightNextItem() {
-                // This is called after state updates to provide visual cues
                 this.renderItems();
             }
 
@@ -960,9 +1044,7 @@
 
                     case 'desk':
                         if (item.locked) {
-                            if (item.interactions <= item.messages.length) {
-                                this.addMessage(item.messages[item.interactions - 1], 'warning');
-                            }
+                            this.addMessage(item.messages[Math.min(item.interactions - 1, item.messages.length - 1)], 'warning');
                         } else {
                             this.addMessage('The desk drawer is already open.', 'success');
                         }
@@ -970,9 +1052,7 @@
 
                     case 'clock':
                         if (!this.puzzleStates.clockRepaired) {
-                            if (item.interactions <= item.messages.length) {
-                                this.addMessage(item.messages[item.interactions - 1], 'warning');
-                            }
+                            this.addMessage(item.messages[Math.min(item.interactions - 1, item.messages.length - 1)], 'warning');
                         } else {
                             this.addMessage('The clock ticks steadily now.', 'success');
                         }
@@ -980,9 +1060,7 @@
 
                     case 'cabinet':
                         if (item.locked) {
-                            if (item.interactions <= item.messages.length) {
-                                this.addMessage(item.messages[item.interactions - 1], 'warning');
-                            }
+                            this.addMessage(item.messages[Math.min(item.interactions - 1, item.messages.length - 1)], 'warning');
                         } else {
                             this.addMessage('The cabinet is already open.', 'success');
                         }
@@ -1022,15 +1100,24 @@
                         div.classList.add('new-item');
                     }
 
+                    // Disable items that can't be used yet
+                    const canUse = this.canUseItem(item.id);
+                    if (!canUse) {
+                        div.classList.add('disabled');
+                    }
+
                     const useBtn = document.createElement('button');
                     useBtn.className = 'use-btn';
-                    useBtn.textContent = 'Use';
-                    useBtn.onclick = () => this.useItem(item.id);
+                    useBtn.textContent = this.gameState.selectedItem === item.id ? 'Cancel' : 'Use';
+                    useBtn.disabled = !canUse && this.gameState.selectedItem !== item.id;
 
-                    // Pulse animation for the item to use next
-                    if (this.shouldPulseUseButton(item.id)) {
+                    if (this.gameState.selectedItem === item.id) {
+                        useBtn.classList.add('active');
+                    } else if (this.shouldPulseUseButton(item.id)) {
                         useBtn.classList.add('pulse');
                     }
+
+                    useBtn.onclick = () => this.selectItemForUse(item.id);
 
                     div.innerHTML = `<span>${item.name}</span>`;
                     div.appendChild(useBtn);
@@ -1040,23 +1127,75 @@
                 this.updateStats();
             }
 
-            // Determine if use button should pulse
-            shouldPulseUseButton(itemId) {
-                if (this.gameState.currentStep === 2 && itemId === 'key') return true;
-                if (this.gameState.currentStep === 3 && itemId === 'gear') return true;
-                if (this.gameState.currentStep === 4 && itemId === 'code_paper') return true;
+            // Check if item can be used at current step
+            canUseItem(itemId) {
+                if (itemId === 'key' && this.gameState.currentStep === 2 && !this.puzzleStates.deskUnlocked) return true;
+                if (itemId === 'gear' && this.gameState.currentStep === 3 && !this.puzzleStates.clockRepaired) return true;
+                if (itemId === 'code_paper' && this.gameState.currentStep === 4 && !this.puzzleStates.cabinetUnlocked) return true;
+                if (itemId === 'black_cube') return true;
                 return false;
             }
 
-            // Use item
-            useItem(itemId) {
-                const item = this.inventory.find(i => i.id === itemId);
-                if (!item) return;
+            // Determine if use button should pulse
+            shouldPulseUseButton(itemId) {
+                if (this.gameState.selectedItem) return false; // Don't pulse if in target mode
+                return this.canUseItem(itemId);
+            }
 
-                switch(itemId) {
+            // Select item for use
+            selectItemForUse(itemId) {
+                // If clicking on already selected item, cancel
+                if (this.gameState.selectedItem === itemId) {
+                    this.gameState.selectedItem = null;
+                    this.gameState.targetMode = false;
+                    this.addMessage('Cancelled item use.', 'warning');
+                    this.renderInventory();
+                    this.renderItems();
+                    return;
+                }
+
+                // Special case for black cube
+                if (itemId === 'black_cube') {
+                    this.addMessage('The Black Cube glows faintly in your hands...', 'mystery');
+                    this.addMessage('You feel a powerful energy emanating from it...', 'mystery');
+                    return;
+                }
+
+                // Check if can use this item
+                if (!this.canUseItem(itemId)) {
+                    this.addMessage('You cannot use this item right now.', 'error');
+                    return;
+                }
+
+                // Enter target selection mode
+                this.gameState.selectedItem = itemId;
+                this.gameState.targetMode = true;
+
+                const itemName = this.inventory.find(i => i.id === itemId).name;
+                this.addMessage(`Selected ${itemName}. Now click on an item in the room to use it on.`, 'important');
+
+                this.renderInventory();
+                this.renderItems();
+            }
+
+            // Use item on target
+            useItemOnTarget(targetKey) {
+                const selectedId = this.gameState.selectedItem;
+
+                if (!this.isValidTarget(targetKey)) {
+                    this.addMessage('That won\'t work here...', 'error');
+                    return;
+                }
+
+                // Exit target mode
+                this.gameState.targetMode = false;
+                this.gameState.selectedItem = null;
+
+                // Execute the use action
+                switch(selectedId) {
                     case 'key':
                         if (!this.puzzleStates.deskUnlocked) {
-                            this.addMessage('You use the Old Key...', 'success');
+                            this.addMessage('You use the Old Key on the desk...', 'success');
                             this.addMessage(this.items.desk.unlockedMessage, 'success');
                             this.items.desk.locked = false;
                             this.puzzleStates.deskUnlocked = true;
@@ -1069,14 +1208,12 @@
                             this.renderInventory();
                             this.updateProgress();
                             this.updateTutorial();
-                        } else {
-                            this.addMessage('The desk is already unlocked...', 'warning');
                         }
                         break;
 
                     case 'gear':
                         if (!this.puzzleStates.clockRepaired) {
-                            this.addMessage('You use the Precision Gear...', 'success');
+                            this.addMessage('You use the Precision Gear on the clock...', 'success');
                             this.addMessage(this.items.clock.repairedMessage, 'success');
                             this.puzzleStates.clockRepaired = true;
                             this.gameState.currentStep = 4;
@@ -1089,8 +1226,6 @@
                             this.renderInventory();
                             this.updateProgress();
                             this.updateTutorial();
-                        } else {
-                            this.addMessage('The clock is already repaired...', 'warning');
                         }
                         break;
 
@@ -1114,16 +1249,11 @@
                             } else {
                                 this.addMessage('Incorrect code! The cabinet remains locked...', 'warning');
                             }
-                        } else {
-                            this.addMessage('The cabinet is already open...', 'warning');
                         }
                         break;
-
-                    case 'black_cube':
-                        this.addMessage('The Black Cube glows faintly in your hands...', 'mystery');
-                        this.addMessage('You feel a powerful energy emanating from it...', 'mystery');
-                        break;
                 }
+
+                this.renderItems();
             }
 
             // Update progress tracker
@@ -1246,7 +1376,8 @@
                     items: this.items,
                     inventory: this.inventory,
                     puzzleStates: this.puzzleStates,
-                    gameState: this.gameState
+                    gameState: this.gameState,
+                    version: '2.1'
                 };
 
                 localStorage.setItem('rustyLakeSave', JSON.stringify(saveData));
@@ -1267,7 +1398,7 @@
                 this.items = data.items;
                 this.inventory = data.inventory;
                 this.puzzleStates = data.puzzleStates;
-                this.gameState = data.gameState;
+                this.gameState = {...data.gameState, selectedItem: null, targetMode: false};
 
                 this.renderItems();
                 this.renderInventory();
@@ -1286,6 +1417,7 @@
         let game;
         window.onload = () => {
             game = new RustyLakeGame();
+            console.log('Rusty Lake Mystery v2.1 - Loaded');
         };
     </script>
 </body>
