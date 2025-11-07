@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>社交人格面具切换器</title>
+    <title>Social Persona Mask Switcher</title>
     <style>
         * {
             margin: 0;
@@ -233,51 +233,51 @@
 </head>
 <body class="family">
     <div class="container">
-        <h1>社交人格面具切换器</h1>
+        <h1>Social Persona Mask Switcher</h1>
 
         <div class="avatar-container">
             <img id="avatar" class="avatar"
-                 src="https://api.dicebear.com/7.x/avataaars/svg?seed=Bella&backgroundColor=ffdfbf&radius=50&mouth=smile&eyes=happy"
-                 alt="社交人格头像">
+                 src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia&backgroundColor=ffdfbf&radius=50&mouth=smile&eyes=happy&hair=long&hairColor=4a312c&accessories=prescription02&accessoriesProbability=100&top=longHairStraight"
+                 alt="Social Persona Avatar">
         </div>
 
         <div class="button-group">
-            <button class="persona-button active" data-persona="family">👨‍👩‍👧‍👦 家人</button>
-            <button class="persona-button" data-persona="friend">🎉 朋友</button>
-            <button class="persona-button" data-persona="colleague">💼 同事</button>
-            <button class="persona-button" data-persona="stranger">🎭 陌生人</button>
+            <button class="persona-button active" data-persona="family">👨‍👩‍👧‍👦 Family</button>
+            <button class="persona-button" data-persona="friend">🎉 Friends</button>
+            <button class="persona-button" data-persona="colleague">💼 Colleagues</button>
+            <button class="persona-button" data-persona="stranger">🎭 Strangers</button>
         </div>
 
         <div class="status-indicator">
-            当前状态：<span id="currentStatus">家人模式</span>
+            Current Mode: <span id="currentStatus">Family Mode</span>
         </div>
     </div>
 
     <script>
-        // 不同人格状态的配置
+        // Different persona configurations - Same woman, different expressions
         const personas = {
             family: {
-                name: '家人模式',
-                // 放松、温暖的微笑 - 使用 avataaars 女性角色
-                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bella&backgroundColor=ffdfbf&radius=50&mouth=smile&eyes=happy',
+                name: 'Family Mode',
+                // Relaxed, warm smile - with family members
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia&backgroundColor=ffdfbf&radius=50&mouth=smile&eyes=happy&hair=long&hairColor=4a312c&accessories=prescription02&accessoriesProbability=100&top=longHairStraight',
                 emoji: '👨‍👩‍👧‍👦'
             },
             friend: {
-                name: '朋友模式',
-                // 开怀大笑、非常开心 - 使用 avataaars 女性角色
-                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie&backgroundColor=b6e3f4&radius=50&mouth=twinkle&eyes=happy',
+                name: 'Friends Mode',
+                // Big laugh, very happy - with close friends
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia&backgroundColor=b6e3f4&radius=50&mouth=twinkle&eyes=happy&hair=long&hairColor=4a312c&accessories=prescription02&accessoriesProbability=100&top=longHairStraight',
                 emoji: '🎉'
             },
             colleague: {
-                name: '同事模式',
-                // 冷淡、礼貌但疏离 - 使用 avataaars 女性角色
-                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma&backgroundColor=d1d4f9&radius=50&mouth=serious&eyes=default',
+                name: 'Colleagues Mode',
+                // Professional, polite but distant - at workplace
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia&backgroundColor=d1d4f9&radius=50&mouth=serious&eyes=default&hair=long&hairColor=4a312c&accessories=prescription02&accessoriesProbability=100&top=longHairStraight',
                 emoji: '💼'
             },
             stranger: {
-                name: '陌生人模式',
-                // 神秘、中性表情 - 使用 avataaars 女性角色
-                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Olivia&backgroundColor=c0aede&radius=50&mouth=default&eyes=default',
+                name: 'Strangers Mode',
+                // Cold, detached - tight-lipped expression with strangers
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia&backgroundColor=c0aede&radius=50&mouth=disbelief&eyes=side&hair=long&hairColor=4a312c&accessories=prescription02&accessoriesProbability=100&top=longHairStraight',
                 emoji: '🎭'
             }
         };
