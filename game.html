@@ -460,15 +460,10 @@
         });
     </script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r150/three.min.js" onerror="alert('Failed to load Three.js. Please check your internet connection.')"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r150/three.min.js"
+            onload="console.log('Three.js loaded successfully'); window.threeJSLoaded = true;"
+            onerror="alert('Failed to load Three.js. Please check your internet connection.');"></script>
     <script>
-        // Check if Three.js loaded successfully
-        if (typeof THREE === 'undefined') {
-            console.error('Three.js failed to load!');
-            alert('Error: Three.js library failed to load. Please check your internet connection and try again.');
-        } else {
-            console.log('Three.js loaded successfully');
-        }
 
         // ============================================================
         // GAME CONFIGURATION AND STATE
@@ -1218,6 +1213,17 @@
         // ============================================================
 
         function initGame() {
+            console.log('initGame called');
+
+            // Check if THREE.js is loaded
+            if (typeof THREE === 'undefined') {
+                console.error('THREE.js is not loaded yet!');
+                alert('Error: Game library is still loading. Please wait a moment and try again.');
+                return;
+            }
+
+            console.log('THREE.js is available, initializing game...');
+
             // Hide start screen
             document.getElementById('start-screen').classList.add('hidden');
 
