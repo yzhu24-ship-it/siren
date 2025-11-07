@@ -1,157 +1,276 @@
-# 🌙 绣湖之谜 - Rusty Lake Mystery
+# 🌙 Rusty Lake Mystery - The Black Cube
 
-一个灵感来源于经典绣湖系列的网页点击式解谜游戏。
+A web-based point-and-click puzzle adventure game inspired by the classic Rusty Lake series.
 
-## 🎮 游戏简介
+## 🎮 Game Overview
 
-你醒来发现自己身处一个神秘的维多利亚风格房间中。房间里充满了诡异的氛围和未解之谜。你的目标是找到传说中的**黑色方块**，才能逃离这个神秘的地方。
+You awaken to find yourself in a mysterious Victorian-era room. The room is filled with eerie atmosphere and unsolved mysteries. Your goal is to find the legendary **Black Cube** to escape this enigmatic place.
 
-## ✨ 游戏特色
+## ✨ Key Features
 
-- **维多利亚哥特风格**：沉浸式的暗黑氛围设计
-- **连锁谜题系统**：谜题之间环环相扣，需要按顺序解开
-- **物品收集系统**：寻找关键物品来推进游戏进程
-- **随机神秘事件**：增强游戏的氛围感和沉浸感
-- **进度保存功能**：可以随时保存和加载游戏进度
+### Visual & Progressive Gameplay
+- **Visual Progress Tracker**: See your quest progress with an animated step-by-step indicator
+- **Tutorial System**: Context-sensitive hints that guide you through each puzzle
+- **Visual Cues**: Highlighted items and pulsing buttons show you what to do next
+- **Achievement Notifications**: Satisfying pop-up notifications when you solve puzzles
+- **Interaction Counter**: Track how many times you've examined each item
+- **Progressive Difficulty**: Puzzles unlock sequentially for a guided experience
 
-## 🎯 游戏玩法
+### Atmosphere & Design
+- **Victorian Gothic Style**: Immersive dark aesthetic with period-appropriate design
+- **Mystery Events**: Random atmospheric events enhance immersion
+- **Smooth Animations**: Fluid transitions and visual feedback
+- **Responsive Design**: Works on desktop and mobile devices
 
-### 基础操作
+### Game Systems
+- **Item Collection**: Find and use key items to progress
+- **Chained Puzzles**: 4 interconnected puzzles that must be solved in order
+- **Save/Load System**: LocalStorage-based progress saving
+- **Statistics Tracking**: Monitor items, puzzles, and interactions
 
-1. **检查物品**：点击房间中的物品按钮进行检查
-2. **收集物品**：多次检查某些物品可能会获得关键道具
-3. **使用物品**：在背包中点击"使用"按钮来使用收集到的物品
-4. **等待事件**：点击"等待..."按钮触发随机神秘事件
+## 🎯 How to Play
 
-### 谜题流程
+### Basic Controls
 
-游戏包含4个主要谜题，需要按以下顺序解决：
+1. **Examine Items**: Click on item buttons to investigate them
+2. **Collect Items**: Some items reveal key objects after multiple examinations
+3. **Use Items**: Click "Use" buttons in your inventory to employ collected items
+4. **Wait for Events**: Click "Wait..." to trigger random mystery events
+5. **Save Progress**: Use Save/Load buttons to preserve your game state
 
-#### 1️⃣ 肖像画谜题
-- 反复检查"神秘肖像画"（需要点击3次）
-- 第三次检查后会获得**古旧钥匙**
+### Visual Guidance System
 
-#### 2️⃣ 书桌谜题
-- 获得钥匙后，在背包中使用**古旧钥匙**
-- 解锁书桌，获得**精密齿轮**
+The game provides multiple visual cues to guide you:
 
-#### 3️⃣ 时钟谜题
-- 在背包中使用**精密齿轮**
-- 修复时钟，获得**褪色纸条**（密码：376）
+- **Progress Tracker**: Shows your current step (1-4) with visual indicators
+  - **Active Step**: Glowing gold circle with pulse animation
+  - **Completed Step**: Green circle with checkmark
+  - **Progress Bar**: Fills as you complete puzzles
 
-#### 4️⃣ 柜子谜题
-- 在背包中使用**褪色纸条**
-- 输入密码：**376**
-- 打开柜子，获得**神秘黑色方块**
+- **Tutorial Box**: Updates with each step, providing:
+  - Current objective description
+  - Specific hint for what to do next
+  - Context-sensitive guidance
 
-#### 🎉 通关
-- 获得黑色方块后即可通关！
+- **Item Highlights**: Items you need to interact with glow
+- **Pulsing Buttons**: "Use" buttons pulse when they're needed
+- **New Item Animation**: Collected items appear with special effects
 
-## 🔍 房间物品列表
+### Puzzle Walkthrough
 
-### 关键物品（用于解谜）
-- 🖼️ **神秘肖像画**：隐藏着钥匙
-- 📚 **老旧书桌**：需要钥匙解锁
-- 🕰️ **古董时钟**：需要齿轮修复
-- 🗄️ **神秘柜子**：需要密码打开
+The game has 4 sequential puzzles:
 
-### 氛围物品（增强体验）
-- 🪞 **古老镜子**：映出诡异的景象
-- 🪟 **窗户**：窗外的迷雾中似乎有什么...
-- 📖 **书架**：古老的书籍记载着秘密
-- 🔥 **壁炉**：熄灭已久的壁炉
+#### 1️⃣ Step 1: Find the Key
+**Objective**: Discover the hidden key in the portrait
 
-## 🎨 技术特点
+- Look for the **Mysterious Portrait**  (highlighted with glowing border)
+- Click it **3 times** to reveal its secret
+- Watch the interaction counter to track your progress
+- On the 3rd click, obtain the **Old Key**
+- Achievement unlocked: "First Clue Found!"
 
-### 架构设计
-- **面向对象编程**：使用 `RustyLakeGame` 类管理游戏状态
-- **状态管理**：完善的谜题进度追踪系统
-- **数据持久化**：基于 localStorage 的存档系统
+#### 2️⃣ Step 2: Unlock the Desk
+**Objective**: Use the key to open the locked desk
 
-### 核心功能
+- Find the **Old Key** in your inventory
+- Click the **"Use"** button (it will be pulsing)
+- The desk drawer opens automatically
+- Obtain the **Precision Gear**
+- Achievement unlocked: "Desk Unlocked!"
+
+#### 3️⃣ Step 3: Repair the Clock
+**Objective**: Fix the broken clock with the gear
+
+- Use the **Precision Gear** from your inventory (pulsing button)
+- The clock springs to life!
+- A hidden compartment reveals the **Faded Note**
+- The note displays the code: **376**
+- Achievement unlocked: "Clock Repaired!"
+
+#### 4️⃣ Step 4: Open the Cabinet
+**Objective**: Enter the code to unlock the mysterious cabinet
+
+- Use the **Faded Note** from your inventory
+- Enter the code: **376** when prompted
+- The cabinet opens with an eerie glow
+- Obtain the **Mysterious Black Cube**
+- Achievement unlocked: "The Black Cube!"
+
+#### 🎉 Victory!
+- The Black Cube is yours!
+- Victory modal appears
+- Game complete!
+
+## 🔍 Room Items
+
+### Puzzle Items (Required for Completion)
+- 🖼️ **Mysterious Portrait**: Hides the key (requires 3 examinations)
+- 📚 **Old Desk**: Locked drawer containing the gear (needs key)
+- 🕰️ **Antique Clock**: Broken mechanism (needs gear to repair)
+- 🗄️ **Mysterious Cabinet**: Code-locked (needs password 376)
+
+### Atmospheric Items (Optional Exploration)
+- 🪞 **Ancient Mirror**: Reveals strange reflections
+- 🪟 **Window**: Foggy view with mysterious shapes
+- 📖 **Bookshelf**: Ancient tomes with cryptic messages
+- 🔥 **Fireplace**: Long-extinguished with hidden marks
+
+## 💻 Technical Features
+
+### Architecture
+- **Object-Oriented JavaScript**: Clean `RustyLakeGame` class structure
+- **State Management**: Comprehensive tracking of items, puzzles, and progress
+- **Event System**: Responsive UI updates with smooth animations
+- **Data Persistence**: LocalStorage integration for save/load
+
+### Code Structure
 ```javascript
-// 游戏核心数据结构
-- items: 房间物品字典（描述、状态、互动次数）
-- inventory: 玩家背包列表
-- puzzleStates: 谜题状态追踪
-- gameState: 游戏整体状态
+class RustyLakeGame {
+  // Core data structures
+  - items: Object          // Room items with states and interactions
+  - inventory: Array       // Player's collected items
+  - puzzleStates: Object   // Puzzle completion tracking
+  - gameState: Object      // Overall game progress
+  - tutorialMessages: Object // Step-by-step guidance
+
+  // Key methods
+  - examineItem()         // Inspect and interact with items
+  - useItem()            // Use inventory items to solve puzzles
+  - updateProgress()     // Update visual progress tracker
+  - updateTutorial()     // Show context-sensitive hints
+  - showAchievement()    // Display achievement notifications
+  - saveGame/loadGame()  // Persistence methods
+}
 ```
 
-### 关键方法
-- `examineItem()` - 检查房间物品
-- `useItem()` - 使用背包物品
-- `triggerRandomEvent()` - 触发神秘事件
-- `saveGame()` / `loadGame()` - 保存/加载游戏
+### Visual Features
+- CSS3 animations and transitions
+- Gradient backgrounds and shadows
+- Responsive grid layouts
+- Custom scrollbars
+- Keyframe animations for:
+  - Progress indicator pulse
+  - Item highlights
+  - Achievement slides
+  - Modal pop-ups
+  - New item appearances
 
-## 🛠️ 本地运行
+## 🚀 Running the Game
 
-1. 克隆或下载项目
+1. Clone or download the repository
 ```bash
 git clone <repository-url>
 cd siren
 ```
 
-2. 直接在浏览器中打开 `index.html` 文件即可开始游戏
+2. Open `index.html` directly in your browser
 
-无需任何依赖或构建步骤，开箱即用！
+**No dependencies, no build process, no installation required!**
 
-## 📋 系统要求
+Simply double-click the HTML file or open it in any modern web browser.
 
-- 现代浏览器（支持 ES6+）
-- 建议分辨率：1280x720 或更高
-- 支持 localStorage 用于存档功能
+## 📋 System Requirements
 
-## 🎮 游戏提示
+- **Browser**: Modern browser with ES6+ support (Chrome, Firefox, Safari, Edge)
+- **Screen**: 1280x720 resolution or higher recommended
+- **Storage**: LocalStorage enabled for save functionality
+- **JavaScript**: Must be enabled
 
-1. **仔细观察**：每个物品的描述都可能包含线索
-2. **多次互动**：有些物品需要多次检查才能发现秘密
-3. **按顺序解谜**：谜题之间有依赖关系，不能跳跃
-4. **善用等待**：随机事件有时会给出提示
-5. **记得保存**：使用保存功能避免重头开始
+## 🎮 Gameplay Tips
 
-## 🌟 游戏攻略（剧透警告）
+### For Beginners
+1. **Follow the Tutorial**: The tutorial box tells you exactly what to do
+2. **Watch the Highlights**: Glowing items and pulsing buttons show the way
+3. **Check Progress**: The tracker at the top shows which step you're on
+4. **Read Everything**: Item descriptions contain important clues
+5. **Use Save Often**: Don't lose your progress!
 
-<details>
-<summary>点击查看完整攻略</summary>
+### For Explorers
+1. **Examine Everything**: All items have unique descriptions
+2. **Multiple Clicks**: Some items reveal more with repeated examination
+3. **Try Random Events**: The "Wait..." button adds atmosphere
+4. **Read the Log**: Event log contains all messages and clues
+5. **Find Easter Eggs**: Atmospheric items have interesting lore
 
-### 通关步骤
-1. 点击"神秘肖像画" 3次 → 获得钥匙
-2. 使用钥匙 → 打开书桌 → 获得齿轮
-3. 使用齿轮 → 修复时钟 → 获得密码纸条（376）
-4. 使用密码纸条 → 输入密码376 → 打开柜子
-5. 获得黑色方块 → 游戏通关！
+### Common Questions
 
-</details>
+**Q: I'm stuck! What do I do?**
+- Check the tutorial box for your current objective
+- Look for highlighted or pulsing elements
+- Review the progress tracker to see your current step
+- Examine the portrait 3 times to get started
 
-## 🎨 设计灵感
+**Q: How do I use items?**
+- Find items in your inventory (right panel)
+- Click the "Use" button next to the item
+- Pulsing buttons indicate which item to use next
 
-本游戏灵感来源于经典的绣湖（Rusty Lake）系列游戏，致敬其：
-- 神秘诡异的氛围营造
-- 巧妙的谜题设计
-- 超现实主义的叙事风格
-- 令人难忘的视觉体验
+**Q: What's the cabinet code?**
+- Repair the clock first (steps 1-3)
+- The code appears on the Faded Note
+- Enter: **376**
 
-## 📝 更新日志
+**Q: Can I skip puzzles?**
+- No, puzzles must be solved in order (1 → 2 → 3 → 4)
+- This ensures a guided, story-driven experience
 
-### Version 1.0.0
-- ✅ 完整的游戏核心逻辑
-- ✅ 4个连锁谜题
-- ✅ 8个可互动房间物品
-- ✅ 随机神秘事件系统
-- ✅ 存档/读档功能
-- ✅ 胜利条件检测
-- ✅ 维多利亚哥特风格UI
+## 🎨 Design Inspiration
 
-## 🤝 贡献
+This game pays homage to the acclaimed Rusty Lake series, celebrating their:
+- Mysterious and eerie atmosphere
+- Clever interconnected puzzle design
+- Surrealist narrative style
+- Memorable visual presentation
+- Point-and-click adventure mechanics
 
-欢迎提出建议和改进意见！
+## 📝 Changelog
 
-## 📄 许可证
+### Version 2.0.0 - Enhanced Edition
+- ✅ **NEW**: Visual progress tracker with step indicators
+- ✅ **NEW**: Context-sensitive tutorial system
+- ✅ **NEW**: Item highlighting and visual cues
+- ✅ **NEW**: Pulsing "Use" buttons for guidance
+- ✅ **NEW**: Achievement notification system
+- ✅ **NEW**: Interaction counter badges on items
+- ✅ **NEW**: New item appearance animations
+- ✅ **NEW**: Enhanced statistics (added interaction count)
+- ✅ **IMPROVED**: More intuitive progressive gameplay
+- ✅ **IMPROVED**: Better visual feedback throughout
+- ✅ **IMPROVED**: Smoother animations and transitions
+- ✅ **UPDATED**: Full English localization
 
-本项目仅供学习和娱乐使用。
+### Version 1.0.0 - Initial Release
+- ✅ Core game logic and puzzle system
+- ✅ 4 chained puzzles
+- ✅ 8 interactive room items
+- ✅ Random mystery event system
+- ✅ Save/load functionality
+- ✅ Victory condition detection
+- ✅ Victorian Gothic UI styling
+
+## 🤝 Contributing
+
+Suggestions and improvements are welcome!
+
+## 📄 License
+
+This project is for educational and entertainment purposes only.
 
 ---
 
-**"记忆是一种奇特的东西，它既是钥匙，也是囚笼。"**
+**"Memory is a strange thing - it is both the key and the cage."**
 
-*享受你的绣湖之旅... 🌙*
+*Enjoy your journey through Rusty Lake... 🌙*
+
+---
+
+## Quick Start Summary
+
+1. **Open** `index.html` in your browser
+2. **Follow** the glowing portrait hint
+3. **Click** the Mysterious Portrait **3 times**
+4. **Use** each item in your inventory as you find them
+5. **Enter code** 376 when prompted
+6. **Find** the Black Cube and win!
+
+The tutorial system will guide you every step of the way! 🎓
