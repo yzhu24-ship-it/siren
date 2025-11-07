@@ -332,6 +332,71 @@
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Start screen */
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 1s ease-in;
+        }
+
+        #start-screen.hidden {
+            display: none;
+        }
+
+        .start-content {
+            text-align: center;
+            color: white;
+            padding: 40px;
+        }
+
+        .game-title {
+            font-size: 72px;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+            font-weight: bold;
+        }
+
+        .game-subtitle {
+            font-size: 32px;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-style: italic;
+            opacity: 0.9;
+        }
+
+        .game-description {
+            font-size: 20px;
+            margin-bottom: 50px;
+            line-height: 1.8;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .start-button {
+            font-size: 24px;
+            padding: 20px 60px;
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .start-button:hover {
+            background: #f0f0f0;
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -359,6 +424,18 @@
             <h1>Your Life Story</h1>
             <p id="ending-text"></p>
             <button class="game-button" onclick="location.reload()">Start Over</button>
+        </div>
+
+        <div id="start-screen">
+            <div class="start-content">
+                <h1 class="game-title">Life Choices</h1>
+                <p class="game-subtitle">An Interactive Journey</p>
+                <p class="game-description">
+                    Make decisions that will shape your life story.<br>
+                    Every choice leads to a different destiny.
+                </p>
+                <button class="game-button start-button" id="start-button">Start Game</button>
+            </div>
         </div>
     </div>
 
@@ -1111,6 +1188,9 @@
         // ============================================================
 
         function initGame() {
+            // Hide start screen
+            document.getElementById('start-screen').classList.add('hidden');
+
             initThreeJS();
             player = new Player();
 
@@ -1125,8 +1205,13 @@
             animate();
         }
 
-        // Start the game when page loads
-        window.addEventListener('load', initGame);
+        // Setup start button when page loads
+        window.addEventListener('load', function() {
+            const startButton = document.getElementById('start-button');
+            startButton.addEventListener('click', function() {
+                initGame();
+            });
+        });
     </script>
 </body>
 </html>
