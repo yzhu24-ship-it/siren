@@ -479,11 +479,11 @@
         function initThreeJS() {
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0xFFFFFF);
-            scene.fog = new THREE.Fog(0xFFFFFF, 10, 50);
+            scene.fog = new THREE.Fog(0xFFFFFF, 30, 100);
 
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 2, 8);
-            camera.lookAt(0, 1, 0);
+            camera.position.set(0, 18, 12);
+            camera.lookAt(0, 0, 0);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -617,10 +617,11 @@
                 this.mesh.position.x = Math.max(-14, Math.min(14, this.mesh.position.x));
                 this.mesh.position.z = Math.max(-14, Math.min(14, this.mesh.position.z));
 
-                // Update camera to follow player
+                // Update camera to follow player (god's eye view)
                 camera.position.x = this.mesh.position.x;
-                camera.position.z = this.mesh.position.z + 8;
-                camera.lookAt(this.mesh.position.x, 1, this.mesh.position.z);
+                camera.position.y = 18;
+                camera.position.z = this.mesh.position.z + 12;
+                camera.lookAt(this.mesh.position.x, 0, this.mesh.position.z);
             }
 
             getPosition() {
