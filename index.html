@@ -237,7 +237,7 @@
 
         <div class="avatar-container">
             <img id="avatar" class="avatar"
-                 src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia&backgroundColor=ffdfbf&radius=50&mouth=smile&eyes=happy&hair=long&hairColor=4a312c&accessories=prescription02&accessoriesProbability=100&top=longHairStraight"
+                 src="https://api.dicebear.com/7.x/avataaars/svg?seed=customFemale&backgroundColor=ffdfbf&radius=50&top=longHairStraight&hairColor=auburn&mouth=smile&eyes=happy&eyebrow=default&skinColor=light"
                  alt="Social Persona Avatar">
         </div>
 
@@ -254,30 +254,30 @@
     </div>
 
     <script>
-        // Different persona configurations - Same woman, different expressions
+        // Same woman with long hair, different expressions for different social contexts
         const personas = {
             family: {
                 name: 'Family Mode',
-                // Relaxed, warm smile - with family members
-                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia&backgroundColor=ffdfbf&radius=50&mouth=smile&eyes=happy&hair=long&hairColor=4a312c&accessories=prescription02&accessoriesProbability=100&top=longHairStraight',
+                // Relaxed, warm smile - comfortable with family
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=customFemale&backgroundColor=ffdfbf&radius=50&top=longHairStraight&hairColor=auburn&mouth=smile&eyes=happy&eyebrow=default&skinColor=light',
                 emoji: '👨‍👩‍👧‍👦'
             },
             friend: {
                 name: 'Friends Mode',
-                // Big laugh, very happy - with close friends
-                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia&backgroundColor=b6e3f4&radius=50&mouth=twinkle&eyes=happy&hair=long&hairColor=4a312c&accessories=prescription02&accessoriesProbability=100&top=longHairStraight',
+                // Big laugh, very happy - having fun with friends
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=customFemale&backgroundColor=b6e3f4&radius=50&top=longHairStraight&hairColor=auburn&mouth=twinkle&eyes=happy&eyebrow=raisedExcited&skinColor=light',
                 emoji: '🎉'
             },
             colleague: {
                 name: 'Colleagues Mode',
-                // Professional, polite but distant - at workplace
-                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia&backgroundColor=d1d4f9&radius=50&mouth=serious&eyes=default&hair=long&hairColor=4a312c&accessories=prescription02&accessoriesProbability=100&top=longHairStraight',
+                // Professional, polite but reserved - at workplace
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=customFemale&backgroundColor=d1d4f9&radius=50&top=longHairStraight&hairColor=auburn&mouth=serious&eyes=default&eyebrow=default&skinColor=light',
                 emoji: '💼'
             },
             stranger: {
                 name: 'Strangers Mode',
-                // Cold, detached - tight-lipped expression with strangers
-                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia&backgroundColor=c0aede&radius=50&mouth=disbelief&eyes=side&hair=long&hairColor=4a312c&accessories=prescription02&accessoriesProbability=100&top=longHairStraight',
+                // Cold, indifferent - straight-line mouth, no smile, avoiding eye contact
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=customFemale&backgroundColor=c0aede&radius=50&top=longHairStraight&hairColor=auburn&mouth=concerned&eyes=side&eyebrow=flatNatural&skinColor=light',
                 emoji: '🎭'
             }
         };
