@@ -446,8 +446,29 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Ensure start screen is visible -->
     <script>
+        // Force start screen to be visible immediately
+        console.log('Page loaded, ensuring start screen visibility');
+        document.addEventListener('DOMContentLoaded', function() {
+            const startScreen = document.getElementById('start-screen');
+            if (startScreen) {
+                startScreen.style.display = 'flex';
+                console.log('Start screen forced to display');
+            }
+        });
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" onerror="alert('Failed to load Three.js. Please check your internet connection.')"></script>
+    <script>
+        // Check if Three.js loaded successfully
+        if (typeof THREE === 'undefined') {
+            console.error('Three.js failed to load!');
+            alert('Error: Three.js library failed to load. Please check your internet connection and try again.');
+        } else {
+            console.log('Three.js loaded successfully');
+        }
+
         // ============================================================
         // GAME CONFIGURATION AND STATE
         // ============================================================
@@ -1215,8 +1236,24 @@
 
         // Setup start button when page loads
         window.addEventListener('load', function() {
+            console.log('Window loaded');
+            const startScreen = document.getElementById('start-screen');
             const startButton = document.getElementById('start-button');
+
+            console.log('Start screen element:', startScreen);
+            console.log('Start button element:', startButton);
+
+            if (!startScreen || !startButton) {
+                console.error('Start screen or button not found!');
+                return;
+            }
+
+            // Ensure start screen is visible
+            startScreen.style.display = 'flex';
+            console.log('Start screen should now be visible');
+
             startButton.addEventListener('click', function() {
+                console.log('Start button clicked');
                 initGame();
             });
         });
