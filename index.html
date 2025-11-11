@@ -83,6 +83,155 @@
             line-height: 1.6;
         }
 
+        /* 小游戏覆盖层 */
+        .minigame-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        .minigame-overlay.show {
+            display: flex;
+        }
+
+        .minigame-container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 90%;
+            max-height: 90%;
+            overflow: auto;
+        }
+
+        .minigame-title {
+            text-align: center;
+            color: #333;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .minigame-desc {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        /* 数独游戏样式 */
+        .sudoku-grid {
+            display: inline-block;
+            border: 3px solid #333;
+            background: #fff;
+            margin: 20px auto;
+        }
+
+        .sudoku-row {
+            display: flex;
+        }
+
+        .sudoku-cell {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .sudoku-cell:hover:not(.fixed) {
+            background: #e3f2fd;
+        }
+
+        .sudoku-cell.fixed {
+            background: #f0f0f0;
+            color: #000;
+            cursor: default;
+        }
+
+        .sudoku-cell.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .sudoku-cell.selected {
+            background: #bbdefb;
+            border: 2px solid #2196f3;
+        }
+
+        .sudoku-numbers {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .sudoku-number-btn {
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 2px solid #2196f3;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sudoku-number-btn:hover {
+            background: #2196f3;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .minigame-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #da190b;
+            transform: translateY(-2px);
+        }
+
         @media (max-width: 768px) {
             .game-title {
                 font-size: 1.5rem;
@@ -91,8 +240,15 @@
                 max-width: 90%;
                 padding: 15px 25px;
             }
-            .message-box h3 {
-                font-size: 1.1rem;
+            .sudoku-cell {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+            .sudoku-number-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
             }
         }
     </style>
@@ -106,6 +262,13 @@
     <div class="message-box" id="messageBox">
         <h3 id="messageTitle">欢迎</h3>
         <p id="messageContent">开始你的人生旅程</p>
+    </div>
+
+    <!-- 小游戏覆盖层 -->
+    <div class="minigame-overlay" id="minigameOverlay">
+        <div class="minigame-container" id="minigameContainer">
+            <!-- 动态内容将在这里插入 -->
+        </div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -143,52 +306,196 @@
         // 游戏状态管理
         // ============================================
         const gameState = {
-            currentScene: 0,
+            currentModule: 'module0',
             playerX: canvas.width / 2,
             playerY: canvas.height * 0.7,
             hoveredDoor: null,
-            animating: false
+            animating: false,
+            playerChoices: [], // 记录玩家的选择历史
+            minigameActive: false
         };
 
-        // 游戏场景数据
-        const scenes = [
-            {
+        // ============================================
+        // 模块定义
+        // ============================================
+        const modules = {
+            module0: {
+                type: 'choice',
                 title: "人生的起点",
-                question: "你来到了人生的第一个岔路口",
+                question: "父母询问：是上学还是学体育？",
+                hint: "（提示：主人公学习成绩好，体育也好）",
                 leftDoor: {
-                    label: "稳定安逸",
-                    description: "选择一份稳定的工作，平凡但安心"
+                    label: "学习",
+                    description: "选择走学习的道路",
+                    nextModule: 'module1A'
                 },
                 rightDoor: {
-                    label: "冒险追梦",
-                    description: "追逐自己的梦想，未知但刺激"
+                    label: "体育",
+                    description: "选择体育专业发展",
+                    nextModule: 'module1B'
                 }
             },
-            {
-                title: "事业发展",
-                question: "在职场中，你面临新的选择",
+            module1A: {
+                type: 'minigame',
+                gameType: 'sudoku',
+                title: "数独挑战",
+                description: "证明你的逻辑思维能力",
+                difficulty: 'easy',
+                onSuccess: 'module2A',
+                onFailure: 'ending_mediocre'
+            },
+            module1B: {
+                type: 'choice',
+                title: "体育发展",
+                question: "在体育道路上，你选择哪个方向？",
                 leftDoor: {
-                    label: "深耕专业",
-                    description: "在当前领域继续深造，成为专家"
+                    label: "职业运动员",
+                    description: "走向专业运动员道路",
+                    nextModule: 'ending_athlete'
                 },
                 rightDoor: {
-                    label: "管理转型",
-                    description: "转向管理岗位，带领团队前进"
+                    label: "体育教师",
+                    description: "成为一名体育老师",
+                    nextModule: 'ending_teacher'
                 }
             },
-            {
-                title: "人生抉择",
-                question: "生活给了你新的考验",
+            module2A: {
+                type: 'choice',
+                title: "文理分科",
+                question: "高中文理分科，你选择？",
                 leftDoor: {
-                    label: "留在家乡",
-                    description: "陪伴家人，享受温馨的时光"
+                    label: "文科",
+                    description: "选择文科，深入人文社科",
+                    nextModule: 'ending_liberal_arts'
                 },
                 rightDoor: {
-                    label: "远走他乡",
-                    description: "到大城市打拼，寻找更多机会"
+                    label: "理科",
+                    description: "选择理科，探索科学世界",
+                    nextModule: 'ending_science'
+                }
+            },
+            ending_mediocre: {
+                type: 'ending',
+                title: "平凡的人生",
+                message: "虽然努力学习，但效果不佳，考上了一所普通大学。你过着平凡但安稳的生活。"
+            },
+            ending_athlete: {
+                type: 'ending',
+                title: "职业运动员",
+                message: "你成为了一名职业运动员，在赛场上挥洒汗水，为国争光！"
+            },
+            ending_teacher: {
+                type: 'ending',
+                title: "体育教师",
+                message: "你成为了一名受学生爱戴的体育老师，培养了无数体育人才。"
+            },
+            ending_liberal_arts: {
+                type: 'ending',
+                title: "人文学者",
+                message: "你在文科领域深耕，成为了一名优秀的人文学者，为社会贡献智慧。"
+            },
+            ending_science: {
+                type: 'ending',
+                title: "科学家",
+                message: "你在理科道路上不断探索，成为了一名杰出的科学家，推动人类进步。"
+            }
+        };
+
+        // ============================================
+        // 数独游戏逻辑
+        // ============================================
+        class SudokuGame {
+            constructor(size = 4) {
+                this.size = size;
+                this.grid = [];
+                this.solution = [];
+                this.selectedCell = null;
+                this.generate();
+            }
+
+            generate() {
+                // 生成一个简单的4x4数独
+                // 解决方案
+                this.solution = [
+                    [1, 2, 3, 4],
+                    [3, 4, 1, 2],
+                    [2, 1, 4, 3],
+                    [4, 3, 2, 1]
+                ];
+
+                // 创建谜题（隐藏一些数字）
+                this.grid = this.solution.map(row => [...row]);
+
+                // 随机移除一些数字
+                const cellsToRemove = 6; // 移除6个数字
+                let removed = 0;
+                while (removed < cellsToRemove) {
+                    const row = Math.floor(Math.random() * this.size);
+                    const col = Math.floor(Math.random() * this.size);
+                    if (this.grid[row][col] !== 0) {
+                        this.grid[row][col] = 0;
+                        removed++;
+                    }
                 }
             }
-        ];
+
+            isValid(row, col, num) {
+                // 检查行
+                for (let c = 0; c < this.size; c++) {
+                    if (c !== col && this.grid[row][c] === num) {
+                        return false;
+                    }
+                }
+
+                // 检查列
+                for (let r = 0; r < this.size; r++) {
+                    if (r !== row && this.grid[r][col] === num) {
+                        return false;
+                    }
+                }
+
+                // 检查2x2宫格
+                const boxRow = Math.floor(row / 2) * 2;
+                const boxCol = Math.floor(col / 2) * 2;
+                for (let r = boxRow; r < boxRow + 2; r++) {
+                    for (let c = boxCol; c < boxCol + 2; c++) {
+                        if ((r !== row || c !== col) && this.grid[r][c] === num) {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+
+            setCell(row, col, num) {
+                this.grid[row][col] = num;
+            }
+
+            isComplete() {
+                for (let r = 0; r < this.size; r++) {
+                    for (let c = 0; c < this.size; c++) {
+                        if (this.grid[r][c] === 0) {
+                            return false;
+                        }
+                        if (this.grid[r][c] !== this.solution[r][c]) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            getCell(row, col) {
+                return this.grid[row][col];
+            }
+
+            isFixed(row, col) {
+                return this.solution[row][col] !== 0 && this.grid[row][col] === this.solution[row][col];
+            }
+        }
+
+        let currentSudoku = null;
 
         // ============================================
         // 绘制函数
@@ -199,21 +506,21 @@
             const w = canvas.width;
             const h = canvas.height;
 
-            // 墙壁（渐变灰白色）
+            // 墙壁
             const wallGradient = ctx.createLinearGradient(0, 0, 0, h * 0.6);
             wallGradient.addColorStop(0, '#f5f5f5');
             wallGradient.addColorStop(1, '#e0e0e0');
             ctx.fillStyle = wallGradient;
             ctx.fillRect(0, 0, w, h * 0.6);
 
-            // 地板（更深的灰色）
+            // 地板
             const floorGradient = ctx.createLinearGradient(0, h * 0.6, 0, h);
             floorGradient.addColorStop(0, '#d0d0d0');
             floorGradient.addColorStop(1, '#b0b0b0');
             ctx.fillStyle = floorGradient;
             ctx.fillRect(0, h * 0.6, w, h * 0.4);
 
-            // 地板线条（增加透视感）
+            // 地板线条
             ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
             ctx.lineWidth = 2;
             const centerX = w / 2;
@@ -234,7 +541,7 @@
             const offsetX = (scaledWidth - width) / 2;
             const offsetY = (scaledHeight - height) / 2;
 
-            // 门的阴影
+            // 阴影
             ctx.fillStyle = config.shadowColor;
             ctx.fillRect(x - offsetX + 5, y - offsetY + 5, scaledWidth, scaledHeight);
 
@@ -242,7 +549,7 @@
             ctx.fillStyle = color;
             ctx.fillRect(x - offsetX, y - offsetY, scaledWidth, scaledHeight);
 
-            // 门的高光
+            // 高光
             const gradient = ctx.createLinearGradient(x, y, x + width, y);
             gradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
             gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
@@ -268,7 +575,6 @@
             ctx.textBaseline = 'middle';
             ctx.fillText(label, x + width / 2, y + height / 2);
 
-            // 悬停提示
             if (isHovered) {
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
                 ctx.fillRect(x - 20, y - 60, width + 40, 40);
@@ -280,13 +586,15 @@
 
         // 绘制信息板
         function drawInfoBoard() {
-            const scene = scenes[gameState.currentScene];
-            const boardX = canvas.width / 2 - 200;
-            const boardY = canvas.height * 0.15;
-            const boardWidth = 400;
-            const boardHeight = 100;
+            const module = modules[gameState.currentModule];
+            if (module.type !== 'choice') return;
 
-            // 信息板背景
+            const boardX = canvas.width / 2 - 250;
+            const boardY = canvas.height * 0.12;
+            const boardWidth = 500;
+            const boardHeight = 120;
+
+            // 背景
             ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
             ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
             ctx.shadowBlur = 20;
@@ -304,12 +612,19 @@
             ctx.fillStyle = '#2c3e50';
             ctx.font = 'bold 22px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(scene.title, boardX + boardWidth / 2, boardY + 35);
+            ctx.fillText(module.title, boardX + boardWidth / 2, boardY + 30);
 
             // 问题
             ctx.fillStyle = '#555';
-            ctx.font = '16px sans-serif';
-            ctx.fillText(scene.question, boardX + boardWidth / 2, boardY + 70);
+            ctx.font = '18px sans-serif';
+            ctx.fillText(module.question, boardX + boardWidth / 2, boardY + 60);
+
+            // 提示
+            if (module.hint) {
+                ctx.fillStyle = '#888';
+                ctx.font = '14px sans-serif';
+                ctx.fillText(module.hint, boardX + boardWidth / 2, boardY + 90);
+            }
         }
 
         // 绘制软体橡皮人角色
@@ -323,34 +638,21 @@
             ctx.ellipse(x, y + 45, 35, 10, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // 身体（软体风格）
+            // 身体
             ctx.fillStyle = config.characterColor;
             ctx.strokeStyle = config.characterOutline;
             ctx.lineWidth = 3;
 
-            // 身体主干
             ctx.beginPath();
             ctx.moveTo(x, y - 40 + bounce);
-            ctx.bezierCurveTo(
-                x - 25, y - 30 + bounce,
-                x - 30, y + 10,
-                x - 20, y + 40
-            );
-            ctx.bezierCurveTo(
-                x - 10, y + 45,
-                x + 10, y + 45,
-                x + 20, y + 40
-            );
-            ctx.bezierCurveTo(
-                x + 30, y + 10,
-                x + 25, y - 30 + bounce,
-                x, y - 40 + bounce
-            );
+            ctx.bezierCurveTo(x - 25, y - 30 + bounce, x - 30, y + 10, x - 20, y + 40);
+            ctx.bezierCurveTo(x - 10, y + 45, x + 10, y + 45, x + 20, y + 40);
+            ctx.bezierCurveTo(x + 30, y + 10, x + 25, y - 30 + bounce, x, y - 40 + bounce);
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
 
-            // 头部
+            // 头
             ctx.beginPath();
             ctx.arc(x, y - 50 + bounce, 25, 0, Math.PI * 2);
             ctx.fill();
@@ -365,14 +667,14 @@
             ctx.arc(x + 8, y - 53 + bounce, 3, 0, Math.PI * 2);
             ctx.fill();
 
-            // 嘴巴（简单的曲线）
+            // 嘴巴
             ctx.strokeStyle = '#000';
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.arc(x, y - 45 + bounce, 8, 0.2, Math.PI - 0.2);
             ctx.stroke();
 
-            // 左臂
+            // 手臂
             ctx.strokeStyle = config.characterOutline;
             ctx.lineWidth = 3;
             ctx.lineCap = 'round';
@@ -380,20 +682,16 @@
             ctx.moveTo(x - 22, y - 20 + bounce);
             ctx.quadraticCurveTo(x - 40, y - 10, x - 35, y + 5);
             ctx.stroke();
-
-            // 右臂
             ctx.beginPath();
             ctx.moveTo(x + 22, y - 20 + bounce);
             ctx.quadraticCurveTo(x + 40, y - 10, x + 35, y + 5);
             ctx.stroke();
 
-            // 左腿
+            // 腿
             ctx.beginPath();
             ctx.moveTo(x - 10, y + 40);
             ctx.quadraticCurveTo(x - 15, y + 50, x - 10, y + 60);
             ctx.stroke();
-
-            // 右腿
             ctx.beginPath();
             ctx.moveTo(x + 10, y + 40);
             ctx.quadraticCurveTo(x + 15, y + 50, x + 10, y + 60);
@@ -404,52 +702,238 @@
         // 主渲染函数
         // ============================================
         function render() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const module = modules[gameState.currentModule];
 
-            drawRoom();
+            if (module.type === 'choice') {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawRoom();
 
-            // 绘制两扇门
-            const doorWidth = 150;
-            const doorHeight = 250;
-            const doorY = canvas.height * 0.35;
-            const leftDoorX = canvas.width * 0.25 - doorWidth / 2;
-            const rightDoorX = canvas.width * 0.75 - doorWidth / 2;
+                const doorWidth = 150;
+                const doorHeight = 250;
+                const doorY = canvas.height * 0.35;
+                const leftDoorX = canvas.width * 0.25 - doorWidth / 2;
+                const rightDoorX = canvas.width * 0.75 - doorWidth / 2;
 
-            const scene = scenes[gameState.currentScene];
+                drawDoor(
+                    leftDoorX, doorY, doorWidth, doorHeight,
+                    config.doorLeftColor,
+                    module.leftDoor.label,
+                    gameState.hoveredDoor === 'left'
+                );
 
-            drawDoor(
-                leftDoorX,
-                doorY,
-                doorWidth,
-                doorHeight,
-                config.doorLeftColor,
-                scene.leftDoor.label,
-                gameState.hoveredDoor === 'left'
-            );
+                drawDoor(
+                    rightDoorX, doorY, doorWidth, doorHeight,
+                    config.doorRightColor,
+                    module.rightDoor.label,
+                    gameState.hoveredDoor === 'right'
+                );
 
-            drawDoor(
-                rightDoorX,
-                doorY,
-                doorWidth,
-                doorHeight,
-                config.doorRightColor,
-                scene.rightDoor.label,
-                gameState.hoveredDoor === 'right'
-            );
+                drawInfoBoard();
+                drawCharacter(gameState.playerX, gameState.playerY);
+            } else if (module.type === 'ending') {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawRoom();
+                drawCharacter(gameState.playerX, gameState.playerY);
 
-            // 绘制信息板
-            drawInfoBoard();
+                // 显示结局文字
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                const boxWidth = 600;
+                const boxHeight = 200;
+                const boxX = canvas.width / 2 - boxWidth / 2;
+                const boxY = canvas.height / 2 - boxHeight / 2;
+                ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
 
-            // 绘制角色
-            drawCharacter(gameState.playerX, gameState.playerY);
+                ctx.strokeStyle = '#ddd';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = 'bold 28px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(module.title, canvas.width / 2, boxY + 60);
+
+                ctx.fillStyle = '#555';
+                ctx.font = '18px sans-serif';
+                wrapText(ctx, module.message, canvas.width / 2, boxY + 100, boxWidth - 60, 25);
+            }
+        }
+
+        // 文字换行
+        function wrapText(context, text, x, y, maxWidth, lineHeight) {
+            const words = text.split('');
+            let line = '';
+            let testLine = '';
+            let lineArray = [];
+
+            for (let n = 0; n < words.length; n++) {
+                testLine += words[n];
+                const metrics = context.measureText(testLine);
+                if (metrics.width > maxWidth && n > 0) {
+                    lineArray.push(line);
+                    line = words[n];
+                    testLine = words[n];
+                } else {
+                    line += words[n];
+                }
+            }
+            lineArray.push(line);
+
+            for (let k = 0; k < lineArray.length; k++) {
+                context.fillText(lineArray[k], x, y + (k * lineHeight));
+            }
+        }
+
+        // ============================================
+        // 小游戏界面
+        // ============================================
+        function showSudokuGame() {
+            gameState.minigameActive = true;
+            currentSudoku = new SudokuGame(4);
+
+            const container = document.getElementById('minigameContainer');
+            container.innerHTML = `
+                <h2 class="minigame-title">数独挑战</h2>
+                <p class="minigame-desc">填入1-4的数字，使每行、每列和每个2x2宫格都不重复</p>
+                <div style="text-align: center;">
+                    <div class="sudoku-grid" id="sudokuGrid"></div>
+                    <div class="sudoku-numbers" id="sudokuNumbers"></div>
+                </div>
+                <div class="minigame-buttons">
+                    <button class="btn btn-primary" onclick="checkSudoku()">检查答案</button>
+                    <button class="btn btn-secondary" onclick="giveUpSudoku()">放弃</button>
+                </div>
+            `;
+
+            renderSudokuGrid();
+            renderSudokuNumbers();
+
+            document.getElementById('minigameOverlay').classList.add('show');
+        }
+
+        function renderSudokuGrid() {
+            const grid = document.getElementById('sudokuGrid');
+            grid.innerHTML = '';
+
+            for (let r = 0; r < 4; r++) {
+                const row = document.createElement('div');
+                row.className = 'sudoku-row';
+
+                for (let c = 0; c < 4; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'sudoku-cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+
+                    const value = currentSudoku.getCell(r, c);
+                    if (value !== 0) {
+                        cell.textContent = value;
+                        if (currentSudoku.solution[r][c] === value) {
+                            cell.classList.add('fixed');
+                        }
+                    }
+
+                    cell.onclick = () => selectSudokuCell(r, c);
+                    row.appendChild(cell);
+                }
+
+                grid.appendChild(row);
+            }
+        }
+
+        function renderSudokuNumbers() {
+            const numbers = document.getElementById('sudokuNumbers');
+            numbers.innerHTML = '';
+
+            for (let i = 1; i <= 4; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'sudoku-number-btn';
+                btn.textContent = i;
+                btn.onclick = () => placeSudokuNumber(i);
+                numbers.appendChild(btn);
+            }
+
+            // 清除按钮
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'sudoku-number-btn';
+            clearBtn.textContent = '✗';
+            clearBtn.onclick = () => placeSudokuNumber(0);
+            numbers.appendChild(clearBtn);
+        }
+
+        let selectedSudokuCell = null;
+
+        function selectSudokuCell(row, col) {
+            // 移除之前的选中状态
+            const cells = document.querySelectorAll('.sudoku-cell');
+            cells.forEach(c => c.classList.remove('selected'));
+
+            // 检查是否是固定单元格
+            if (currentSudoku.solution[row][col] !== 0 &&
+                currentSudoku.getCell(row, col) === currentSudoku.solution[row][col]) {
+                return;
+            }
+
+            selectedSudokuCell = { row, col };
+            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            cell.classList.add('selected');
+        }
+
+        function placeSudokuNumber(num) {
+            if (!selectedSudokuCell) return;
+
+            const { row, col } = selectedSudokuCell;
+            currentSudoku.setCell(row, col, num);
+            renderSudokuGrid();
+
+            // 重新选中
+            if (num !== 0) {
+                selectSudokuCell(row, col);
+            }
+        }
+
+        function checkSudoku() {
+            if (currentSudoku.isComplete()) {
+                showMessage('成功！', '你成功完成了数独！', 3000);
+                setTimeout(() => {
+                    closeSudoku(true);
+                }, 3000);
+            } else {
+                showMessage('还没完成', '还有错误或空格，请继续努力！', 2000);
+            }
+        }
+
+        function giveUpSudoku() {
+            if (confirm('确定要放弃吗？这将导致失败结局。')) {
+                closeSudoku(false);
+            }
+        }
+
+        function closeSudoku(success) {
+            document.getElementById('minigameOverlay').classList.remove('show');
+            gameState.minigameActive = false;
+
+            const module = modules[gameState.currentModule];
+            const nextModule = success ? module.onSuccess : module.onFailure;
+
+            setTimeout(() => {
+                gameState.currentModule = nextModule;
+                gameState.playerX = canvas.width / 2;
+                render();
+
+                const newModule = modules[nextModule];
+                if (newModule.type === 'ending') {
+                    showMessage(newModule.title, newModule.message, 5000);
+                }
+            }, 500);
         }
 
         // ============================================
         // 交互处理
         // ============================================
-
-        // 检测鼠标是否悬停在门上
         function checkDoorHover(mouseX, mouseY) {
+            const module = modules[gameState.currentModule];
+            if (module.type !== 'choice') return null;
+
             const doorWidth = 150;
             const doorHeight = 250;
             const doorY = canvas.height * 0.35;
@@ -469,7 +953,6 @@
             return null;
         }
 
-        // 显示消息
         function showMessage(title, content, duration = 3000) {
             const messageBox = document.getElementById('messageBox');
             const messageTitle = document.getElementById('messageTitle');
@@ -484,20 +967,25 @@
             }, duration);
         }
 
-        // 选择门
         function chooseDoor(door) {
             if (gameState.animating) return;
 
+            const module = modules[gameState.currentModule];
+            if (module.type !== 'choice') return;
+
             gameState.animating = true;
-            const scene = scenes[gameState.currentScene];
-            const choice = door === 'left' ? scene.leftDoor : scene.rightDoor;
+            const choice = door === 'left' ? module.leftDoor : module.rightDoor;
 
-            showMessage(
-                `你选择了: ${choice.label}`,
-                choice.description
-            );
+            // 记录选择
+            gameState.playerChoices.push({
+                module: gameState.currentModule,
+                choice: door,
+                label: choice.label
+            });
 
-            // 角色移动动画
+            showMessage(`你选择了: ${choice.label}`, choice.description);
+
+            // 角色移动
             const targetX = door === 'left' ? canvas.width * 0.25 : canvas.width * 0.75;
             const duration = 1000;
             const startX = gameState.playerX;
@@ -513,23 +1001,24 @@
                 if (progress < 1) {
                     requestAnimationFrame(animate);
                 } else {
-                    // 动画结束后切换场景
                     setTimeout(() => {
-                        gameState.currentScene++;
-
-                        if (gameState.currentScene >= scenes.length) {
-                            // 游戏结束
-                            showMessage(
-                                '人生旅程结束',
-                                '你已经走完了这段人生旅程，感谢游玩！',
-                                5000
-                            );
-                            gameState.currentScene = 0;
-                        }
-
+                        const nextModule = choice.nextModule;
+                        gameState.currentModule = nextModule;
                         gameState.playerX = canvas.width / 2;
                         gameState.animating = false;
-                        render();
+
+                        const newModule = modules[nextModule];
+
+                        if (newModule.type === 'minigame') {
+                            if (newModule.gameType === 'sudoku') {
+                                showSudokuGame();
+                            }
+                        } else if (newModule.type === 'ending') {
+                            render();
+                            showMessage(newModule.title, newModule.message, 5000);
+                        } else {
+                            render();
+                        }
                     }, 1000);
                 }
             }
@@ -537,13 +1026,14 @@
             animate();
         }
 
-        // 缓动函数
         function easeInOutQuad(t) {
             return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
         }
 
-        // 鼠标移动事件
+        // 事件监听
         canvas.addEventListener('mousemove', (e) => {
+            if (gameState.minigameActive) return;
+
             const rect = canvas.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
@@ -557,9 +1047,8 @@
             }
         });
 
-        // 鼠标点击事件
         canvas.addEventListener('click', (e) => {
-            if (gameState.animating) return;
+            if (gameState.animating || gameState.minigameActive) return;
 
             const rect = canvas.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
@@ -572,9 +1061,8 @@
             }
         });
 
-        // 键盘事件（左右箭头）
         document.addEventListener('keydown', (e) => {
-            if (gameState.animating) return;
+            if (gameState.animating || gameState.minigameActive) return;
 
             if (e.key === 'ArrowLeft') {
                 chooseDoor('left');
@@ -584,7 +1072,7 @@
         });
 
         // ============================================
-        // 游戏循环（用于动画）
+        // 游戏循环
         // ============================================
         function gameLoop() {
             render();
@@ -594,7 +1082,7 @@
         // 启动游戏
         showMessage(
             '欢迎来到人生选择',
-            '点击左右门或使用方向键做出你的选择',
+            '父母询问：是上学还是学体育？做出你的选择开始旅程',
             4000
         );
 
