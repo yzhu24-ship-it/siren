@@ -232,6 +232,80 @@
             transform: translateY(-2px);
         }
 
+        /* 答题游戏样式 */
+        .quiz-container {
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .quiz-timer {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #ff5722;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .quiz-timer.warning {
+            color: #f44336;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .quiz-question {
+            font-size: 1.5rem;
+            color: #333;
+            margin: 30px 0;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .quiz-option {
+            padding: 20px;
+            font-size: 1.2rem;
+            background: white;
+            border: 3px solid #2196f3;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        .quiz-option:hover {
+            background: #e3f2fd;
+            transform: translateX(10px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .quiz-option.selected {
+            background: #2196f3;
+            color: white;
+            border-color: #1976d2;
+        }
+
+        .quiz-option.correct {
+            background: #4caf50;
+            color: white;
+            border-color: #388e3c;
+        }
+
+        .quiz-option.incorrect {
+            background: #f44336;
+            color: white;
+            border-color: #d32f2f;
+        }
+
         @media (max-width: 768px) {
             .game-title {
                 font-size: 1.5rem;
@@ -366,13 +440,28 @@
                 leftDoor: {
                     label: "文科",
                     description: "选择文科，深入人文社科",
-                    nextModule: 'ending_liberal_arts'
+                    nextModule: 'module2A1_quiz'
                 },
                 rightDoor: {
                     label: "理科",
                     description: "选择理科，探索科学世界",
                     nextModule: 'ending_science'
                 }
+            },
+            module2A1_quiz: {
+                type: 'minigame',
+                gameType: 'quiz',
+                title: "地理知识挑战",
+                description: "回答地理问题，展现你的知识储备",
+                timeLimit: 30,
+                question: "中国的首都是哪个城市？",
+                options: [
+                    { label: "A. 上海", value: "A", correct: false },
+                    { label: "B. 北京", value: "B", correct: true },
+                    { label: "C. 广州", value: "C", correct: false }
+                ],
+                onSuccess: 'ending_liberal_arts_success',
+                onFailure: 'ending_liberal_arts_fail'
             },
             ending_mediocre: {
                 type: 'ending',
@@ -389,10 +478,15 @@
                 title: "体育教师",
                 message: "你成为了一名受学生爱戴的体育老师，培养了无数体育人才。"
             },
-            ending_liberal_arts: {
+            ending_liberal_arts_success: {
                 type: 'ending',
-                title: "人文学者",
-                message: "你在文科领域深耕，成为了一名优秀的人文学者，为社会贡献智慧。"
+                title: "职场精英",
+                message: "你大学成绩优异，毕业后进入一家大公司工作，人生一帆风顺。"
+            },
+            ending_liberal_arts_fail: {
+                type: 'ending',
+                title: "普通文员",
+                message: "你大学期间有些松懈，成绩平平，最终成为一名普通的公司文员。"
             },
             ending_science: {
                 type: 'ending',
@@ -928,6 +1022,153 @@
         }
 
         // ============================================
+        // 答题游戏逻辑
+        // ============================================
+        let quizTimer = null;
+        let quizTimeLeft = 0;
+        let quizSelectedAnswer = null;
+
+        function showQuizGame() {
+            gameState.minigameActive = true;
+            const module = modules[gameState.currentModule];
+
+            quizTimeLeft = module.timeLimit;
+            quizSelectedAnswer = null;
+
+            const container = document.getElementById('minigameContainer');
+            container.innerHTML = `
+                <div class="quiz-container">
+                    <h2 class="minigame-title">${module.title}</h2>
+                    <p class="minigame-desc">${module.description}</p>
+                    <div class="quiz-timer" id="quizTimer">${quizTimeLeft}秒</div>
+                    <div class="quiz-question">${module.question}</div>
+                    <div class="quiz-options" id="quizOptions"></div>
+                    <div class="minigame-buttons">
+                        <button class="btn btn-primary" onclick="submitQuizAnswer()" id="submitBtn">提交答案</button>
+                    </div>
+                </div>
+            `;
+
+            renderQuizOptions();
+            startQuizTimer();
+
+            document.getElementById('minigameOverlay').classList.add('show');
+        }
+
+        function renderQuizOptions() {
+            const module = modules[gameState.currentModule];
+            const optionsContainer = document.getElementById('quizOptions');
+            optionsContainer.innerHTML = '';
+
+            module.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'quiz-option';
+                optionDiv.textContent = option.label;
+                optionDiv.dataset.value = option.value;
+                optionDiv.dataset.correct = option.correct;
+                optionDiv.onclick = () => selectQuizOption(index);
+                optionsContainer.appendChild(optionDiv);
+            });
+        }
+
+        function selectQuizOption(index) {
+            const module = modules[gameState.currentModule];
+            const options = document.querySelectorAll('.quiz-option');
+
+            // 移除之前的选中状态
+            options.forEach(opt => opt.classList.remove('selected'));
+
+            // 选中当前选项
+            options[index].classList.add('selected');
+            quizSelectedAnswer = module.options[index];
+        }
+
+        function startQuizTimer() {
+            const timerDisplay = document.getElementById('quizTimer');
+
+            quizTimer = setInterval(() => {
+                quizTimeLeft--;
+                timerDisplay.textContent = `${quizTimeLeft}秒`;
+
+                // 最后10秒警告
+                if (quizTimeLeft <= 10) {
+                    timerDisplay.classList.add('warning');
+                }
+
+                // 时间到
+                if (quizTimeLeft <= 0) {
+                    clearInterval(quizTimer);
+                    showMessage('时间到！', '很遗憾，你没有在规定时间内作答', 3000);
+                    setTimeout(() => {
+                        closeQuiz(false);
+                    }, 3000);
+                }
+            }, 1000);
+        }
+
+        function submitQuizAnswer() {
+            if (!quizSelectedAnswer) {
+                showMessage('请选择答案', '请先选择一个答案再提交', 2000);
+                return;
+            }
+
+            clearInterval(quizTimer);
+
+            const options = document.querySelectorAll('.quiz-option');
+            const module = modules[gameState.currentModule];
+
+            // 显示正确答案
+            options.forEach(opt => {
+                if (opt.dataset.correct === 'true') {
+                    opt.classList.add('correct');
+                } else if (opt.classList.contains('selected')) {
+                    opt.classList.add('incorrect');
+                }
+                opt.onclick = null; // 禁用点击
+            });
+
+            // 禁用提交按钮
+            document.getElementById('submitBtn').disabled = true;
+
+            const isCorrect = quizSelectedAnswer.correct;
+
+            if (isCorrect) {
+                showMessage('回答正确！', '恭喜你答对了！', 3000);
+                setTimeout(() => {
+                    closeQuiz(true);
+                }, 3000);
+            } else {
+                showMessage('回答错误', '很遗憾，答案不正确', 3000);
+                setTimeout(() => {
+                    closeQuiz(false);
+                }, 3000);
+            }
+        }
+
+        function closeQuiz(success) {
+            if (quizTimer) {
+                clearInterval(quizTimer);
+            }
+
+            document.getElementById('minigameOverlay').classList.remove('show');
+            gameState.minigameActive = false;
+
+            const module = modules[gameState.currentModule];
+            const nextModule = success ? module.onSuccess : module.onFailure;
+
+            setTimeout(() => {
+                gameState.currentModule = nextModule;
+                gameState.playerX = canvas.width / 2;
+                render();
+
+                const newModule = modules[nextModule];
+                if (newModule.type === 'ending') {
+                    showMessage(newModule.title, newModule.message, 5000);
+                }
+            }, 500);
+        }
+
+        // ============================================
         // 交互处理
         // ============================================
         function checkDoorHover(mouseX, mouseY) {
@@ -1012,6 +1253,8 @@
                         if (newModule.type === 'minigame') {
                             if (newModule.gameType === 'sudoku') {
                                 showSudokuGame();
+                            } else if (newModule.gameType === 'quiz') {
+                                showQuizGame();
                             }
                         } else if (newModule.type === 'ending') {
                             render();
