@@ -306,6 +306,92 @@
             border-color: #d32f2f;
         }
 
+        /* Debug 游戏样式 */
+        .debug-container {
+            text-align: left;
+            max-width: 700px;
+        }
+
+        .debug-task {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #2196f3;
+        }
+
+        .debug-task h3 {
+            color: #1976d2;
+            margin-bottom: 5px;
+        }
+
+        .debug-hint {
+            background: #fff3e0;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #ff9800;
+            font-size: 0.95rem;
+            color: #e65100;
+        }
+
+        .code-editor {
+            background: #263238;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .code-editor textarea {
+            width: 100%;
+            min-height: 200px;
+            background: #1e272e;
+            color: #a8dadc;
+            border: none;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            outline: none;
+        }
+
+        .code-editor textarea::selection {
+            background: #457b9d;
+        }
+
+        .code-line-numbers {
+            color: #546e7a;
+            user-select: none;
+            padding-right: 10px;
+            text-align: right;
+        }
+
+        .debug-result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .debug-result.show {
+            display: block;
+        }
+
+        .debug-result.success {
+            background: #c8e6c9;
+            border: 2px solid #4caf50;
+            color: #1b5e20;
+        }
+
+        .debug-result.error {
+            background: #ffcdd2;
+            border: 2px solid #f44336;
+            color: #b71c1c;
+        }
+
         @media (max-width: 768px) {
             .game-title {
                 font-size: 1.5rem;
@@ -445,7 +531,7 @@
                 rightDoor: {
                     label: "理科",
                     description: "选择理科，探索科学世界",
-                    nextModule: 'ending_science'
+                    nextModule: 'module2A2_debug'
                 }
             },
             module2A1_quiz: {
@@ -462,6 +548,26 @@
                 ],
                 onSuccess: 'ending_liberal_arts_success',
                 onFailure: 'ending_liberal_arts_fail'
+            },
+            module2A2_debug: {
+                type: 'minigame',
+                gameType: 'debug',
+                title: "代码调试挑战",
+                description: "找出并修正代码中的错误",
+                task: "计算1到10的和",
+                buggyCode: `# 计算1到10的和
+total = 0
+for i in range(1, 11):
+    total = i
+print(total)`,
+                correctCode: `# 计算1到10的和
+total = 0
+for i in range(1, 11):
+    total = total + i
+print(total)`,
+                hint: "仔细检查循环中的赋值语句",
+                onSuccess: 'ending_science_success',
+                onFailure: 'ending_science_fail'
             },
             ending_mediocre: {
                 type: 'ending',
@@ -488,10 +594,15 @@
                 title: "普通文员",
                 message: "你大学期间有些松懈，成绩平平，最终成为一名普通的公司文员。"
             },
-            ending_science: {
+            ending_science_success: {
                 type: 'ending',
-                title: "科学家",
-                message: "你在理科道路上不断探索，成为了一名杰出的科学家，推动人类进步。"
+                title: "技术总监",
+                message: "你逻辑清晰，成绩优秀，毕业后成为了一名技术总监，带领团队攻坚克难。"
+            },
+            ending_science_fail: {
+                type: 'ending',
+                title: "普通码农",
+                message: "你的基础知识不牢，大学成绩很差，毕业后成为一名普通的码农，每天苦苦加班。"
             }
         };
 
@@ -1169,6 +1280,137 @@
         }
 
         // ============================================
+        // Debug 游戏逻辑
+        // ============================================
+        let currentDebugCode = '';
+
+        function showDebugGame() {
+            gameState.minigameActive = true;
+            const module = modules[gameState.currentModule];
+
+            currentDebugCode = module.buggyCode;
+
+            const container = document.getElementById('minigameContainer');
+            container.innerHTML = `
+                <div class="debug-container">
+                    <h2 class="minigame-title">${module.title}</h2>
+                    <p class="minigame-desc">${module.description}</p>
+
+                    <div class="debug-task">
+                        <h3>任务目标</h3>
+                        <p>${module.task}</p>
+                    </div>
+
+                    <div class="debug-hint">
+                        💡 提示：${module.hint}
+                    </div>
+
+                    <div class="code-editor">
+                        <textarea id="codeInput" spellcheck="false">${module.buggyCode}</textarea>
+                    </div>
+
+                    <div class="debug-result" id="debugResult"></div>
+
+                    <div class="minigame-buttons">
+                        <button class="btn btn-primary" onclick="checkDebugCode()">提交代码</button>
+                        <button class="btn btn-secondary" onclick="giveUpDebug()">放弃</button>
+                    </div>
+                </div>
+            `;
+
+            // 监听代码输入
+            document.getElementById('codeInput').addEventListener('input', (e) => {
+                currentDebugCode = e.target.value;
+            });
+
+            document.getElementById('minigameOverlay').classList.add('show');
+        }
+
+        function checkDebugCode() {
+            const module = modules[gameState.currentModule];
+            const userCode = currentDebugCode.trim();
+            const correctCode = module.correctCode.trim();
+
+            const resultDiv = document.getElementById('debugResult');
+
+            // 简单的代码比较（忽略空白差异）
+            const normalizeCode = (code) => {
+                return code
+                    .split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0)
+                    .join('\n');
+            };
+
+            const userNormalized = normalizeCode(userCode);
+            const correctNormalized = normalizeCode(correctCode);
+
+            const isCorrect = userNormalized === correctNormalized;
+
+            if (isCorrect) {
+                resultDiv.className = 'debug-result success show';
+                resultDiv.innerHTML = `
+                    <strong>✓ 代码正确！</strong><br>
+                    你成功修复了错误！代码现在可以正确计算1到10的和（结果为55）。
+                `;
+                showMessage('代码正确！', '你成功修复了bug！', 3000);
+
+                setTimeout(() => {
+                    closeDebug(true);
+                }, 3500);
+            } else {
+                // 检查关键修复是否存在
+                const hasCorrectFix = userCode.includes('total = total + i') ||
+                                     userCode.includes('total += i');
+
+                if (hasCorrectFix) {
+                    resultDiv.className = 'debug-result success show';
+                    resultDiv.innerHTML = `
+                        <strong>✓ 代码正确！</strong><br>
+                        你成功修复了错误！累加逻辑正确。
+                    `;
+                    showMessage('代码正确！', '你成功修复了bug！', 3000);
+
+                    setTimeout(() => {
+                        closeDebug(true);
+                    }, 3500);
+                } else {
+                    resultDiv.className = 'debug-result error show';
+                    resultDiv.innerHTML = `
+                        <strong>✗ 代码仍有问题</strong><br>
+                        提示：检查循环中对 total 变量的操作。当前的赋值方式会导致什么结果？
+                    `;
+                    showMessage('还有错误', '代码仍然存在问题，请继续修改', 2000);
+                }
+            }
+        }
+
+        function giveUpDebug() {
+            if (confirm('确定要放弃吗？这将导致失败结局。')) {
+                closeDebug(false);
+            }
+        }
+
+        function closeDebug(success) {
+            document.getElementById('minigameOverlay').classList.remove('show');
+            gameState.minigameActive = false;
+
+            const module = modules[gameState.currentModule];
+            const nextModule = success ? module.onSuccess : module.onFailure;
+
+            setTimeout(() => {
+                gameState.currentModule = nextModule;
+                gameState.playerX = canvas.width / 2;
+                render();
+
+                const newModule = modules[nextModule];
+                if (newModule.type === 'ending') {
+                    showMessage(newModule.title, newModule.message, 5000);
+                }
+            }, 500);
+        }
+
+        // ============================================
         // 交互处理
         // ============================================
         function checkDoorHover(mouseX, mouseY) {
@@ -1255,6 +1497,8 @@
                                 showSudokuGame();
                             } else if (newModule.gameType === 'quiz') {
                                 showQuizGame();
+                            } else if (newModule.gameType === 'debug') {
+                                showDebugGame();
                             }
                         } else if (newModule.type === 'ending') {
                             render();
