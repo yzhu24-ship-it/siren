@@ -556,7 +556,6 @@
         }
 
         window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
 
         // ============================================
         // 游戏状态管理
@@ -1948,6 +1947,8 @@ print(total)`,
         }
 
         // 启动游戏
+        resizeCanvas(); // 初始化画布尺寸
+
         showMessage(
             '欢迎来到人生选择',
             '父母询问：是上学还是学体育？做出你的选择开始旅程',
