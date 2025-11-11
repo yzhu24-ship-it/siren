@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social Persona Mask Switcher</title>
+    <title>人生选择 - Life Choice Game</title>
     <style>
         * {
             margin: 0;
@@ -13,590 +13,592 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 40px;
-            background: linear-gradient(135deg, #ffa07a 0%, #ff6b6b 100%);
-            transition: background 0.8s cubic-bezier(0.4, 0, 0.2, 1);
             overflow: hidden;
-            position: relative;
+            background: #f5f5f5;
         }
 
-        /* 背景动画装饰 */
-        body::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: backgroundMove 20s linear infinite;
+        #gameCanvas {
+            display: block;
+            background: linear-gradient(180deg, #e0e0e0 0%, #d0d0d0 50%, #c0c0c0 100%);
+            cursor: pointer;
+        }
+
+        .ui-overlay {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 100;
             pointer-events: none;
         }
 
-        @keyframes backgroundMove {
-            0% {
-                transform: translate(0, 0);
-            }
-            100% {
-                transform: translate(50px, 50px);
-            }
-        }
-
-        .container {
-            position: relative;
-            z-index: 1;
-            text-align: center;
-            max-width: 600px;
-            width: 100%;
-        }
-
-        h1 {
-            color: white;
-            font-size: 2.5rem;
-            margin-bottom: 60px;
-            text-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
+        .game-title {
+            color: #fff;
+            font-size: 2rem;
             font-weight: 300;
-            letter-spacing: 2px;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+            margin-bottom: 10px;
+            letter-spacing: 4px;
         }
 
-        .avatar-container {
-            margin: 0 auto 60px;
-            width: 300px;
-            height: 300px;
-            position: relative;
-        }
-
-        .avatar {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
-                        0 0 0 10px rgba(255, 255, 255, 0.1),
-                        0 0 0 20px rgba(255, 255, 255, 0.05);
-            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-                        box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            background: white;
-            animation: avatarPulse 3s ease-in-out infinite;
-        }
-
-        @keyframes avatarPulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.02);
-            }
-        }
-
-        .avatar:hover {
-            transform: scale(1.05);
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4),
-                        0 0 0 10px rgba(255, 255, 255, 0.15),
-                        0 0 0 20px rgba(255, 255, 255, 0.08);
-        }
-
-        /* 切换动画效果 */
-        .avatar.switching {
-            animation: switchAnimation 0.6s ease-in-out;
-        }
-
-        @keyframes switchAnimation {
-            0% {
-                transform: scale(1) rotateY(0deg);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(0.8) rotateY(90deg);
-                opacity: 0.3;
-            }
-            100% {
-                transform: scale(1) rotateY(0deg);
-                opacity: 1;
-            }
-        }
-
-        .button-group {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        .persona-button {
-            padding: 20px 30px;
-            font-size: 1.1rem;
-            font-weight: 500;
-            border: none;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .persona-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transform: translateX(-100%);
-            transition: transform 0.6s;
-        }
-
-        .persona-button:hover::before {
-            transform: translateX(100%);
-        }
-
-        .persona-button:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .persona-button:active {
-            transform: translateY(0);
-        }
-
-        .persona-button.active {
-            background: rgba(255, 255, 255, 0.4);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2),
-                        inset 0 2px 10px rgba(255, 255, 255, 0.2);
-            transform: scale(0.98);
-        }
-
-        /* 状态指示器 */
-        .status-indicator {
-            margin-top: 40px;
-            color: white;
-            font-size: 1.2rem;
+        .info-text {
+            color: #fff;
+            font-size: 1rem;
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
             opacity: 0.9;
-            text-shadow: 1px 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        /* 响应式设计 */
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 2rem;
-                margin-bottom: 40px;
+        .message-box {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            text-align: center;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .message-box.show {
+            opacity: 1;
+        }
+
+        .message-box h3 {
+            color: #333;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .message-box p {
+            color: #666;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 1.5rem;
             }
-
-            .avatar-container {
-                width: 250px;
-                height: 250px;
-                margin-bottom: 40px;
+            .message-box {
+                max-width: 90%;
+                padding: 15px 25px;
             }
-
-            .button-group {
-                grid-template-columns: 1fr;
-                max-width: 300px;
+            .message-box h3 {
+                font-size: 1.1rem;
             }
-
-            .persona-button {
-                font-size: 1rem;
-                padding: 18px 25px;
-            }
-        }
-
-        /* 不同状态的背景色 */
-        body.family {
-            background: linear-gradient(135deg, #ffa07a 0%, #ff6b6b 100%);
-        }
-
-        body.friend {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        body.colleague {
-            background: linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%);
-        }
-
-        body.stranger {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
     </style>
 </head>
-<body class="family">
-    <div class="container">
-        <h1>Social Persona Mask Switcher</h1>
-
-        <div class="avatar-container">
-            <canvas id="avatar" class="avatar"></canvas>
-        </div>
-
-        <div class="button-group">
-            <button class="persona-button active" data-persona="family">👨‍👩‍👧‍👦 Family</button>
-            <button class="persona-button" data-persona="friend">🎉 Friends</button>
-            <button class="persona-button" data-persona="colleague">💼 Colleagues</button>
-            <button class="persona-button" data-persona="stranger">🎭 Strangers</button>
-        </div>
-
-        <div class="status-indicator">
-            Current Mode: <span id="currentStatus">Family Mode</span>
-        </div>
+<body>
+    <div class="ui-overlay">
+        <h1 class="game-title">人生选择</h1>
+        <p class="info-text">点击左右门做出你的选择</p>
     </div>
 
+    <div class="message-box" id="messageBox">
+        <h3 id="messageTitle">欢迎</h3>
+        <p id="messageContent">开始你的人生旅程</p>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
     <script>
-        // Drawing function for cute avatars with different expressions
-        function drawAvatar(ctx, expression, bgColor) {
-            const width = 300;
-            const height = 300;
-
-            // Clear canvas
-            ctx.clearRect(0, 0, width, height);
-
-            // Background with gradient
-            const bgGradient = ctx.createRadialGradient(150, 150, 0, 150, 150, 150);
-            bgGradient.addColorStop(0, bgColor);
-            bgGradient.addColorStop(1, adjustBrightness(bgColor, -20));
-            ctx.fillStyle = bgGradient;
-            ctx.fillRect(0, 0, width, height);
-
-            // Face shadow (for depth)
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.beginPath();
-            ctx.arc(150, 140, 78, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Face
-            const faceGradient = ctx.createRadialGradient(150, 130, 0, 150, 140, 75);
-            faceGradient.addColorStop(0, '#ffd4b3');
-            faceGradient.addColorStop(1, '#f4c7a5');
-            ctx.fillStyle = faceGradient;
-            ctx.beginPath();
-            ctx.arc(150, 135, 75, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Hair (long wavy hair)
-            ctx.fillStyle = '#6b3410';
-            ctx.beginPath();
-            // Top bun/volume
-            ctx.ellipse(150, 85, 80, 50, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Hair highlights
-            ctx.fillStyle = '#8b4513';
-            ctx.beginPath();
-            ctx.ellipse(150, 85, 70, 43, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Left hair flow
-            ctx.fillStyle = '#6b3410';
-            ctx.beginPath();
-            ctx.moveTo(70, 90);
-            ctx.quadraticCurveTo(60, 120, 70, 180);
-            ctx.quadraticCurveTo(75, 200, 85, 215);
-            ctx.lineTo(95, 210);
-            ctx.quadraticCurveTo(85, 190, 80, 160);
-            ctx.quadraticCurveTo(75, 120, 85, 90);
-            ctx.fill();
-
-            // Right hair flow
-            ctx.beginPath();
-            ctx.moveTo(230, 90);
-            ctx.quadraticCurveTo(240, 120, 230, 180);
-            ctx.quadraticCurveTo(225, 200, 215, 215);
-            ctx.lineTo(205, 210);
-            ctx.quadraticCurveTo(215, 190, 220, 160);
-            ctx.quadraticCurveTo(225, 120, 215, 90);
-            ctx.fill();
-
-            // Blush
-            if (expression === 'family' || expression === 'friend') {
-                ctx.fillStyle = 'rgba(255, 150, 150, 0.3)';
-                ctx.beginPath();
-                ctx.ellipse(110, 145, 15, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(190, 145, 15, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // Eyes
-            if (expression === 'stranger') {
-                // Cold, looking away
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.ellipse(115, 125, 12, 15, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(185, 125, 12, 15, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.fillStyle = '#4a3728';
-                ctx.beginPath();
-                ctx.arc(112, 125, 8, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(188, 125, 8, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Flat eyebrows
-                ctx.strokeStyle = '#4a3728';
-                ctx.lineWidth = 2.5;
-                ctx.beginPath();
-                ctx.moveTo(100, 108);
-                ctx.lineTo(130, 108);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(170, 108);
-                ctx.lineTo(200, 108);
-                ctx.stroke();
-            } else if (expression === 'friend') {
-                // Super happy squinted eyes
-                ctx.fillStyle = '#4a3728';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(125, 122, 3, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(175, 122, 3, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Happy curved eyebrows
-                ctx.strokeStyle = '#4a3728';
-                ctx.lineWidth = 2.5;
-                ctx.beginPath();
-                ctx.moveTo(105, 108);
-                ctx.quadraticCurveTo(125, 102, 145, 108);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(155, 108);
-                ctx.quadraticCurveTo(175, 102, 195, 108);
-                ctx.stroke();
-            } else {
-                // Big cute eyes
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.ellipse(125, 125, 13, 16, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(175, 125, 13, 16, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Iris
-                ctx.fillStyle = '#4a3728';
-                ctx.beginPath();
-                ctx.arc(125, 128, 10, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(175, 128, 10, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Pupils with sparkle
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(125, 128, 6, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(175, 128, 6, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Eye sparkles
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.arc(122, 124, 2.5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(172, 124, 2.5, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Eyebrows
-                ctx.strokeStyle = '#4a3728';
-                ctx.lineWidth = 2.5;
-                if (expression === 'family') {
-                    ctx.beginPath();
-                    ctx.moveTo(105, 105);
-                    ctx.quadraticCurveTo(125, 103, 145, 106);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(155, 106);
-                    ctx.quadraticCurveTo(175, 103, 195, 105);
-                    ctx.stroke();
-                } else {
-                    ctx.beginPath();
-                    ctx.moveTo(105, 108);
-                    ctx.lineTo(145, 108);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(155, 108);
-                    ctx.lineTo(195, 108);
-                    ctx.stroke();
-                }
-            }
-
-            // Mouth
-            ctx.strokeStyle = '#4a3728';
-            ctx.fillStyle = '#ff6b9d';
-            ctx.lineWidth = 2.5;
-
-            if (expression === 'family') {
-                // Big happy smile
-                ctx.beginPath();
-                ctx.moveTo(115, 155);
-                ctx.quadraticCurveTo(150, 180, 185, 155);
-                ctx.stroke();
-
-                // Open mouth smile
-                ctx.fillStyle = 'rgba(255, 107, 157, 0.6)';
-                ctx.beginPath();
-                ctx.moveTo(115, 155);
-                ctx.quadraticCurveTo(150, 175, 185, 155);
-                ctx.quadraticCurveTo(150, 165, 115, 155);
-                ctx.fill();
-            } else if (expression === 'friend') {
-                // Super wide laugh
-                ctx.beginPath();
-                ctx.arc(150, 145, 30, 0.2, Math.PI - 0.2);
-                ctx.stroke();
-
-                // Open laughing mouth
-                ctx.fillStyle = 'rgba(255, 107, 157, 0.7)';
-                ctx.beginPath();
-                ctx.arc(150, 145, 28, 0.2, Math.PI - 0.2);
-                ctx.lineTo(150, 160);
-                ctx.fill();
-            } else if (expression === 'colleague') {
-                // Polite small smile
-                ctx.beginPath();
-                ctx.moveTo(130, 162);
-                ctx.quadraticCurveTo(150, 168, 170, 162);
-                ctx.stroke();
-            } else if (expression === 'stranger') {
-                // Flat line - indifferent
-                ctx.beginPath();
-                ctx.moveTo(130, 162);
-                ctx.lineTo(170, 162);
-                ctx.stroke();
-            }
-
-            // Cute nose
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.beginPath();
-            ctx.arc(150, 142, 2, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // Helper function to adjust color brightness
-        function adjustBrightness(color, amount) {
-            const hex = color.replace('#', '');
-            const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
-            const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
-            const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
-            return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
-        }
-
-        // Persona configurations
-        const personas = {
-            family: {
-                name: 'Family Mode',
-                expression: 'family',
-                bgColor: '#ffdfbf',
-                emoji: '👨‍👩‍👧‍👦'
-            },
-            friend: {
-                name: 'Friends Mode',
-                expression: 'friend',
-                bgColor: '#b6e3f4',
-                emoji: '🎉'
-            },
-            colleague: {
-                name: 'Colleagues Mode',
-                expression: 'colleague',
-                bgColor: '#d1d4f9',
-                emoji: '💼'
-            },
-            stranger: {
-                name: 'Strangers Mode',
-                expression: 'stranger',
-                bgColor: '#c0aede',
-                emoji: '🎭'
-            }
+        // ============================================
+        // 游戏配置
+        // ============================================
+        const config = {
+            roomColor: '#ffffff',
+            floorColor: '#e8e8e8',
+            shadowColor: 'rgba(0, 0, 0, 0.15)',
+            doorLeftColor: '#5a9fd4',
+            doorRightColor: '#d45a9f',
+            characterColor: '#f0e4d7',
+            characterOutline: '#8b7355'
         };
 
-        // Get DOM elements
-        const canvas = document.getElementById('avatar');
+        // ============================================
+        // Canvas 设置
+        // ============================================
+        const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const statusElement = document.getElementById('currentStatus');
-        const buttons = document.querySelectorAll('.persona-button');
-        const body = document.body;
 
-        // Set canvas size
-        canvas.width = 300;
-        canvas.height = 300;
-
-        // Switch persona function
-        function switchPersona(personaKey) {
-            const persona = personas[personaKey];
-
-            // Add switching animation
-            canvas.classList.add('switching');
-
-            // Draw new avatar after animation delay
-            setTimeout(() => {
-                drawAvatar(ctx, persona.expression, persona.bgColor);
-            }, 300);
-
-            // Remove animation class
-            setTimeout(() => {
-                canvas.classList.remove('switching');
-            }, 600);
-
-            // Update background color
-            body.className = personaKey;
-
-            // Update status text
-            statusElement.textContent = persona.name;
-
-            // Update button states
-            buttons.forEach(btn => {
-                if (btn.dataset.persona === personaKey) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            render();
         }
 
-        // Add click events to buttons
-        buttons.forEach(button => {
-            button.addEventListener('click', () => {
-                const personaKey = button.dataset.persona;
-                switchPersona(personaKey);
-            });
-        });
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            const keyMap = {
-                '1': 'family',
-                '2': 'friend',
-                '3': 'colleague',
-                '4': 'stranger'
-            };
+        // ============================================
+        // 游戏状态管理
+        // ============================================
+        const gameState = {
+            currentScene: 0,
+            playerX: canvas.width / 2,
+            playerY: canvas.height * 0.7,
+            hoveredDoor: null,
+            animating: false
+        };
 
-            if (keyMap[e.key]) {
-                switchPersona(keyMap[e.key]);
+        // 游戏场景数据
+        const scenes = [
+            {
+                title: "人生的起点",
+                question: "你来到了人生的第一个岔路口",
+                leftDoor: {
+                    label: "稳定安逸",
+                    description: "选择一份稳定的工作，平凡但安心"
+                },
+                rightDoor: {
+                    label: "冒险追梦",
+                    description: "追逐自己的梦想，未知但刺激"
+                }
+            },
+            {
+                title: "事业发展",
+                question: "在职场中，你面临新的选择",
+                leftDoor: {
+                    label: "深耕专业",
+                    description: "在当前领域继续深造，成为专家"
+                },
+                rightDoor: {
+                    label: "管理转型",
+                    description: "转向管理岗位，带领团队前进"
+                }
+            },
+            {
+                title: "人生抉择",
+                question: "生活给了你新的考验",
+                leftDoor: {
+                    label: "留在家乡",
+                    description: "陪伴家人，享受温馨的时光"
+                },
+                rightDoor: {
+                    label: "远走他乡",
+                    description: "到大城市打拼，寻找更多机会"
+                }
+            }
+        ];
+
+        // ============================================
+        // 绘制函数
+        // ============================================
+
+        // 绘制房间
+        function drawRoom() {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // 墙壁（渐变灰白色）
+            const wallGradient = ctx.createLinearGradient(0, 0, 0, h * 0.6);
+            wallGradient.addColorStop(0, '#f5f5f5');
+            wallGradient.addColorStop(1, '#e0e0e0');
+            ctx.fillStyle = wallGradient;
+            ctx.fillRect(0, 0, w, h * 0.6);
+
+            // 地板（更深的灰色）
+            const floorGradient = ctx.createLinearGradient(0, h * 0.6, 0, h);
+            floorGradient.addColorStop(0, '#d0d0d0');
+            floorGradient.addColorStop(1, '#b0b0b0');
+            ctx.fillStyle = floorGradient;
+            ctx.fillRect(0, h * 0.6, w, h * 0.4);
+
+            // 地板线条（增加透视感）
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.lineWidth = 2;
+            const centerX = w / 2;
+            for (let i = 0; i < 5; i++) {
+                const y = h * 0.6 + (h * 0.4 * (i + 1) / 6);
+                ctx.beginPath();
+                ctx.moveTo(centerX - 200 * (i + 1) / 5, y);
+                ctx.lineTo(centerX + 200 * (i + 1) / 5, y);
+                ctx.stroke();
+            }
+        }
+
+        // 绘制门
+        function drawDoor(x, y, width, height, color, label, isHovered) {
+            const scale = isHovered ? 1.05 : 1;
+            const scaledWidth = width * scale;
+            const scaledHeight = height * scale;
+            const offsetX = (scaledWidth - width) / 2;
+            const offsetY = (scaledHeight - height) / 2;
+
+            // 门的阴影
+            ctx.fillStyle = config.shadowColor;
+            ctx.fillRect(x - offsetX + 5, y - offsetY + 5, scaledWidth, scaledHeight);
+
+            // 门框
+            ctx.fillStyle = color;
+            ctx.fillRect(x - offsetX, y - offsetY, scaledWidth, scaledHeight);
+
+            // 门的高光
+            const gradient = ctx.createLinearGradient(x, y, x + width, y);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+            gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0.2)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(x - offsetX, y - offsetY, scaledWidth, scaledHeight);
+
+            // 门把手
+            const handleY = y + height * 0.5;
+            const handleX = x + width * 0.8;
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(handleX, handleY, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#B8860B';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 门标签
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 24px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, x + width / 2, y + height / 2);
+
+            // 悬停提示
+            if (isHovered) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.fillRect(x - 20, y - 60, width + 40, 40);
+                ctx.fillStyle = '#333';
+                ctx.font = '16px sans-serif';
+                ctx.fillText('点击进入', x + width / 2, y - 40);
+            }
+        }
+
+        // 绘制信息板
+        function drawInfoBoard() {
+            const scene = scenes[gameState.currentScene];
+            const boardX = canvas.width / 2 - 200;
+            const boardY = canvas.height * 0.15;
+            const boardWidth = 400;
+            const boardHeight = 100;
+
+            // 信息板背景
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 20;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 5;
+            ctx.fillRect(boardX, boardY, boardWidth, boardHeight);
+            ctx.shadowBlur = 0;
+
+            // 边框
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(boardX, boardY, boardWidth, boardHeight);
+
+            // 标题
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 22px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(scene.title, boardX + boardWidth / 2, boardY + 35);
+
+            // 问题
+            ctx.fillStyle = '#555';
+            ctx.font = '16px sans-serif';
+            ctx.fillText(scene.question, boardX + boardWidth / 2, boardY + 70);
+        }
+
+        // 绘制软体橡皮人角色
+        function drawCharacter(x, y) {
+            const time = Date.now() / 1000;
+            const bounce = Math.sin(time * 2) * 3;
+
+            // 阴影
+            ctx.fillStyle = config.shadowColor;
+            ctx.beginPath();
+            ctx.ellipse(x, y + 45, 35, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 身体（软体风格）
+            ctx.fillStyle = config.characterColor;
+            ctx.strokeStyle = config.characterOutline;
+            ctx.lineWidth = 3;
+
+            // 身体主干
+            ctx.beginPath();
+            ctx.moveTo(x, y - 40 + bounce);
+            ctx.bezierCurveTo(
+                x - 25, y - 30 + bounce,
+                x - 30, y + 10,
+                x - 20, y + 40
+            );
+            ctx.bezierCurveTo(
+                x - 10, y + 45,
+                x + 10, y + 45,
+                x + 20, y + 40
+            );
+            ctx.bezierCurveTo(
+                x + 30, y + 10,
+                x + 25, y - 30 + bounce,
+                x, y - 40 + bounce
+            );
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // 头部
+            ctx.beginPath();
+            ctx.arc(x, y - 50 + bounce, 25, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // 眼睛
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(x - 8, y - 53 + bounce, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x + 8, y - 53 + bounce, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 嘴巴（简单的曲线）
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y - 45 + bounce, 8, 0.2, Math.PI - 0.2);
+            ctx.stroke();
+
+            // 左臂
+            ctx.strokeStyle = config.characterOutline;
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x - 22, y - 20 + bounce);
+            ctx.quadraticCurveTo(x - 40, y - 10, x - 35, y + 5);
+            ctx.stroke();
+
+            // 右臂
+            ctx.beginPath();
+            ctx.moveTo(x + 22, y - 20 + bounce);
+            ctx.quadraticCurveTo(x + 40, y - 10, x + 35, y + 5);
+            ctx.stroke();
+
+            // 左腿
+            ctx.beginPath();
+            ctx.moveTo(x - 10, y + 40);
+            ctx.quadraticCurveTo(x - 15, y + 50, x - 10, y + 60);
+            ctx.stroke();
+
+            // 右腿
+            ctx.beginPath();
+            ctx.moveTo(x + 10, y + 40);
+            ctx.quadraticCurveTo(x + 15, y + 50, x + 10, y + 60);
+            ctx.stroke();
+        }
+
+        // ============================================
+        // 主渲染函数
+        // ============================================
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawRoom();
+
+            // 绘制两扇门
+            const doorWidth = 150;
+            const doorHeight = 250;
+            const doorY = canvas.height * 0.35;
+            const leftDoorX = canvas.width * 0.25 - doorWidth / 2;
+            const rightDoorX = canvas.width * 0.75 - doorWidth / 2;
+
+            const scene = scenes[gameState.currentScene];
+
+            drawDoor(
+                leftDoorX,
+                doorY,
+                doorWidth,
+                doorHeight,
+                config.doorLeftColor,
+                scene.leftDoor.label,
+                gameState.hoveredDoor === 'left'
+            );
+
+            drawDoor(
+                rightDoorX,
+                doorY,
+                doorWidth,
+                doorHeight,
+                config.doorRightColor,
+                scene.rightDoor.label,
+                gameState.hoveredDoor === 'right'
+            );
+
+            // 绘制信息板
+            drawInfoBoard();
+
+            // 绘制角色
+            drawCharacter(gameState.playerX, gameState.playerY);
+        }
+
+        // ============================================
+        // 交互处理
+        // ============================================
+
+        // 检测鼠标是否悬停在门上
+        function checkDoorHover(mouseX, mouseY) {
+            const doorWidth = 150;
+            const doorHeight = 250;
+            const doorY = canvas.height * 0.35;
+            const leftDoorX = canvas.width * 0.25 - doorWidth / 2;
+            const rightDoorX = canvas.width * 0.75 - doorWidth / 2;
+
+            if (mouseX >= leftDoorX && mouseX <= leftDoorX + doorWidth &&
+                mouseY >= doorY && mouseY <= doorY + doorHeight) {
+                return 'left';
+            }
+
+            if (mouseX >= rightDoorX && mouseX <= rightDoorX + doorWidth &&
+                mouseY >= doorY && mouseY <= doorY + doorHeight) {
+                return 'right';
+            }
+
+            return null;
+        }
+
+        // 显示消息
+        function showMessage(title, content, duration = 3000) {
+            const messageBox = document.getElementById('messageBox');
+            const messageTitle = document.getElementById('messageTitle');
+            const messageContent = document.getElementById('messageContent');
+
+            messageTitle.textContent = title;
+            messageContent.textContent = content;
+            messageBox.classList.add('show');
+
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, duration);
+        }
+
+        // 选择门
+        function chooseDoor(door) {
+            if (gameState.animating) return;
+
+            gameState.animating = true;
+            const scene = scenes[gameState.currentScene];
+            const choice = door === 'left' ? scene.leftDoor : scene.rightDoor;
+
+            showMessage(
+                `你选择了: ${choice.label}`,
+                choice.description
+            );
+
+            // 角色移动动画
+            const targetX = door === 'left' ? canvas.width * 0.25 : canvas.width * 0.75;
+            const duration = 1000;
+            const startX = gameState.playerX;
+            const startTime = Date.now();
+
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                gameState.playerX = startX + (targetX - startX) * easeInOutQuad(progress);
+                render();
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // 动画结束后切换场景
+                    setTimeout(() => {
+                        gameState.currentScene++;
+
+                        if (gameState.currentScene >= scenes.length) {
+                            // 游戏结束
+                            showMessage(
+                                '人生旅程结束',
+                                '你已经走完了这段人生旅程，感谢游玩！',
+                                5000
+                            );
+                            gameState.currentScene = 0;
+                        }
+
+                        gameState.playerX = canvas.width / 2;
+                        gameState.animating = false;
+                        render();
+                    }, 1000);
+                }
+            }
+
+            animate();
+        }
+
+        // 缓动函数
+        function easeInOutQuad(t) {
+            return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        }
+
+        // 鼠标移动事件
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const hoveredDoor = checkDoorHover(mouseX, mouseY);
+
+            if (hoveredDoor !== gameState.hoveredDoor) {
+                gameState.hoveredDoor = hoveredDoor;
+                canvas.style.cursor = hoveredDoor ? 'pointer' : 'default';
+                render();
             }
         });
 
-        // Draw initial avatar (family mode)
-        drawAvatar(ctx, 'family', '#ffdfbf');
+        // 鼠标点击事件
+        canvas.addEventListener('click', (e) => {
+            if (gameState.animating) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const clickedDoor = checkDoorHover(mouseX, mouseY);
+
+            if (clickedDoor) {
+                chooseDoor(clickedDoor);
+            }
+        });
+
+        // 键盘事件（左右箭头）
+        document.addEventListener('keydown', (e) => {
+            if (gameState.animating) return;
+
+            if (e.key === 'ArrowLeft') {
+                chooseDoor('left');
+            } else if (e.key === 'ArrowRight') {
+                chooseDoor('right');
+            }
+        });
+
+        // ============================================
+        // 游戏循环（用于动画）
+        // ============================================
+        function gameLoop() {
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 启动游戏
+        showMessage(
+            '欢迎来到人生选择',
+            '点击左右门或使用方向键做出你的选择',
+            4000
+        );
+
+        gameLoop();
     </script>
 </body>
 </html>
