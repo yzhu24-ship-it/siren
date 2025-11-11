@@ -930,7 +930,12 @@ print(total)`,
 
         // 绘制信息板
         function drawInfoBoard() {
-            const module = modules[gameState.currentModule];
+            let module;
+            try {
+                module = modules[gameState.currentModule];
+            } catch (e) {
+                return; // modules未初始化，安全返回
+            }
             if (module.type !== 'choice') return;
 
             const boardX = canvas.width / 2 - 250;
