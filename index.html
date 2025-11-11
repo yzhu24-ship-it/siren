@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>人生选择 - Life Choice Game</title>
+    <title>Life Choices - The Game</title>
     <style>
         * {
             margin: 0;
@@ -511,13 +511,13 @@
 </head>
 <body>
     <div class="ui-overlay">
-        <h1 class="game-title">人生选择</h1>
-        <p class="info-text">点击左右门做出你的选择</p>
+        <h1 class="game-title">Life Choices</h1>
+        <p class="info-text">Click the doors to make your choices</p>
     </div>
 
     <div class="message-box" id="messageBox">
-        <h3 id="messageTitle">欢迎</h3>
-        <p id="messageContent">开始你的人生旅程</p>
+        <h3 id="messageTitle">Welcome</h3>
+        <p id="messageContent">Begin your life journey</p>
     </div>
 
     <!-- 小游戏覆盖层 -->
@@ -549,25 +549,25 @@
         const modules = {
             module0: {
                 type: 'choice',
-                title: "人生的起点",
-                question: "父母询问：是上学还是学体育？",
-                hint: "（提示：主人公学习成绩好，体育也好）",
+                title: "Life's Beginning",
+                question: "Your parents ask: Study or Sports?",
+                hint: "(Hint: You're good at both academics and athletics)",
                 leftDoor: {
-                    label: "学习",
-                    description: "选择走学习的道路",
+                    label: "Study",
+                    description: "Choose the academic path",
                     nextModule: 'module1A'
                 },
                 rightDoor: {
-                    label: "体育",
-                    description: "选择体育专业发展",
+                    label: "Sports",
+                    description: "Choose athletic development",
                     nextModule: 'module1B'
                 }
             },
             module1A: {
                 type: 'minigame',
                 gameType: 'sudoku',
-                title: "数独挑战",
-                description: "证明你的逻辑思维能力",
+                title: "Sudoku Challenge",
+                description: "Prove your logical thinking ability",
                 difficulty: 'easy',
                 onSuccess: 'module2A',
                 onFailure: 'ending_mediocre'
@@ -575,68 +575,68 @@
             module1B: {
                 type: 'minigame',
                 gameType: 'hurdles',
-                title: "跨栏挑战",
-                description: "展现你的运动天赋，跨越所有栏架！",
+                title: "Hurdles Challenge",
+                description: "Show your athletic talent, clear all hurdles!",
                 hurdleCount: 5,
                 onPerfect: 'module2B1',
                 onImperfect: 'module2B2'
             },
             module2B1: {
                 type: 'choice',
-                title: "完美表现",
-                question: "你在青年赛中表现出色！是否继续向职业运动员发展？",
+                title: "Perfect Performance",
+                question: "You excelled in the youth competition! Continue as a professional athlete?",
                 leftDoor: {
-                    label: "继续",
-                    description: "坚持训练，追求更高荣誉",
+                    label: "Continue",
+                    description: "Keep training for higher honors",
                     nextModule: 'ending_olympic_champion'
                 },
                 rightDoor: {
-                    label: "放弃",
-                    description: "急流勇退，转型做教练",
+                    label: "Quit",
+                    description: "Retire early and become a coach",
                     nextModule: 'ending_coach'
                 }
             },
             module2B2: {
                 type: 'choice',
-                title: "面对现实",
-                question: "你的天赋似乎没有别人突出，训练中常感吃力。是否继续坚持体育道路？",
+                title: "Facing Reality",
+                question: "Your talent seems limited, training is hard. Continue on the athletic path?",
                 leftDoor: {
-                    label: "继续坚持",
-                    description: "不放弃梦想，继续努力",
+                    label: "Keep Trying",
+                    description: "Don't give up on your dream",
                     nextModule: 'ending_failed_athlete'
                 },
                 rightDoor: {
-                    label: "放弃并重新学习",
-                    description: "调整方向，重新出发",
+                    label: "Quit & Study",
+                    description: "Change direction, start fresh",
                     nextModule: 'ending_restart_success'
                 }
             },
             module2A: {
                 type: 'choice',
-                title: "文理分科",
-                question: "高中文理分科，你选择？",
+                title: "Major Selection",
+                question: "High school track selection. Your choice?",
                 leftDoor: {
-                    label: "文科",
-                    description: "选择文科，深入人文社科",
+                    label: "Liberal Arts",
+                    description: "Choose humanities and social sciences",
                     nextModule: 'module2A1_quiz'
                 },
                 rightDoor: {
-                    label: "理科",
-                    description: "选择理科，探索科学世界",
+                    label: "Science",
+                    description: "Choose science and technology",
                     nextModule: 'module2A2_debug'
                 }
             },
             module2A1_quiz: {
                 type: 'minigame',
                 gameType: 'quiz',
-                title: "地理知识挑战",
-                description: "回答地理问题，展现你的知识储备",
+                title: "Geography Challenge",
+                description: "Answer geography questions to show your knowledge",
                 timeLimit: 30,
-                question: "中国的首都是哪个城市？",
+                question: "What is the capital of China?",
                 options: [
-                    { label: "A. 上海", value: "A", correct: false },
-                    { label: "B. 北京", value: "B", correct: true },
-                    { label: "C. 广州", value: "C", correct: false }
+                    { label: "A. Shanghai", value: "A", correct: false },
+                    { label: "B. Beijing", value: "B", correct: true },
+                    { label: "C. Guangzhou", value: "C", correct: false }
                 ],
                 onSuccess: 'ending_liberal_arts_success',
                 onFailure: 'ending_liberal_arts_fail'
@@ -644,67 +644,67 @@
             module2A2_debug: {
                 type: 'minigame',
                 gameType: 'debug',
-                title: "代码调试挑战",
-                description: "找出并修正代码中的错误",
-                task: "计算1到10的和",
-                buggyCode: `# 计算1到10的和
+                title: "Code Debugging Challenge",
+                description: "Find and fix the error in the code",
+                task: "Calculate sum from 1 to 10",
+                buggyCode: `# Calculate sum from 1 to 10
 total = 0
 for i in range(1, 11):
     total = i
 print(total)`,
-                correctCode: `# 计算1到10的和
+                correctCode: `# Calculate sum from 1 to 10
 total = 0
 for i in range(1, 11):
     total = total + i
 print(total)`,
-                hint: "仔细检查循环中的赋值语句",
+                hint: "Check the assignment statement in the loop",
                 onSuccess: 'ending_science_success',
                 onFailure: 'ending_science_fail'
             },
             ending_mediocre: {
                 type: 'ending',
-                title: "平凡的人生",
-                message: "虽然努力学习，但效果不佳，考上了一所普通大学。你过着平凡但安稳的生活。"
+                title: "Ordinary Life",
+                message: "Despite studying hard, results were mediocre. You got into an average college and live a simple but stable life."
             },
             ending_olympic_champion: {
                 type: 'ending',
-                title: "奥运冠军",
-                message: "你坚持不懈地训练，最终代表国家参加奥运会并获得了金牌！你是国家的骄傲！"
+                title: "Olympic Champion",
+                message: "Through relentless training, you represented your country at the Olympics and won gold! You are a national hero!"
             },
             ending_coach: {
                 type: 'ending',
-                title: "金牌教练",
-                message: "你选择急流勇退，成为了一名教练，培养出了许多世界冠军。"
+                title: "Gold Medal Coach",
+                message: "You retired early and became a coach, training many world champions."
             },
             ending_failed_athlete: {
                 type: 'ending',
-                title: "遗憾退役",
-                message: "尽管你付出了巨大的努力，但始终未能被选入国家队，最终带着遗憾退役。"
+                title: "Regretful Retirement",
+                message: "Despite your great efforts, you never made the national team and retired with regret."
             },
             ending_restart_success: {
                 type: 'ending',
-                title: "重新出发",
-                message: "你及时调整了人生方向，通过刻苦学习，考上了一所好大学，并找到了一份满意的工作。"
+                title: "Fresh Start",
+                message: "You adjusted your life direction in time. Through hard study, you got into a good university and found a satisfying job."
             },
             ending_liberal_arts_success: {
                 type: 'ending',
-                title: "职场精英",
-                message: "你大学成绩优异，毕业后进入一家大公司工作，人生一帆风顺。"
+                title: "Career Elite",
+                message: "You excelled in college, joined a major company after graduation, and your life went smoothly."
             },
             ending_liberal_arts_fail: {
                 type: 'ending',
-                title: "普通文员",
-                message: "你大学期间有些松懈，成绩平平，最终成为一名普通的公司文员。"
+                title: "Office Clerk",
+                message: "You slacked off in college with average grades and became an ordinary office clerk."
             },
             ending_science_success: {
                 type: 'ending',
-                title: "技术总监",
-                message: "你逻辑清晰，成绩优秀，毕业后成为了一名技术总监，带领团队攻坚克难。"
+                title: "Tech Director",
+                message: "With clear logic and excellent grades, you became a tech director leading teams through challenges."
             },
             ending_science_fail: {
                 type: 'ending',
-                title: "普通码农",
-                message: "你的基础知识不牢，大学成绩很差，毕业后成为一名普通的码农，每天苦苦加班。"
+                title: "Code Monkey",
+                message: "With poor fundamentals and bad grades, you became an ordinary programmer working overtime daily."
             }
         };
 
@@ -872,10 +872,6 @@ print(total)`,
             const offsetX = (scaledWidth - width) / 2;
             const offsetY = (scaledHeight - height) / 2;
 
-            // 阴影
-            ctx.fillStyle = config.shadowColor;
-            ctx.fillRect(x - offsetX + 5, y - offsetY + 5, scaledWidth, scaledHeight);
-
             // 黄色木门底色
             const woodGradient = ctx.createLinearGradient(x - offsetX, y - offsetY, x - offsetX + scaledWidth, y - offsetY);
             woodGradient.addColorStop(0, '#D4A574');
@@ -917,14 +913,6 @@ print(total)`,
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(label, x + width / 2, y + height / 2);
-
-            if (isHovered) {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                ctx.fillRect(x - 20, y - 60, width + 40, 40);
-                ctx.fillStyle = '#333';
-                ctx.font = '16px sans-serif';
-                ctx.fillText('点击进入', x + width / 2, y - 40);
-            }
         }
 
         // 绘制信息板
@@ -936,15 +924,6 @@ print(total)`,
             const boardY = canvas.height * 0.12;
             const boardWidth = 500;
             const boardHeight = 120;
-
-            // 黑板阴影
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-            ctx.shadowBlur = 20;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 5;
-            ctx.fillRect(boardX + 5, boardY + 5, boardWidth, boardHeight);
-            ctx.shadowBlur = 0;
 
             // 黑板背景（深绿色）
             ctx.fillStyle = '#2d5016';
@@ -1152,15 +1131,15 @@ print(total)`,
 
             const container = document.getElementById('minigameContainer');
             container.innerHTML = `
-                <h2 class="minigame-title">数独挑战</h2>
-                <p class="minigame-desc">填入1-4的数字，使每行、每列和每个2x2宫格都不重复</p>
+                <h2 class="minigame-title">Sudoku Challenge</h2>
+                <p class="minigame-desc">Fill in numbers 1-4, ensuring no repeats in each row, column, and 2x2 grid</p>
                 <div style="text-align: center;">
                     <div class="sudoku-grid" id="sudokuGrid"></div>
                     <div class="sudoku-numbers" id="sudokuNumbers"></div>
                 </div>
                 <div class="minigame-buttons">
-                    <button class="btn btn-primary" onclick="checkSudoku()">检查答案</button>
-                    <button class="btn btn-secondary" onclick="giveUpSudoku()">放弃</button>
+                    <button class="btn btn-primary" onclick="checkSudoku()">Check Answer</button>
+                    <button class="btn btn-secondary" onclick="giveUpSudoku()">Give Up</button>
                 </div>
             `;
 
@@ -1253,17 +1232,17 @@ print(total)`,
 
         function checkSudoku() {
             if (currentSudoku.isComplete()) {
-                showMessage('成功！', '你成功完成了数独！', 3000);
+                showMessage('Success!', 'You completed the sudoku!', 3000);
                 setTimeout(() => {
                     closeSudoku(true);
                 }, 3000);
             } else {
-                showMessage('还没完成', '还有错误或空格，请继续努力！', 2000);
+                showMessage('Not Complete', 'There are still errors or empty cells. Keep trying!', 2000);
             }
         }
 
         function giveUpSudoku() {
-            if (confirm('确定要放弃吗？这将导致失败结局。')) {
+            if (confirm('Are you sure you want to give up? This will lead to a failure ending.')) {
                 closeSudoku(false);
             }
         }
@@ -1306,11 +1285,11 @@ print(total)`,
                 <div class="quiz-container">
                     <h2 class="minigame-title">${module.title}</h2>
                     <p class="minigame-desc">${module.description}</p>
-                    <div class="quiz-timer" id="quizTimer">${quizTimeLeft}秒</div>
+                    <div class="quiz-timer" id="quizTimer">${quizTimeLeft}s</div>
                     <div class="quiz-question">${module.question}</div>
                     <div class="quiz-options" id="quizOptions"></div>
                     <div class="minigame-buttons">
-                        <button class="btn btn-primary" onclick="submitQuizAnswer()" id="submitBtn">提交答案</button>
+                        <button class="btn btn-primary" onclick="submitQuizAnswer()" id="submitBtn">Submit Answer</button>
                     </div>
                 </div>
             `;
@@ -1354,17 +1333,17 @@ print(total)`,
 
             quizTimer = setInterval(() => {
                 quizTimeLeft--;
-                timerDisplay.textContent = `${quizTimeLeft}秒`;
+                timerDisplay.textContent = `${quizTimeLeft}s`;
 
-                // 最后10秒警告
+                // Last 10 seconds warning
                 if (quizTimeLeft <= 10) {
                     timerDisplay.classList.add('warning');
                 }
 
-                // 时间到
+                // Time's up
                 if (quizTimeLeft <= 0) {
                     clearInterval(quizTimer);
-                    showMessage('时间到！', '很遗憾，你没有在规定时间内作答', 3000);
+                    showMessage('Time\'s Up!', 'Unfortunately, you didn\'t answer within the time limit', 3000);
                     setTimeout(() => {
                         closeQuiz(false);
                     }, 3000);
@@ -1374,7 +1353,7 @@ print(total)`,
 
         function submitQuizAnswer() {
             if (!quizSelectedAnswer) {
-                showMessage('请选择答案', '请先选择一个答案再提交', 2000);
+                showMessage('Please Select', 'Please select an answer before submitting', 2000);
                 return;
             }
 
@@ -1383,28 +1362,28 @@ print(total)`,
             const options = document.querySelectorAll('.quiz-option');
             const module = modules[gameState.currentModule];
 
-            // 显示正确答案
+            // Show correct answer
             options.forEach(opt => {
                 if (opt.dataset.correct === 'true') {
                     opt.classList.add('correct');
                 } else if (opt.classList.contains('selected')) {
                     opt.classList.add('incorrect');
                 }
-                opt.onclick = null; // 禁用点击
+                opt.onclick = null; // Disable click
             });
 
-            // 禁用提交按钮
+            // Disable submit button
             document.getElementById('submitBtn').disabled = true;
 
             const isCorrect = quizSelectedAnswer.correct;
 
             if (isCorrect) {
-                showMessage('回答正确！', '恭喜你答对了！', 3000);
+                showMessage('Correct!', 'Congratulations, you got it right!', 3000);
                 setTimeout(() => {
                     closeQuiz(true);
                 }, 3000);
             } else {
-                showMessage('回答错误', '很遗憾，答案不正确', 3000);
+                showMessage('Incorrect', 'Unfortunately, that\'s not the right answer', 3000);
                 setTimeout(() => {
                     closeQuiz(false);
                 }, 3000);
@@ -1452,12 +1431,12 @@ print(total)`,
                     <p class="minigame-desc">${module.description}</p>
 
                     <div class="debug-task">
-                        <h3>任务目标</h3>
+                        <h3>Objective</h3>
                         <p>${module.task}</p>
                     </div>
 
                     <div class="debug-hint">
-                        💡 提示：${module.hint}
+                        💡 Hint: ${module.hint}
                     </div>
 
                     <div class="code-editor">
@@ -1467,8 +1446,8 @@ print(total)`,
                     <div class="debug-result" id="debugResult"></div>
 
                     <div class="minigame-buttons">
-                        <button class="btn btn-primary" onclick="checkDebugCode()">提交代码</button>
-                        <button class="btn btn-secondary" onclick="giveUpDebug()">放弃</button>
+                        <button class="btn btn-primary" onclick="checkDebugCode()">Submit Code</button>
+                        <button class="btn btn-secondary" onclick="giveUpDebug()">Give Up</button>
                     </div>
                 </div>
             `;
@@ -1505,26 +1484,26 @@ print(total)`,
             if (isCorrect) {
                 resultDiv.className = 'debug-result success show';
                 resultDiv.innerHTML = `
-                    <strong>✓ 代码正确！</strong><br>
-                    你成功修复了错误！代码现在可以正确计算1到10的和（结果为55）。
+                    <strong>✓ Code Correct!</strong><br>
+                    You successfully fixed the error! The code now correctly calculates the sum from 1 to 10 (result is 55).
                 `;
-                showMessage('代码正确！', '你成功修复了bug！', 3000);
+                showMessage('Code Correct!', 'You successfully fixed the bug!', 3000);
 
                 setTimeout(() => {
                     closeDebug(true);
                 }, 3500);
             } else {
-                // 检查关键修复是否存在
+                // Check if the key fix exists
                 const hasCorrectFix = userCode.includes('total = total + i') ||
                                      userCode.includes('total += i');
 
                 if (hasCorrectFix) {
                     resultDiv.className = 'debug-result success show';
                     resultDiv.innerHTML = `
-                        <strong>✓ 代码正确！</strong><br>
-                        你成功修复了错误！累加逻辑正确。
+                        <strong>✓ Code Correct!</strong><br>
+                        You successfully fixed the error! The accumulation logic is correct.
                     `;
-                    showMessage('代码正确！', '你成功修复了bug！', 3000);
+                    showMessage('Code Correct!', 'You successfully fixed the bug!', 3000);
 
                     setTimeout(() => {
                         closeDebug(true);
@@ -1532,16 +1511,16 @@ print(total)`,
                 } else {
                     resultDiv.className = 'debug-result error show';
                     resultDiv.innerHTML = `
-                        <strong>✗ 代码仍有问题</strong><br>
-                        提示：检查循环中对 total 变量的操作。当前的赋值方式会导致什么结果？
+                        <strong>✗ Code Still Has Issues</strong><br>
+                        Hint: Check the operation on the total variable in the loop. What result does the current assignment cause?
                     `;
-                    showMessage('还有错误', '代码仍然存在问题，请继续修改', 2000);
+                    showMessage('Still Wrong', 'The code still has issues, please continue fixing', 2000);
                 }
             }
         }
 
         function giveUpDebug() {
-            if (confirm('确定要放弃吗？这将导致失败结局。')) {
+            if (confirm('Are you sure you want to give up? This will lead to a failure ending.')) {
                 closeDebug(false);
             }
         }
@@ -1598,20 +1577,20 @@ print(total)`,
                     <p class="minigame-desc">${module.description}</p>
 
                     <div class="hurdles-instruction">
-                        ⌨️ 按空格键或点击屏幕跳跃，避开所有栏架！
+                        ⌨️ Press SPACE or click to jump, avoid all hurdles!
                     </div>
 
                     <div class="hurdles-stats">
                         <div class="stat-item">
-                            <div class="stat-label">已通过</div>
+                            <div class="stat-label">Passed</div>
                             <div class="stat-value" id="hurdlesPassed">0</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-label">碰倒</div>
+                            <div class="stat-label">Hit</div>
                             <div class="stat-value" id="hurdlesHit">0</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-label">剩余</div>
+                            <div class="stat-label">Remaining</div>
                             <div class="stat-value" id="hurdlesRemaining">${module.hurdleCount}</div>
                         </div>
                     </div>
@@ -1749,14 +1728,14 @@ print(total)`,
 
             if (isPerfect) {
                 showMessage(
-                    '完美表现！',
-                    '你没有碰倒任何栏架，表现出色！',
+                    'Perfect Performance!',
+                    'You didn\'t hit any hurdles, excellent job!',
                     3000
                 );
             } else {
                 showMessage(
-                    '完成挑战',
-                    `你碰倒了 ${hurdlesGame.hurdlesHit} 个栏架`,
+                    'Challenge Complete',
+                    `You hit ${hurdlesGame.hurdlesHit} hurdle(s)`,
                     3000
                 );
             }
@@ -1948,8 +1927,8 @@ print(total)`,
         window.addEventListener('resize', resizeCanvas); // 添加resize监听器
 
         showMessage(
-            '欢迎来到人生选择',
-            '父母询问：是上学还是学体育？做出你的选择开始旅程',
+            'Welcome to Life Choices',
+            'Your parents ask: Study or Sports? Make your choice to begin your journey',
             4000
         );
 
