@@ -392,6 +392,102 @@
             color: #b71c1c;
         }
 
+        /* 跨栏跑游戏样式 */
+        .hurdles-container {
+            text-align: center;
+            max-width: 800px;
+        }
+
+        .hurdles-game-area {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(to bottom, #87ceeb 0%, #87ceeb 60%, #8b7355 60%, #6b5344 100%);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .track-line {
+            position: absolute;
+            bottom: 100px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .hurdles-player {
+            position: absolute;
+            bottom: 100px;
+            left: 100px;
+            width: 40px;
+            height: 60px;
+            transition: bottom 0.3s ease;
+        }
+
+        .hurdles-player.jumping {
+            bottom: 180px;
+        }
+
+        .hurdle {
+            position: absolute;
+            bottom: 100px;
+            width: 15px;
+            height: 80px;
+            background: linear-gradient(to bottom, #ff6b6b 0%, #ff6b6b 85%, #333 85%, #333 100%);
+            border-radius: 3px;
+            transition: transform 0.1s;
+        }
+
+        .hurdle.hit {
+            transform: rotate(45deg);
+            transform-origin: bottom left;
+        }
+
+        .hurdles-stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            font-size: 1.2rem;
+        }
+
+        .stat-item {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .stat-value {
+            color: #333;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .stat-value.perfect {
+            color: #4caf50;
+        }
+
+        .stat-value.hit {
+            color: #f44336;
+        }
+
+        .hurdles-instruction {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #ff9800;
+        }
+
         @media (max-width: 768px) {
             .game-title {
                 font-size: 1.5rem;
@@ -505,18 +601,42 @@
                 onFailure: 'ending_mediocre'
             },
             module1B: {
+                type: 'minigame',
+                gameType: 'hurdles',
+                title: "跨栏挑战",
+                description: "展现你的运动天赋，跨越所有栏架！",
+                hurdleCount: 5,
+                onPerfect: 'module2B1',
+                onImperfect: 'module2B2'
+            },
+            module2B1: {
                 type: 'choice',
-                title: "体育发展",
-                question: "在体育道路上，你选择哪个方向？",
+                title: "完美表现",
+                question: "你在青年赛中表现出色！是否继续向职业运动员发展？",
                 leftDoor: {
-                    label: "职业运动员",
-                    description: "走向专业运动员道路",
-                    nextModule: 'ending_athlete'
+                    label: "继续",
+                    description: "坚持训练，追求更高荣誉",
+                    nextModule: 'ending_olympic_champion'
                 },
                 rightDoor: {
-                    label: "体育教师",
-                    description: "成为一名体育老师",
-                    nextModule: 'ending_teacher'
+                    label: "放弃",
+                    description: "急流勇退，转型做教练",
+                    nextModule: 'ending_coach'
+                }
+            },
+            module2B2: {
+                type: 'choice',
+                title: "面对现实",
+                question: "你的天赋似乎没有别人突出，训练中常感吃力。是否继续坚持体育道路？",
+                leftDoor: {
+                    label: "继续坚持",
+                    description: "不放弃梦想，继续努力",
+                    nextModule: 'ending_failed_athlete'
+                },
+                rightDoor: {
+                    label: "放弃并重新学习",
+                    description: "调整方向，重新出发",
+                    nextModule: 'ending_restart_success'
                 }
             },
             module2A: {
@@ -574,15 +694,25 @@ print(total)`,
                 title: "平凡的人生",
                 message: "虽然努力学习，但效果不佳，考上了一所普通大学。你过着平凡但安稳的生活。"
             },
-            ending_athlete: {
+            ending_olympic_champion: {
                 type: 'ending',
-                title: "职业运动员",
-                message: "你成为了一名职业运动员，在赛场上挥洒汗水，为国争光！"
+                title: "奥运冠军",
+                message: "你坚持不懈地训练，最终代表国家参加奥运会并获得了金牌！你是国家的骄傲！"
             },
-            ending_teacher: {
+            ending_coach: {
                 type: 'ending',
-                title: "体育教师",
-                message: "你成为了一名受学生爱戴的体育老师，培养了无数体育人才。"
+                title: "金牌教练",
+                message: "你选择急流勇退，成为了一名教练，培养出了许多世界冠军。"
+            },
+            ending_failed_athlete: {
+                type: 'ending',
+                title: "遗憾退役",
+                message: "尽管你付出了巨大的努力，但始终未能被选入国家队，最终带着遗憾退役。"
+            },
+            ending_restart_success: {
+                type: 'ending',
+                title: "重新出发",
+                message: "你及时调整了人生方向，通过刻苦学习，考上了一所好大学，并找到了一份满意的工作。"
             },
             ending_liberal_arts_success: {
                 type: 'ending',
@@ -1411,6 +1541,226 @@ print(total)`,
         }
 
         // ============================================
+        // 跨栏跑游戏逻辑
+        // ============================================
+        let hurdlesGame = {
+            hurdles: [],
+            hurdlesPassed: 0,
+            hurdlesHit: 0,
+            isJumping: false,
+            gameRunning: false,
+            animationFrame: null
+        };
+
+        function showHurdlesGame() {
+            gameState.minigameActive = true;
+            const module = modules[gameState.currentModule];
+
+            // 重置游戏状态
+            hurdlesGame = {
+                hurdles: [],
+                hurdlesPassed: 0,
+                hurdlesHit: 0,
+                isJumping: false,
+                gameRunning: true,
+                animationFrame: null
+            };
+
+            const container = document.getElementById('minigameContainer');
+            container.innerHTML = `
+                <div class="hurdles-container">
+                    <h2 class="minigame-title">${module.title}</h2>
+                    <p class="minigame-desc">${module.description}</p>
+
+                    <div class="hurdles-instruction">
+                        ⌨️ 按空格键或点击屏幕跳跃，避开所有栏架！
+                    </div>
+
+                    <div class="hurdles-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">已通过</div>
+                            <div class="stat-value" id="hurdlesPassed">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">碰倒</div>
+                            <div class="stat-value" id="hurdlesHit">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">剩余</div>
+                            <div class="stat-value" id="hurdlesRemaining">${module.hurdleCount}</div>
+                        </div>
+                    </div>
+
+                    <div class="hurdles-game-area" id="hurdlesGameArea">
+                        <div class="track-line"></div>
+                        <div class="hurdles-player" id="hurdlesPlayer">🏃</div>
+                    </div>
+                </div>
+            `;
+
+            // 初始化栏架
+            initHurdles(module.hurdleCount);
+
+            // 开始游戏循环
+            startHurdlesGame();
+
+            document.getElementById('minigameOverlay').classList.add('show');
+
+            // 添加跳跃事件监听
+            document.addEventListener('keydown', handleHurdleJump);
+            document.getElementById('hurdlesGameArea').addEventListener('click', jump);
+        }
+
+        function initHurdles(count) {
+            const gameArea = document.getElementById('hurdlesGameArea');
+            const startX = 600;
+            const spacing = 200;
+
+            for (let i = 0; i < count; i++) {
+                const hurdle = document.createElement('div');
+                hurdle.className = 'hurdle';
+                hurdle.style.left = `${startX + i * spacing}px`;
+                hurdle.dataset.index = i;
+                hurdle.dataset.passed = 'false';
+                gameArea.appendChild(hurdle);
+                hurdlesGame.hurdles.push(hurdle);
+            }
+        }
+
+        function handleHurdleJump(e) {
+            if (e.code === 'Space' && hurdlesGame.gameRunning) {
+                e.preventDefault();
+                jump();
+            }
+        }
+
+        function jump() {
+            if (!hurdlesGame.isJumping && hurdlesGame.gameRunning) {
+                hurdlesGame.isJumping = true;
+                const player = document.getElementById('hurdlesPlayer');
+                player.classList.add('jumping');
+
+                setTimeout(() => {
+                    player.classList.remove('jumping');
+                    hurdlesGame.isJumping = false;
+                }, 600);
+            }
+        }
+
+        function startHurdlesGame() {
+            const gameArea = document.getElementById('hurdlesGameArea');
+            const player = document.getElementById('hurdlesPlayer');
+            const speed = 3;
+
+            function gameLoop() {
+                if (!hurdlesGame.gameRunning) return;
+
+                // 移动所有栏架
+                hurdlesGame.hurdles.forEach(hurdle => {
+                    const currentLeft = parseInt(hurdle.style.left);
+                    const newLeft = currentLeft - speed;
+
+                    if (newLeft < -50) {
+                        // 栏架已经通过屏幕
+                        if (hurdle.dataset.passed === 'false') {
+                            hurdle.dataset.passed = 'true';
+                            hurdlesGame.hurdlesPassed++;
+                            updateHurdlesStats();
+
+                            // 检查是否完成
+                            if (hurdlesGame.hurdlesPassed === hurdlesGame.hurdles.length) {
+                                finishHurdlesGame();
+                                return;
+                            }
+                        }
+                    } else {
+                        hurdle.style.left = `${newLeft}px`;
+
+                        // 碰撞检测
+                        if (!hurdle.classList.contains('hit') &&
+                            newLeft < 140 && newLeft > 60 &&
+                            !hurdlesGame.isJumping) {
+                            // 碰到栏架
+                            hurdle.classList.add('hit');
+                            hurdlesGame.hurdlesHit++;
+                            updateHurdlesStats();
+                        }
+                    }
+                });
+
+                hurdlesGame.animationFrame = requestAnimationFrame(gameLoop);
+            }
+
+            gameLoop();
+        }
+
+        function updateHurdlesStats() {
+            document.getElementById('hurdlesPassed').textContent = hurdlesGame.hurdlesPassed;
+            document.getElementById('hurdlesHit').textContent = hurdlesGame.hurdlesHit;
+            document.getElementById('hurdlesRemaining').textContent =
+                hurdlesGame.hurdles.length - hurdlesGame.hurdlesPassed;
+
+            const hitElement = document.getElementById('hurdlesHit');
+            if (hurdlesGame.hurdlesHit === 0) {
+                hitElement.classList.add('perfect');
+                hitElement.classList.remove('hit');
+            } else {
+                hitElement.classList.add('hit');
+                hitElement.classList.remove('perfect');
+            }
+        }
+
+        function finishHurdlesGame() {
+            hurdlesGame.gameRunning = false;
+
+            if (hurdlesGame.animationFrame) {
+                cancelAnimationFrame(hurdlesGame.animationFrame);
+            }
+
+            // 移除事件监听
+            document.removeEventListener('keydown', handleHurdleJump);
+
+            const isPerfect = hurdlesGame.hurdlesHit === 0;
+
+            if (isPerfect) {
+                showMessage(
+                    '完美表现！',
+                    '你没有碰倒任何栏架，表现出色！',
+                    3000
+                );
+            } else {
+                showMessage(
+                    '完成挑战',
+                    `你碰倒了 ${hurdlesGame.hurdlesHit} 个栏架`,
+                    3000
+                );
+            }
+
+            setTimeout(() => {
+                closeHurdles(isPerfect);
+            }, 3500);
+        }
+
+        function closeHurdles(isPerfect) {
+            document.getElementById('minigameOverlay').classList.remove('show');
+            gameState.minigameActive = false;
+
+            const module = modules[gameState.currentModule];
+            const nextModule = isPerfect ? module.onPerfect : module.onImperfect;
+
+            setTimeout(() => {
+                gameState.currentModule = nextModule;
+                gameState.playerX = canvas.width / 2;
+                render();
+
+                const newModule = modules[nextModule];
+                if (newModule.type === 'ending') {
+                    showMessage(newModule.title, newModule.message, 5000);
+                }
+            }, 500);
+        }
+
+        // ============================================
         // 交互处理
         // ============================================
         function checkDoorHover(mouseX, mouseY) {
@@ -1499,6 +1849,8 @@ print(total)`,
                                 showQuizGame();
                             } else if (newModule.gameType === 'debug') {
                                 showDebugGame();
+                            } else if (newModule.gameType === 'hurdles') {
+                                showHurdlesGame();
                             }
                         } else if (newModule.type === 'ending') {
                             render();
