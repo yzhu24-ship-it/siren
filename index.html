@@ -1064,11 +1064,13 @@ print(total)`,
         // ============================================
         function render() {
             // 保护性检查：确保modules已初始化
-            if (typeof modules === 'undefined') {
+            let module;
+            try {
+                module = modules[gameState.currentModule];
+            } catch (e) {
+                // modules还未初始化，安全返回
                 return;
             }
-
-            const module = modules[gameState.currentModule];
 
             if (module.type === 'choice') {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
