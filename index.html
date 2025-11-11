@@ -880,32 +880,44 @@ print(total)`,
             ctx.fillStyle = config.shadowColor;
             ctx.fillRect(x - offsetX + 5, y - offsetY + 5, scaledWidth, scaledHeight);
 
-            // 门框
-            ctx.fillStyle = color;
+            // 黄色木门底色
+            const woodGradient = ctx.createLinearGradient(x - offsetX, y - offsetY, x - offsetX + scaledWidth, y - offsetY);
+            woodGradient.addColorStop(0, '#D4A574');
+            woodGradient.addColorStop(0.5, '#C89F6C');
+            woodGradient.addColorStop(1, '#B8925F');
+            ctx.fillStyle = woodGradient;
             ctx.fillRect(x - offsetX, y - offsetY, scaledWidth, scaledHeight);
 
-            // 高光
-            const gradient = ctx.createLinearGradient(x, y, x + width, y);
-            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
-            gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
-            gradient.addColorStop(1, 'rgba(0, 0, 0, 0.2)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(x - offsetX, y - offsetY, scaledWidth, scaledHeight);
+            // 木门纹理（木板条）
+            ctx.strokeStyle = 'rgba(139, 90, 43, 0.3)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 5; i++) {
+                const lineY = y - offsetY + (scaledHeight / 5) * i + 10;
+                ctx.beginPath();
+                ctx.moveTo(x - offsetX + 10, lineY);
+                ctx.lineTo(x - offsetX + scaledWidth - 10, lineY);
+                ctx.stroke();
+            }
 
-            // 门把手
+            // 木门边框装饰
+            ctx.strokeStyle = '#8B5A2B';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(x - offsetX + 5, y - offsetY + 5, scaledWidth - 10, scaledHeight - 10);
+
+            // 门把手（黄铜色）
             const handleY = y + height * 0.5;
-            const handleX = x + width * 0.8;
-            ctx.fillStyle = '#FFD700';
+            const handleX = x + width * 0.85;
+            ctx.fillStyle = '#DAA520';
             ctx.beginPath();
-            ctx.arc(handleX, handleY, 8, 0, Math.PI * 2);
+            ctx.arc(handleX, handleY, 10, 0, Math.PI * 2);
             ctx.fill();
             ctx.strokeStyle = '#B8860B';
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // 门标签
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 24px sans-serif';
+            // 门标签（深色文字更适合木门）
+            ctx.fillStyle = '#3E2723';
+            ctx.font = 'bold 28px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(label, x + width / 2, y + height / 2);
@@ -929,34 +941,51 @@ print(total)`,
             const boardWidth = 500;
             const boardHeight = 120;
 
-            // 背景
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            // 黑板阴影
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
             ctx.shadowBlur = 20;
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 5;
-            ctx.fillRect(boardX, boardY, boardWidth, boardHeight);
+            ctx.fillRect(boardX + 5, boardY + 5, boardWidth, boardHeight);
             ctx.shadowBlur = 0;
 
-            // 边框
-            ctx.strokeStyle = '#ddd';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(boardX, boardY, boardWidth, boardHeight);
+            // 黑板背景（深绿色）
+            ctx.fillStyle = '#2d5016';
+            ctx.fillRect(boardX, boardY, boardWidth, boardHeight);
 
-            // 标题
-            ctx.fillStyle = '#2c3e50';
+            // 黑板纹理
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            for (let i = 0; i < 30; i++) {
+                const x = boardX + Math.random() * boardWidth;
+                const y = boardY + Math.random() * boardHeight;
+                ctx.fillRect(x, y, 2, 2);
+            }
+
+            // 木制边框
+            ctx.strokeStyle = '#8B4513';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(boardX - 4, boardY - 4, boardWidth + 8, boardHeight + 8);
+
+            // 内层边框
+            ctx.strokeStyle = '#A0522D';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(boardX + 2, boardY + 2, boardWidth - 4, boardHeight - 4);
+
+            // 标题（白色粉笔字）
+            ctx.fillStyle = '#FFFFFF';
             ctx.font = 'bold 22px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(module.title, boardX + boardWidth / 2, boardY + 30);
 
-            // 问题
-            ctx.fillStyle = '#555';
+            // 问题（白色粉笔字）
+            ctx.fillStyle = '#FFFFFF';
             ctx.font = '18px sans-serif';
             ctx.fillText(module.question, boardX + boardWidth / 2, boardY + 60);
 
-            // 提示
+            // 提示（白色粉笔字，稍微透明）
             if (module.hint) {
-                ctx.fillStyle = '#888';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
                 ctx.font = '14px sans-serif';
                 ctx.fillText(module.hint, boardX + boardWidth / 2, boardY + 90);
             }
