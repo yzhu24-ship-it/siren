@@ -420,37 +420,232 @@
             background-position: center;
         }
 
-        /* Furniture color overlays */
+        /* Furniture color overlays - 3D realistic style */
+
+        /* Door - Black with 3D depth */
         #hotspot-door {
-            background: rgba(40, 40, 40, 0.6);
-            border: 3px solid #2a2a2a;
+            background: linear-gradient(to right,
+                #1a1a1a 0%,
+                #2d2d2d 5%,
+                #1a1a1a 50%,
+                #2d2d2d 95%,
+                #1a1a1a 100%);
+            border: 4px solid #0a0a0a;
+            box-shadow:
+                inset 0 0 0 2px #3a3a3a,
+                inset 15px 0 20px rgba(0,0,0,0.4),
+                inset -15px 0 20px rgba(0,0,0,0.4),
+                0 10px 30px rgba(0,0,0,0.6);
+            position: relative;
         }
 
+        #hotspot-door::before {
+            content: '';
+            position: absolute;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle, #555 0%, #2a2a2a 100%);
+            border-radius: 50%;
+            box-shadow:
+                0 2px 4px rgba(0,0,0,0.5),
+                inset 0 1px 2px rgba(255,255,255,0.1);
+        }
+
+        /* Desk - Wood brown with 3D depth */
         #hotspot-desk {
-            background: linear-gradient(135deg, rgba(139, 105, 53, 0.5) 0%, rgba(180, 140, 80, 0.5) 100%);
-            border: 3px solid #8b6935;
+            background: linear-gradient(to bottom,
+                #d4a574 0%,
+                #c9964a 10%,
+                #b88644 50%,
+                #c9964a 90%,
+                #d4a574 100%);
+            border: 4px solid #6b4f25;
+            border-top: 6px solid #e6b887;
+            box-shadow:
+                inset 0 -3px 8px rgba(0,0,0,0.3),
+                inset 0 3px 8px rgba(255,255,255,0.2),
+                0 15px 25px rgba(0,0,0,0.4);
+            position: relative;
         }
 
+        #hotspot-desk::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 10%;
+            right: 10%;
+            height: 8px;
+            background: linear-gradient(to bottom, #8b6935 0%, #6b4f25 100%);
+            border-radius: 2px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+
+        /* Tall Cabinet - Wood with drawer details */
         #hotspot-cabinet {
-            background: linear-gradient(135deg, rgba(139, 105, 53, 0.5) 0%, rgba(160, 120, 70, 0.5) 100%);
-            border: 3px solid #8b6935;
+            background: linear-gradient(to bottom,
+                #d4a574 0%,
+                #c9964a 3%,
+                #b88644 20%,
+                #a88550 50%,
+                #b88644 80%,
+                #c9964a 97%,
+                #d4a574 100%);
+            border: 4px solid #6b4f25;
+            box-shadow:
+                inset 0 0 0 2px #e6b887,
+                inset 20px 0 30px rgba(0,0,0,0.2),
+                inset -20px 0 30px rgba(0,0,0,0.2),
+                0 15px 35px rgba(0,0,0,0.5);
+            position: relative;
         }
 
+        #hotspot-cabinet::before {
+            content: '';
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 35%;
+            border: 3px solid #5a3f1f;
+            background: linear-gradient(135deg, #c9964a 0%, #a88550 100%);
+            box-shadow:
+                inset 0 2px 4px rgba(0,0,0,0.3),
+                inset 0 -2px 4px rgba(255,255,255,0.1);
+        }
+
+        #hotspot-cabinet::after {
+            content: '';
+            position: absolute;
+            top: 30%;
+            right: 25%;
+            width: 10px;
+            height: 10px;
+            background: radial-gradient(circle, #3a3a3a 0%, #1a1a1a 100%);
+            border-radius: 50%;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.4);
+        }
+
+        /* Storage Cabinet - Light wood */
         #hotspot-storage {
-            background: linear-gradient(135deg, rgba(120, 90, 50, 0.4) 0%, rgba(150, 110, 60, 0.4) 100%);
-            border: 3px solid #785a32;
+            background: linear-gradient(to bottom,
+                #e6d4b8 0%,
+                #d4a574 5%,
+                #c9964a 50%,
+                #d4a574 95%,
+                #e6d4b8 100%);
+            border: 4px solid #8b6935;
+            box-shadow:
+                inset 0 0 0 2px #f0e0c8,
+                inset 0 -5px 15px rgba(0,0,0,0.2),
+                0 12px 20px rgba(0,0,0,0.3);
+            position: relative;
         }
 
+        #hotspot-storage::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%;
+            height: 80%;
+            border: 3px solid #6b4f25;
+            background: linear-gradient(to right,
+                #d4a574 0%,
+                #c9964a 2%,
+                #d4a574 48%,
+                #6b4f25 50%,
+                #d4a574 52%,
+                #c9964a 98%,
+                #d4a574 100%);
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
+        }
+
+        /* Windows - White frame with glass effect */
         #hotspot-window1,
         #hotspot-window2 {
-            background: linear-gradient(135deg, rgba(240, 240, 240, 0.6) 0%, rgba(200, 220, 240, 0.6) 100%);
-            border: 3px solid #c0c0c0;
-            box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.3);
+            background: linear-gradient(135deg,
+                #ffffff 0%,
+                #f5f5f5 10%,
+                #e8e8e8 50%,
+                #f5f5f5 90%,
+                #ffffff 100%);
+            border: 5px solid #c0c0c0;
+            box-shadow:
+                inset 0 0 0 3px #ffffff,
+                inset 0 0 50px rgba(200, 220, 240, 0.4),
+                0 8px 20px rgba(0,0,0,0.3);
+            position: relative;
         }
 
+        #hotspot-window1::before,
+        #hotspot-window2::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #999 0%, #bbb 50%, #999 100%);
+            box-shadow: 0 0 3px rgba(0,0,0,0.2);
+        }
+
+        #hotspot-window1::after,
+        #hotspot-window2::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, #999 0%, #bbb 50%, #999 100%);
+            box-shadow: 0 0 3px rgba(0,0,0,0.2);
+        }
+
+        /* Bookshelf - Dark wood with shelves */
         #hotspot-bookshelf {
-            background: linear-gradient(135deg, rgba(100, 75, 40, 0.4) 0%, rgba(130, 95, 50, 0.4) 100%);
-            border: 3px solid #644b28;
+            background: linear-gradient(to bottom,
+                #8b6935 0%,
+                #6b4f25 3%,
+                #5a3f1f 15%,
+                #4a2f0f 50%,
+                #5a3f1f 85%,
+                #6b4f25 97%,
+                #8b6935 100%);
+            border: 4px solid #3a1f0a;
+            box-shadow:
+                inset 0 0 0 2px #a88550,
+                inset 0 10px 20px rgba(0,0,0,0.4),
+                0 15px 30px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        #hotspot-bookshelf::before {
+            content: '';
+            position: absolute;
+            top: 33%;
+            left: 5%;
+            right: 5%;
+            height: 3px;
+            background: linear-gradient(to right, #3a1f0a 0%, #6b4f25 50%, #3a1f0a 100%);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #hotspot-bookshelf::after {
+            content: '';
+            position: absolute;
+            top: 66%;
+            left: 5%;
+            right: 5%;
+            height: 3px;
+            background: linear-gradient(to right, #3a1f0a 0%, #6b4f25 50%, #3a1f0a 100%);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
     </style>
 </head>
