@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rusty Lake Mystery - The Black Cube</title>
-    <!-- Version 2.2 - Reverse Interaction Flow (2025-11-07) -->
+    <!-- Version 3.0 - Visual Image-Based Interface -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -17,472 +17,241 @@
 
         body {
             font-family: 'Courier New', monospace;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: #0a0a0a;
             color: #e8e8e8;
-            min-height: 100vh;
-            padding: 20px;
-            overflow-x: hidden;
-        }
-
-        .game-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: rgba(26, 26, 46, 0.9);
-            border: 3px solid #8b7355;
-            border-radius: 10px;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 50px rgba(0, 0, 0, 0.5);
-            padding: 30px;
-        }
-
-        .version {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            color: #5a4a3a;
-            font-size: 11px;
-        }
-
-        h1 {
-            text-align: center;
-            font-size: 42px;
-            color: #c9a56f;
-            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
-            margin-bottom: 10px;
-            letter-spacing: 3px;
-            font-family: 'Georgia', serif;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #8b7355;
-            font-style: italic;
-            margin-bottom: 20px;
-            font-size: 16px;
-        }
-
-        /* Progress Tracker */
-        .progress-tracker {
-            background: rgba(0, 0, 0, 0.4);
-            border: 2px solid #5a4a3a;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .progress-title {
-            text-align: center;
-            color: #c9a56f;
-            font-size: 18px;
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-
-        .progress-steps {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-        }
-
-        .progress-line {
-            position: absolute;
-            top: 20px;
-            left: 10%;
-            right: 10%;
-            height: 3px;
-            background: #3a3a3a;
-            z-index: 0;
-        }
-
-        .progress-line-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #c9a56f 0%, #8b7355 100%);
-            width: 0%;
-            transition: width 0.5s ease;
-        }
-
-        .progress-step {
-            flex: 1;
-            text-align: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        .step-circle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #2a2a2a;
-            border: 3px solid #5a4a3a;
-            margin: 0 auto 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-
-        .step-circle.active {
-            background: linear-gradient(145deg, #c9a56f, #8b7355);
-            border-color: #c9a56f;
-            box-shadow: 0 0 20px rgba(201, 165, 111, 0.6);
-            animation: pulse 2s infinite;
-        }
-
-        .step-circle.completed {
-            background: #4a8a4a;
-            border-color: #5a9a5a;
-        }
-
-        .step-circle.completed::after {
-            content: '✓';
-            color: white;
-            font-size: 20px;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .step-label {
-            font-size: 12px;
-            color: #8b7355;
-        }
-
-        .step-label.active {
-            color: #c9a56f;
-            font-weight: bold;
-        }
-
-        .step-label.completed {
-            color: #90ee90;
-        }
-
-        /* Tutorial Box */
-        .tutorial-box {
-            background: linear-gradient(145deg, rgba(201, 165, 111, 0.1), rgba(139, 115, 85, 0.1));
-            border: 2px solid #c9a56f;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            animation: slideDown 0.5s ease-out;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .tutorial-box h3 {
-            color: #c9a56f;
-            margin-bottom: 10px;
-            font-size: 16px;
-        }
-
-        .tutorial-box p {
-            color: #d4d4d4;
-            line-height: 1.6;
-            font-size: 14px;
-        }
-
-        .tutorial-box .hint {
-            margin-top: 10px;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            border-left: 3px solid #c9a56f;
-            font-style: italic;
-            color: #ffb366;
+            overflow: hidden;
+            height: 100vh;
         }
 
         .game-layout {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-            margin-top: 20px;
+            display: flex;
+            height: 100vh;
+            width: 100vw;
         }
 
-        .main-panel {
-            background: rgba(22, 33, 62, 0.7);
-            border: 2px solid #5a4a3a;
-            border-radius: 8px;
-            padding: 20px;
-        }
-
-        .side-panel {
+        /* Main view area - 75% width */
+        .main-view {
+            flex: 0 0 75%;
+            position: relative;
+            background: linear-gradient(180deg, #a8d8f0 0%, #b8e8ff 100%);
             display: flex;
             flex-direction: column;
-            gap: 20px;
         }
 
-        .panel {
-            background: rgba(22, 33, 62, 0.7);
-            border: 2px solid #5a4a3a;
-            border-radius: 8px;
-            padding: 15px;
-        }
-
-        .panel-title {
-            font-size: 20px;
-            color: #c9a56f;
-            border-bottom: 2px solid #5a4a3a;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-
-        .room-description {
-            line-height: 1.8;
-            color: #d4d4d4;
-            text-align: justify;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 5px;
-            border-left: 4px solid #8b7355;
-        }
-
-        .items-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .item-btn {
-            background: linear-gradient(145deg, #3a2f2a, #2a1f1a);
-            color: #c9a56f;
-            border: 2px solid #5a4a3a;
-            padding: 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            transition: all 0.3s;
+        .wall-container {
+            flex: 1;
             position: relative;
-        }
-
-        .item-btn:hover {
-            background: linear-gradient(145deg, #4a3f3a, #3a2f2a);
-            border-color: #c9a56f;
-            box-shadow: 0 0 15px rgba(201, 165, 111, 0.3);
-            transform: translateY(-2px);
-        }
-
-        .item-btn.checked {
-            background: linear-gradient(145deg, #2a3f2a, #1a2f1a);
-            border-color: #5a7a5a;
-        }
-
-        .item-btn.highlighted {
-            animation: highlight 2s infinite;
-            border-color: #ffb366;
-        }
-
-        .item-btn.selected {
-            animation: selectedGlow 1.5s infinite;
-            border-color: #5aea5a;
-            box-shadow: 0 0 20px rgba(90, 234, 90, 0.8);
-        }
-
-        @keyframes selectedGlow {
-            0%, 100% {
-                box-shadow: 0 0 15px rgba(90, 234, 90, 0.6);
-                border-color: #5aea5a;
-            }
-            50% {
-                box-shadow: 0 0 30px rgba(90, 234, 90, 1);
-                border-color: #90ff90;
-            }
-        }
-
-        @keyframes highlight {
-            0%, 100% { box-shadow: 0 0 10px rgba(255, 179, 102, 0.3); }
-            50% { box-shadow: 0 0 20px rgba(255, 179, 102, 0.8); }
-        }
-
-        .item-interaction-count {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(201, 165, 111, 0.3);
-            color: #c9a56f;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
-            font-weight: bold;
+            overflow: hidden;
         }
 
-        .inventory-list {
-            min-height: 100px;
+        .wall {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            display: none;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
-        .inventory-item {
-            background: rgba(201, 165, 111, 0.1);
-            border: 1px solid #8b7355;
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s;
+        .wall.active {
+            display: block;
+        }
+
+        /* Navigation arrows */
+        .nav-arrows {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            gap: 40px;
+            z-index: 100;
         }
 
-        .inventory-item:hover {
-            background: rgba(201, 165, 111, 0.2);
-            border-color: #c9a56f;
-            transform: translateX(5px);
-        }
-
-        .inventory-item.new-item {
-            animation: newItemAppear 0.5s ease-out;
-        }
-
-        .inventory-item.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        @keyframes newItemAppear {
-            0% {
-                opacity: 0;
-                transform: scale(0.8) translateX(-20px);
-            }
-            100% {
-                opacity: 1;
-                transform: scale(1) translateX(0);
-            }
-        }
-
-        .use-btn {
-            background: #5a4a3a;
-            color: #c9a56f;
-            border: none;
-            padding: 5px 12px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.3s;
-        }
-
-        .use-btn:hover:not(:disabled) {
-            background: #6a5a4a;
-            box-shadow: 0 0 10px rgba(201, 165, 111, 0.5);
-        }
-
-        .use-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        .use-btn.pulse {
-            animation: btnPulse 1.5s infinite;
-        }
-
-        .use-btn.active {
-            background: #90ee90;
-            color: #1a1a2e;
-            font-weight: bold;
-        }
-
-        @keyframes btnPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); box-shadow: 0 0 15px rgba(201, 165, 111, 0.8); }
-        }
-
-        .message-log {
-            max-height: 250px;
-            overflow-y: auto;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 5px;
-        }
-
-        .message {
-            margin-bottom: 8px;
-            padding: 8px;
-            border-left: 3px solid #5a4a3a;
-            background: rgba(22, 33, 62, 0.5);
-            border-radius: 3px;
-            animation: messageSlide 0.3s ease-out;
-        }
-
-        @keyframes messageSlide {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .message.warning {
-            border-left-color: #a0522d;
-            color: #ffb366;
-        }
-
-        .message.success {
-            border-left-color: #4a8a4a;
-            color: #90ee90;
-        }
-
-        .message.mystery {
-            border-left-color: #8b4789;
-            color: #dda0dd;
-        }
-
-        .message.important {
-            background: rgba(201, 165, 111, 0.1);
-            border-left-color: #c9a56f;
-            color: #c9a56f;
-            font-weight: bold;
-        }
-
-        .message.error {
-            border-left-color: #d32f2f;
-            color: #ff6b6b;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .action-btn {
-            flex: 1;
-            background: linear-gradient(145deg, #5a4a3a, #4a3a2a);
-            color: #c9a56f;
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.5);
             border: 2px solid #8b7355;
-            padding: 12px;
-            border-radius: 5px;
+            border-radius: 50%;
             cursor: pointer;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #c9a56f;
+            transition: all 0.3s;
+            user-select: none;
+        }
+
+        .nav-btn:hover {
+            background: rgba(0, 0, 0, 0.7);
+            box-shadow: 0 0 15px rgba(201, 165, 111, 0.5);
+            transform: scale(1.1);
+        }
+
+        .wall-indicator {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 2px solid #8b7355;
+            color: #c9a56f;
+            font-size: 16px;
+            z-index: 100;
+        }
+
+        /* Right side panel - 25% width */
+        .right-panel {
+            flex: 0 0 25%;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            border-left: 3px solid #8b7355;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .panel-header {
+            text-align: center;
+            font-size: 24px;
+            color: #c9a56f;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .clues-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .clue-box {
+            aspect-ratio: 1;
+            border: 2px solid #8b7355;
+            border-radius: 10px;
+            background: rgba(26, 26, 46, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
             transition: all 0.3s;
         }
 
-        .action-btn:hover {
-            background: linear-gradient(145deg, #6a5a4a, #5a4a3a);
-            box-shadow: 0 0 20px rgba(201, 165, 111, 0.4);
+        .clue-box.empty {
+            border-style: dashed;
+            opacity: 0.4;
+        }
+
+        .clue-box.filled {
+            border-color: #c9a56f;
+            box-shadow: 0 0 15px rgba(201, 165, 111, 0.3);
+        }
+
+        .clue-box.new-item {
+            animation: itemPulse 1s ease-in-out;
+        }
+
+        @keyframes itemPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); box-shadow: 0 0 25px rgba(201, 165, 111, 0.8); }
+        }
+
+        .clue-image {
+            width: 90%;
+            height: 90%;
+            object-fit: contain;
+        }
+
+        .clue-text {
+            text-align: center;
+            padding: 10px;
+            font-size: 12px;
+            color: #c9a56f;
+            word-wrap: break-word;
+        }
+
+        .clue-icon {
+            font-size: 40px;
+        }
+
+        /* Event log */
+        .event-log {
+            flex: 1;
+            border: 2px solid #8b7355;
+            border-radius: 10px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
+            max-height: 200px;
+        }
+
+        .log-title {
+            color: #c9a56f;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .log-message {
+            padding: 5px;
+            margin: 5px 0;
+            font-size: 12px;
+            border-left: 2px solid #8b7355;
+            padding-left: 10px;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .log-message.important {
+            color: #90ff90;
+            border-left-color: #90ff90;
+        }
+
+        .log-message.error {
+            color: #ff6b6b;
+            border-left-color: #ff6b6b;
+        }
+
+        /* Clickable hotspots on walls */
+        .hotspot {
+            position: absolute;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+            border-radius: 5px;
+        }
+
+        .hotspot:hover {
+            border-color: rgba(201, 165, 111, 0.8);
+            box-shadow: 0 0 20px rgba(201, 165, 111, 0.6);
             transform: scale(1.05);
         }
 
+        .hotspot.selected {
+            border-color: #90ff90;
+            animation: hotspotGlow 1.5s infinite;
+        }
+
+        @keyframes hotspotGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(144, 255, 144, 0.6); }
+            50% { box-shadow: 0 0 30px rgba(144, 255, 144, 1); }
+        }
+
+        /* Modal for detailed views */
         .modal {
             display: none;
             position: fixed;
@@ -492,911 +261,771 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.9);
             z-index: 1000;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
         }
 
         .modal-content {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            border: 4px solid #c9a56f;
-            border-radius: 10px;
+            border: 3px solid #8b7355;
+            border-radius: 15px;
             padding: 40px;
             max-width: 600px;
-            text-align: center;
-            box-shadow: 0 0 50px rgba(201, 165, 111, 0.6);
-            animation: modalAppear 0.5s ease-out;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
         }
 
-        @keyframes modalAppear {
-            from {
-                opacity: 0;
-                transform: scale(0.8);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .modal-content h2 {
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 30px;
+            cursor: pointer;
             color: #c9a56f;
-            font-size: 36px;
+            border: none;
+            background: none;
+        }
+
+        .modal-close:hover {
+            color: #ff6b6b;
+        }
+
+        .modal-title {
+            font-size: 28px;
+            color: #c9a56f;
             margin-bottom: 20px;
-            font-family: 'Georgia', serif;
+            text-align: center;
         }
 
-        .modal-content p {
-            color: #d4d4d4;
-            line-height: 1.8;
+        .modal-description {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #e8e8e8;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 15px;
             font-size: 18px;
-        }
-
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 15px;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #8b7355;
             border-radius: 5px;
-        }
-
-        .stat {
-            text-align: center;
-        }
-
-        .stat-label {
-            color: #8b7355;
-            font-size: 12px;
-        }
-
-        .stat-value {
             color: #c9a56f;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        .empty-state {
             text-align: center;
-            color: #8b7355;
-            font-style: italic;
-            padding: 20px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
         }
 
-        /* Achievement notification */
-        .achievement {
-            position: fixed;
+        .modal-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            background: #8b7355;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        .modal-btn:hover {
+            background: #a88866;
+            box-shadow: 0 0 15px rgba(139, 115, 85, 0.6);
+        }
+
+        .modal-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        /* Control buttons */
+        .controls {
+            position: absolute;
             top: 20px;
-            right: -400px;
-            background: linear-gradient(145deg, #2a3f2a, #1a2f1a);
-            border: 2px solid #5a9a5a;
-            border-radius: 8px;
-            padding: 15px 20px;
-            min-width: 300px;
-            box-shadow: 0 0 20px rgba(90, 154, 90, 0.5);
-            z-index: 999;
-            transition: right 0.5s ease-out;
-        }
-
-        .achievement.show {
             right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
         }
 
-        .achievement-title {
-            color: #90ee90;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .achievement-text {
-            color: #d4d4d4;
+        .control-btn {
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #8b7355;
+            border-radius: 5px;
+            color: #c9a56f;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
             font-size: 14px;
+            transition: all 0.3s;
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
+        .control-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+            box-shadow: 0 0 10px rgba(139, 115, 85, 0.6);
         }
 
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.3);
+        /* Cabinet/Furniture styles */
+        .furniture-view {
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+            text-align: center;
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: #5a4a3a;
-            border-radius: 4px;
+        .furniture-image {
+            width: 100%;
+            height: auto;
+            border: 2px solid #8b7355;
+            border-radius: 10px;
+            margin-bottom: 20px;
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #6a5a4a;
+        .lock-icon {
+            font-size: 60px;
+            margin: 20px 0;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .game-layout {
-                grid-template-columns: 1fr;
-            }
+        /* Wall placeholder backgrounds */
+        .wall-1 {
+            background: linear-gradient(180deg, #a8d8f0 0%, #b8e8ff 50%, #a8d8f0 100%);
+        }
 
-            h1 {
-                font-size: 32px;
-            }
+        .wall-2 {
+            background: linear-gradient(180deg, #a8d8f0 0%, #b8e8ff 50%, #a8d8f0 100%);
+        }
 
-            .progress-steps {
-                flex-wrap: wrap;
-            }
+        .wall-3 {
+            background: linear-gradient(180deg, #a8d8f0 0%, #b8e8ff 50%, #a8d8f0 100%);
+        }
 
-            .progress-step {
-                flex-basis: 50%;
-                margin-bottom: 15px;
-            }
+        .wall-4 {
+            background: linear-gradient(180deg, #a8d8f0 0%, #b8e8ff 50%, #a8d8f0 100%);
+            position: relative;
+        }
+
+        .wall-4::after {
+            content: 'Empty Wall';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            color: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Placeholder objects drawn with CSS */
+        .portrait-placeholder {
+            width: 200px;
+            height: 280px;
+            background: linear-gradient(135deg, #3a2f24 0%, #5a4a3a 100%);
+            border: 10px solid #d4a574;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .portrait-placeholder::before {
+            content: '🖼️';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 80px;
+        }
+
+        .window-placeholder {
+            width: 180px;
+            height: 240px;
+            background: linear-gradient(135deg, #e8e8e8 0%, #c0c0c0 100%);
+            border: 8px solid #a0a0a0;
+            position: relative;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .window-placeholder::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 2px;
+            height: 100%;
+            background: #888;
+            transform: translateX(-50%);
+        }
+
+        .window-placeholder::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #888;
+            transform: translateY(-50%);
+        }
+
+        .desk-placeholder {
+            width: 300px;
+            height: 200px;
+            background: linear-gradient(180deg, #c9964a 0%, #d4a574 50%, #b88644 100%);
+            border: 5px solid #8b6935;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        .desk-placeholder::before {
+            content: '🗄️';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+        }
+
+        .cabinet-placeholder {
+            width: 180px;
+            height: 280px;
+            background: linear-gradient(135deg, #d4a574 0%, #c9964a 100%);
+            border: 6px solid #8b6935;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        .cabinet-placeholder::before {
+            content: '🚪';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 80px;
+        }
+
+        .clock-placeholder {
+            width: 150px;
+            height: 200px;
+            background: linear-gradient(135deg, #8b6935 0%, #a88550 100%);
+            border: 5px solid #6b4f25;
+            border-radius: 50% 50% 10px 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        .clock-placeholder::before {
+            content: '🕐';
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
         }
     </style>
 </head>
 <body>
-    <div class="game-container">
-        <div class="version" style="color: #90ff90; font-size: 14px; font-weight: bold;">v2.2 - ENGLISH (Nov 7, 2025)</div>
-        <h1>🌙 Rusty Lake Mystery 🌙</h1>
-        <p class="subtitle">The Black Cube - A Victorian Gothic Puzzle Adventure</p>
+    <div class="game-layout">
+        <!-- Main view area -->
+        <div class="main-view">
+            <div class="wall-indicator">Wall <span id="wallNumber">1</span> of 4</div>
 
-        <!-- Progress Tracker -->
-        <div class="progress-tracker">
-            <div class="progress-title">📋 Quest Progress</div>
-            <div class="progress-steps">
-                <div class="progress-line">
-                    <div class="progress-line-fill" id="progressFill"></div>
-                </div>
-                <div class="progress-step">
-                    <div class="step-circle" id="step1">1</div>
-                    <div class="step-label" id="label1">Find Key</div>
-                </div>
-                <div class="progress-step">
-                    <div class="step-circle" id="step2">2</div>
-                    <div class="step-label" id="label2">Unlock Desk</div>
-                </div>
-                <div class="progress-step">
-                    <div class="step-circle" id="step3">3</div>
-                    <div class="step-label" id="label3">Repair Clock</div>
-                </div>
-                <div class="progress-step">
-                    <div class="step-circle" id="step4">4</div>
-                    <div class="step-label" id="label4">Open Cabinet</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tutorial Box -->
-        <div class="tutorial-box" id="tutorialBox">
-            <h3 id="tutorialTitle">🎓 Getting Started</h3>
-            <p id="tutorialText">Welcome to the mystery room. Click on items to examine them. Some items may reveal secrets after multiple interactions...</p>
-            <div class="hint" id="tutorialHint">💡 Hint: Start by examining the Mysterious Portrait on the wall</div>
-        </div>
-
-        <div class="game-layout">
-            <!-- Main Panel -->
-            <div class="main-panel">
-                <div class="panel-title">📜 Room Description</div>
-                <div class="room-description" id="roomDescription"></div>
-
-                <div class="panel-title">🔍 Interactive Items</div>
-                <div class="items-grid" id="itemsGrid"></div>
-
-                <div class="action-buttons">
-                    <button class="action-btn" onclick="game.triggerRandomEvent()">🎲 Wait...</button>
-                    <button class="action-btn" onclick="game.saveGame()">💾 Save Game</button>
-                    <button class="action-btn" onclick="game.loadGame()">📂 Load Game</button>
-                </div>
+            <div class="controls">
+                <button class="control-btn" onclick="game.saveGame()">💾 Save</button>
+                <button class="control-btn" onclick="game.loadGame()">📂 Load</button>
             </div>
 
-            <!-- Side Panel -->
-            <div class="side-panel">
-                <!-- Inventory -->
-                <div class="panel">
-                    <div class="panel-title">🎒 Inventory</div>
-                    <div class="inventory-list" id="inventoryList"></div>
-                </div>
+            <div class="wall-container">
+                <!-- Wall 1: Portrait and Window -->
+                <div class="wall wall-1 active" id="wall-1">
+                    <!-- Portrait hotspot (upper center) -->
+                    <div class="hotspot portrait-placeholder"
+                         style="position: absolute; top: 15%; left: 50%; transform: translateX(-50%);"
+                         onclick="game.clickHotspot('portrait')"
+                         id="hotspot-portrait">
+                    </div>
 
-                <!-- Statistics -->
-                <div class="panel">
-                    <div class="panel-title">📊 Game Status</div>
-                    <div class="stats">
-                        <div class="stat">
-                            <div class="stat-label">Items</div>
-                            <div class="stat-value" id="itemCount">0</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-label">Puzzles</div>
-                            <div class="stat-value" id="puzzleCount">0/4</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-label">Interactions</div>
-                            <div class="stat-value" id="interactionCount">0</div>
-                        </div>
+                    <!-- Window hotspot (right side) -->
+                    <div class="hotspot window-placeholder"
+                         style="position: absolute; top: 25%; right: 15%;"
+                         onclick="game.clickHotspot('window')"
+                         id="hotspot-window">
                     </div>
                 </div>
 
-                <!-- Message Log -->
-                <div class="panel">
-                    <div class="panel-title">📰 Event Log</div>
-                    <div class="message-log" id="messageLog"></div>
+                <!-- Wall 2: Desk -->
+                <div class="wall wall-2" id="wall-2">
+                    <!-- Desk hotspot (center-bottom) -->
+                    <div class="hotspot desk-placeholder"
+                         style="position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%);"
+                         onclick="game.clickHotspot('desk')"
+                         id="hotspot-desk">
+                    </div>
                 </div>
+
+                <!-- Wall 3: Clock and Cabinet -->
+                <div class="wall wall-3" id="wall-3">
+                    <!-- Clock hotspot (left side) -->
+                    <div class="hotspot clock-placeholder"
+                         style="position: absolute; top: 20%; left: 20%;"
+                         onclick="game.clickHotspot('clock')"
+                         id="hotspot-clock">
+                    </div>
+
+                    <!-- Cabinet hotspot (right side) -->
+                    <div class="hotspot cabinet-placeholder"
+                         style="position: absolute; top: 25%; right: 15%;"
+                         onclick="game.clickHotspot('cabinet')"
+                         id="hotspot-cabinet">
+                    </div>
+                </div>
+
+                <!-- Wall 4: Empty -->
+                <div class="wall wall-4" id="wall-4">
+                    <!-- This wall is empty as specified -->
+                </div>
+            </div>
+
+            <!-- Navigation arrows -->
+            <div class="nav-arrows">
+                <div class="nav-btn" onclick="game.previousWall()">◀</div>
+                <div class="nav-btn" onclick="game.nextWall()">▶</div>
+            </div>
+        </div>
+
+        <!-- Right panel for clues -->
+        <div class="right-panel">
+            <div class="panel-header">🔍 Clues & Items</div>
+            <div class="clues-grid" id="cluesGrid">
+                <!-- 8 clue boxes -->
+                <div class="clue-box empty" id="clue-0"></div>
+                <div class="clue-box empty" id="clue-1"></div>
+                <div class="clue-box empty" id="clue-2"></div>
+                <div class="clue-box empty" id="clue-3"></div>
+                <div class="clue-box empty" id="clue-4"></div>
+                <div class="clue-box empty" id="clue-5"></div>
+                <div class="clue-box empty" id="clue-6"></div>
+                <div class="clue-box empty" id="clue-7"></div>
+            </div>
+
+            <div class="event-log">
+                <div class="log-title">📰 Event Log</div>
+                <div id="logContainer"></div>
             </div>
         </div>
     </div>
 
-    <!-- Achievement Notification -->
-    <div class="achievement" id="achievementNotif">
-        <div class="achievement-title" id="achievementTitle">Achievement Unlocked!</div>
-        <div class="achievement-text" id="achievementText">You found something...</div>
-    </div>
-
-    <!-- Victory Modal -->
-    <div class="modal" id="victoryModal">
+    <!-- Modal for interactions -->
+    <div class="modal" id="modal">
         <div class="modal-content">
-            <h2>🎉 Congratulations! 🎉</h2>
-            <p>You have successfully found the legendary Black Cube...</p>
-            <p style="margin-top: 20px; color: #8b7355;">But this is only the beginning of the Rusty Lake series...</p>
-            <p style="margin-top: 20px; font-style: italic; color: #dda0dd;">"Memory is a strange thing - it is both the key and the cage."</p>
+            <button class="modal-close" onclick="game.closeModal()">×</button>
+            <div id="modalBody"></div>
         </div>
     </div>
 
     <script>
-        // Rusty Lake Mystery Game - Enhanced Edition v2.1
         class RustyLakeGame {
             constructor() {
-                // Room items definition
-                this.items = {
-                    portrait: {
-                        name: 'Mysterious Portrait',
-                        description: 'A Victorian-era portrait of a melancholic gentleman hangs on the wall. His eyes seem to follow you...',
-                        checked: false,
-                        interactions: 0,
-                        messages: [
-                            'The figure in the portrait appears to smile at you...',
-                            'You notice something unusual behind the frame...',
-                            'An old key falls from behind the portrait!'
-                        ]
-                    },
-                    clock: {
-                        name: 'Antique Clock',
-                        description: 'A magnificent grandfather clock stands motionless. Upon closer inspection, it\'s missing a crucial gear.',
-                        checked: false,
-                        needsItem: 'gear',
-                        interactions: 0,
-                        messages: [
-                            'The clock stands silent, as if time itself has frozen...',
-                            'You need to find a gear to repair it...'
-                        ],
-                        repairedMessage: 'You install the gear into the clock. The chimes ring out! A hidden compartment behind the clock opens, revealing a piece of paper...'
-                    },
-                    desk: {
-                        name: 'Old Desk',
-                        description: 'A Victorian mahogany desk with an ornate lock on its drawer.',
-                        checked: false,
-                        locked: true,
-                        needsItem: 'key',
-                        interactions: 0,
-                        messages: [
-                            'The desk drawer is firmly locked. You need a key...',
-                            'The desk surface bears the marks of time...'
-                        ],
-                        unlockedMessage: 'The key fits perfectly! The drawer opens to reveal a precision gear inside!'
-                    },
-                    cabinet: {
-                        name: 'Mysterious Cabinet',
-                        description: 'A black cabinet carved with strange symbols. It has a three-digit combination lock.',
-                        checked: false,
-                        locked: true,
-                        needsCode: true,
-                        code: '376',
-                        interactions: 0,
-                        messages: [
-                            'The symbols on the cabinet seem to tell an ancient secret...',
-                            'The combination lock awaits the correct numbers...'
-                        ],
-                        unlockedMessage: 'Correct code! The cabinet door slowly opens, an eerie light emanating from within... Inside lies a black cube!'
-                    },
-                    mirror: {
-                        name: 'Ancient Mirror',
-                        description: 'A massive mirror with strange runes faintly visible on its surface.',
-                        checked: false,
-                        interactions: 0,
-                        messages: [
-                            'The mirror reflects more than just your image...',
-                            'The room in the reflection seems somehow different...',
-                            'Ripples spread across the mirror surface, then calm again...'
-                        ]
-                    },
-                    window: {
-                        name: 'Window',
-                        description: 'Dense fog obscures the view outside. Occasionally, dark shadows drift past.',
-                        checked: false,
-                        interactions: 0,
-                        messages: [
-                            'Something moves in the fog...',
-                            'A raven perches on the windowsill, staring at you...',
-                            'An eerie wind sound comes from outside...'
-                        ]
-                    },
-                    bookshelf: {
-                        name: 'Bookshelf',
-                        description: 'A tall bookshelf filled with ancient tomes, emanating a musty smell of age.',
-                        checked: false,
-                        interactions: 0,
-                        messages: [
-                            'The books are written in an ancient script...',
-                            'You open a book and find a faded photograph inside...',
-                            'One book\'s cover reads: "Truth lies within time"...'
-                        ]
-                    },
-                    fireplace: {
-                        name: 'Fireplace',
-                        description: 'A long-extinguished fireplace, ashes still contain remnants of unburnt wood.',
-                        checked: false,
-                        interactions: 0,
-                        messages: [
-                            'The ashes in the fireplace are cold...',
-                            'You discover strange marks in the ashes...',
-                            'Something glints in the depths of the fireplace...'
-                        ]
-                    }
-                };
-
-                // Player inventory
-                this.inventory = [];
-
-                // Puzzle states
+                this.currentWall = 1;
+                this.selectedHotspot = null;
+                this.clues = [];
                 this.puzzleStates = {
-                    portraitSolved: false,
-                    deskUnlocked: false,
-                    clockRepaired: false,
-                    cabinetUnlocked: false
+                    portrait: { solved: false, examined: false },
+                    desk: { solved: false, locked: true },
+                    clock: { solved: false, examined: false },
+                    cabinet: { solved: false, locked: true }
                 };
-
-                // Game state
-                this.gameState = {
-                    gameWon: false,
-                    mysteryEvents: 0,
-                    totalInteractions: 0,
-                    currentStep: 1,
-                    selectedRoomItem: null  // Room item selected for interaction
-                };
-
-                // Tutorial messages for each step
-                this.tutorialMessages = {
-                    1: {
-                        title: '🎓 Step 1: Find the Key',
-                        text: 'The portrait seems suspicious. Try clicking on it multiple times to uncover its secret.',
-                        hint: '💡 Hint: Click the Mysterious Portrait 3 times to reveal the hidden key'
-                    },
-                    2: {
-                        title: '🎓 Step 2: Unlock the Desk',
-                        text: 'You have the key! First click the Old Desk to select it, then use the key on it.',
-                        hint: '💡 Hint: Click the Old Desk (it will glow green), then click "Use" on the Old Key'
-                    },
-                    3: {
-                        title: '🎓 Step 3: Repair the Clock',
-                        text: 'The gear from the desk can repair the broken clock. Select the clock, then use the gear!',
-                        hint: '💡 Hint: Click the Antique Clock to select it, then click "Use" on the Precision Gear'
-                    },
-                    4: {
-                        title: '🎓 Step 4: Open the Cabinet',
-                        text: 'The faded note contains a code. Select the cabinet, then use the note on it!',
-                        hint: '💡 Hint: Click the Mysterious Cabinet to select it, then click "Use" on the Faded Note'
-                    }
-                };
-
-                // Mystery events
-                this.mysteryEvents = [
-                    'You hear piano music in the distance...',
-                    'The room temperature suddenly drops...',
-                    'Shadows on the wall seem to come alive...',
-                    'A faint scent of roses fills the air...',
-                    'Whispers echo in your ears...',
-                    'The lights flicker briefly...',
-                    'You feel someone watching from behind, but nothing is there...',
-                    'The clock\'s ticking becomes eerily loud...',
-                    'Your reflection in the mirror lags slightly...',
-                    'The raven outside caws three times...'
-                ];
 
                 this.init();
             }
 
-            // Initialize game
             init() {
-                this.renderRoom();
-                this.renderItems();
-                this.renderInventory();
-                this.updateStats();
-                this.updateProgress();
-                this.updateTutorial();
-                this.addMessage('Welcome to Rusty Lake Mystery...', 'mystery');
-                this.addMessage('You awaken in a strange Victorian room.', 'warning');
-                this.addMessage('Find the Black Cube to escape...', 'warning');
-                this.highlightNextItem();
+                this.addLog("Welcome to Rusty Lake Mystery...", "important");
+                this.addLog("Explore the room by clicking on objects and switching between walls.");
             }
 
-            // Render room description
-            renderRoom() {
-                const roomDesc = document.getElementById('roomDescription');
-                roomDesc.innerHTML = `
-                    <p>You find yourself in an ornately decorated yet eerie Victorian room. Dark red wallpaper
-                    with intricate Gothic patterns covers the walls. Heavy dark curtains partially obscure the
-                    windows, allowing only faint light to enter.</p>
-                    <p style="margin-top: 10px;">The room fills with a musty scent - a mixture of wood, old books,
-                    and something indescribably mysterious. You sense this room hides many secrets...</p>
-                `;
+            nextWall() {
+                this.currentWall = (this.currentWall % 4) + 1;
+                this.updateWall();
             }
 
-            // Render item buttons
-            renderItems() {
-                const grid = document.getElementById('itemsGrid');
-                grid.innerHTML = '';
-
-                for (let [key, item] of Object.entries(this.items)) {
-                    const btn = document.createElement('button');
-                    btn.className = 'item-btn' + (item.checked ? ' checked' : '');
-
-                    // Highlight next item for current step
-                    if (this.shouldHighlight(key)) {
-                        btn.classList.add('highlighted');
-                    }
-
-                    // Highlight selected room item
-                    if (this.gameState.selectedRoomItem === key) {
-                        btn.classList.add('selected');
-                    }
-
-                    btn.textContent = item.name;
-
-                    // Show interaction count if > 0
-                    if (item.interactions > 0) {
-                        const badge = document.createElement('span');
-                        badge.className = 'item-interaction-count';
-                        badge.textContent = item.interactions;
-                        btn.appendChild(badge);
-                    }
-
-                    btn.onclick = () => this.examineItem(key);
-                    grid.appendChild(btn);
-                }
+            previousWall() {
+                this.currentWall = this.currentWall === 1 ? 4 : this.currentWall - 1;
+                this.updateWall();
             }
 
-            // Determine which item to highlight
-            shouldHighlight(itemKey) {
-                if (this.gameState.currentStep === 1 && itemKey === 'portrait' && !this.puzzleStates.portraitSolved) {
-                    return true;
-                }
-                return false;
+            updateWall() {
+                document.querySelectorAll('.wall').forEach(w => w.classList.remove('active'));
+                document.getElementById(`wall-${this.currentWall}`).classList.add('active');
+                document.getElementById('wallNumber').textContent = this.currentWall;
+                this.clearSelection();
             }
 
-            // Highlight next item for guidance
-            highlightNextItem() {
-                this.renderItems();
-            }
+            clickHotspot(itemKey) {
+                // Clear previous selection
+                this.clearSelection();
 
-            // Examine item - now also handles selection
-            examineItem(itemKey) {
-                const item = this.items[itemKey];
-
-                // If clicking on already selected item, examine it
-                if (this.gameState.selectedRoomItem === itemKey) {
-                    if (!item.checked) {
-                        item.checked = true;
-                        this.addMessage(`You carefully examine the ${item.name}...`, 'success');
-                        this.addMessage(item.description);
-                    } else {
-                        this.addMessage(`You examine the ${item.name} again...`);
-                    }
-
-                    // Handle item interaction
-                    this.handleItemInteraction(itemKey);
-                    this.gameState.totalInteractions++;
-                } else {
-                    // Select this room item
-                    this.gameState.selectedRoomItem = itemKey;
-                    this.addMessage(`Selected: ${item.name}`, 'important');
-
-                    // Auto-examine if first time
-                    if (!item.checked) {
-                        item.checked = true;
-                        this.addMessage(item.description);
-                        this.handleItemInteraction(itemKey);
-                        this.gameState.totalInteractions++;
-                    }
+                // Select this hotspot
+                this.selectedHotspot = itemKey;
+                const hotspot = document.getElementById(`hotspot-${itemKey}`);
+                if (hotspot) {
+                    hotspot.classList.add('selected');
                 }
 
-                this.renderItems();
-                this.updateStats();
+                this.addLog(`Selected: ${this.getItemName(itemKey)}`, "important");
+
+                // Open interaction modal
+                this.openInteractionModal(itemKey);
             }
 
-            // Handle item interaction logic
-            handleItemInteraction(itemKey) {
-                const item = this.items[itemKey];
-                item.interactions++;
+            clearSelection() {
+                document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('selected'));
+                this.selectedHotspot = null;
+            }
+
+            getItemName(key) {
+                const names = {
+                    portrait: "Victorian Portrait",
+                    window: "Window",
+                    desk: "Wooden Desk",
+                    clock: "Grandfather Clock",
+                    cabinet: "Cabinet"
+                };
+                return names[key] || key;
+            }
+
+            openInteractionModal(itemKey) {
+                const modal = document.getElementById('modal');
+                const modalBody = document.getElementById('modalBody');
+
+                let content = '';
 
                 switch(itemKey) {
                     case 'portrait':
-                        if (item.interactions <= item.messages.length) {
-                            this.addMessage(item.messages[item.interactions - 1], 'warning');
-                            if (item.interactions === 3 && !this.puzzleStates.portraitSolved) {
-                                this.addInventoryItem({name: 'Old Key', id: 'key'}, true);
-                                this.puzzleStates.portraitSolved = true;
-                                this.gameState.currentStep = 2;
-                                this.showAchievement('First Clue Found!', 'You discovered the hidden key');
-                                this.updateProgress();
-                                this.updateTutorial();
-                            }
-                        }
+                        content = this.getPortraitModal();
                         break;
-
-                    case 'desk':
-                        if (item.locked) {
-                            this.addMessage(item.messages[Math.min(item.interactions - 1, item.messages.length - 1)], 'warning');
-                        } else {
-                            this.addMessage('The desk drawer is already open.', 'success');
-                        }
-                        break;
-
-                    case 'clock':
-                        if (!this.puzzleStates.clockRepaired) {
-                            this.addMessage(item.messages[Math.min(item.interactions - 1, item.messages.length - 1)], 'warning');
-                        } else {
-                            this.addMessage('The clock ticks steadily now.', 'success');
-                        }
-                        break;
-
-                    case 'cabinet':
-                        if (item.locked) {
-                            this.addMessage(item.messages[Math.min(item.interactions - 1, item.messages.length - 1)], 'warning');
-                        } else {
-                            this.addMessage('The cabinet is already open.', 'success');
-                        }
-                        break;
-
-                    case 'mirror':
                     case 'window':
-                    case 'bookshelf':
-                    case 'fireplace':
-                        const msgIndex = (item.interactions - 1) % item.messages.length;
-                        this.addMessage(item.messages[msgIndex], 'mystery');
+                        content = this.getWindowModal();
                         break;
-                }
-            }
-
-            // Add item to inventory with animation
-            addInventoryItem(item, isNew = true) {
-                this.inventory.push(item);
-                this.addMessage(`You obtained: ${item.name}`, 'important');
-                this.renderInventory(isNew ? item.id : null);
-            }
-
-            // Render inventory
-            renderInventory(newItemId = null) {
-                const list = document.getElementById('inventoryList');
-
-                if (this.inventory.length === 0) {
-                    list.innerHTML = '<div class="empty-state">Your inventory is empty...</div>';
-                    return;
-                }
-
-                list.innerHTML = '';
-                this.inventory.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'inventory-item';
-                    if (newItemId === item.id) {
-                        div.classList.add('new-item');
-                    }
-
-                    // Disable items that can't be used yet
-                    const canUse = this.canUseItem(item.id);
-                    if (!canUse) {
-                        div.classList.add('disabled');
-                    }
-
-                    const useBtn = document.createElement('button');
-                    useBtn.className = 'use-btn';
-                    useBtn.textContent = 'Use';
-                    useBtn.disabled = !canUse;
-
-                    if (this.shouldPulseUseButton(item.id)) {
-                        useBtn.classList.add('pulse');
-                    }
-
-                    useBtn.onclick = () => this.selectItemForUse(item.id);
-
-                    div.innerHTML = `<span>${item.name}</span>`;
-                    div.appendChild(useBtn);
-                    list.appendChild(div);
-                });
-
-                this.updateStats();
-            }
-
-            // Check if item can be used at current step
-            canUseItem(itemId) {
-                if (itemId === 'key' && this.gameState.currentStep === 2 && !this.puzzleStates.deskUnlocked) return true;
-                if (itemId === 'gear' && this.gameState.currentStep === 3 && !this.puzzleStates.clockRepaired) return true;
-                if (itemId === 'code_paper' && this.gameState.currentStep === 4 && !this.puzzleStates.cabinetUnlocked) return true;
-                if (itemId === 'black_cube') return true;
-                return false;
-            }
-
-            // Determine if use button should pulse
-            shouldPulseUseButton(itemId) {
-                return this.canUseItem(itemId);
-            }
-
-            // Use item from inventory
-            selectItemForUse(itemId) {
-                // Special case for black cube
-                if (itemId === 'black_cube') {
-                    this.addMessage('The Black Cube glows faintly in your hands...', 'mystery');
-                    this.addMessage('You feel a powerful energy emanating from it...', 'mystery');
-                    return;
-                }
-
-                // Check if can use this item
-                if (!this.canUseItem(itemId)) {
-                    this.addMessage('You cannot use this item right now.', 'error');
-                    return;
-                }
-
-                // Check if a room item is selected
-                if (!this.gameState.selectedRoomItem) {
-                    this.addMessage('Please select an item in the room first!', 'warning');
-                    return;
-                }
-
-                // Check if the combination is correct
-                this.tryUseItemOn(itemId, this.gameState.selectedRoomItem);
-            }
-
-            // Try to use inventory item on selected room item
-            tryUseItemOn(itemId, roomItemKey) {
-                // Check valid combinations
-                const validCombos = {
-                    'key': 'desk',
-                    'gear': 'clock',
-                    'code_paper': 'cabinet'
-                };
-
-                // Check if combination is valid
-                if (validCombos[itemId] !== roomItemKey) {
-                    this.addMessage(`You cannot use that item on the ${this.items[roomItemKey].name}...`, 'error');
-                    return;
-                }
-
-                // Execute the correct action
-                switch(itemId) {
-                    case 'key':
-                        if (!this.puzzleStates.deskUnlocked) {
-                            this.addMessage('You use the Old Key on the desk...', 'success');
-                            this.addMessage(this.items.desk.unlockedMessage, 'success');
-                            this.items.desk.locked = false;
-                            this.puzzleStates.deskUnlocked = true;
-                            this.gameState.currentStep = 3;
-                            this.gameState.selectedRoomItem = null; // Clear selection
-
-                            this.addInventoryItem({name: 'Precision Gear', id: 'gear'}, true);
-                            this.showAchievement('Desk Unlocked!', 'You found the precision gear');
-
-                            this.inventory = this.inventory.filter(i => i.id !== 'key');
-                            this.renderInventory();
-                            this.updateProgress();
-                            this.updateTutorial();
-                        }
+                    case 'desk':
+                        content = this.getDeskModal();
                         break;
-
-                    case 'gear':
-                        if (!this.puzzleStates.clockRepaired) {
-                            this.addMessage('You use the Precision Gear on the clock...', 'success');
-                            this.addMessage(this.items.clock.repairedMessage, 'success');
-                            this.puzzleStates.clockRepaired = true;
-                            this.gameState.currentStep = 4;
-                            this.gameState.selectedRoomItem = null; // Clear selection
-
-                            this.addInventoryItem({name: 'Faded Note', id: 'code_paper', code: '376'}, true);
-                            this.addMessage('The note reads: 376', 'important');
-                            this.showAchievement('Clock Repaired!', 'Time reveals its secrets');
-
-                            this.inventory = this.inventory.filter(i => i.id !== 'gear');
-                            this.renderInventory();
-                            this.updateProgress();
-                            this.updateTutorial();
-                        }
+                    case 'clock':
+                        content = this.getClockModal();
                         break;
-
-                    case 'code_paper':
-                        if (!this.puzzleStates.cabinetUnlocked) {
-                            const code = prompt('Enter the three-digit code from the note:');
-                            if (code === this.items.cabinet.code) {
-                                this.addMessage('You entered the code: ' + code, 'success');
-                                this.addMessage(this.items.cabinet.unlockedMessage, 'success');
-                                this.puzzleStates.cabinetUnlocked = true;
-                                this.items.cabinet.locked = false;
-                                this.gameState.selectedRoomItem = null; // Clear selection
-
-                                this.addInventoryItem({name: 'Mysterious Black Cube', id: 'black_cube'}, true);
-                                this.showAchievement('The Black Cube!', 'You found the legendary artifact');
-
-                                this.inventory = this.inventory.filter(i => i.id !== 'code_paper');
-                                this.renderInventory();
-                                this.updateProgress();
-
-                                setTimeout(() => this.checkVictory(), 1000);
-                            } else {
-                                this.addMessage('Incorrect code! The cabinet remains locked...', 'warning');
-                            }
-                        }
+                    case 'cabinet':
+                        content = this.getCabinetModal();
                         break;
                 }
 
-                this.renderItems();
+                modalBody.innerHTML = content;
+                modal.classList.add('active');
             }
 
-            // Update progress tracker
-            updateProgress() {
-                const steps = [
-                    this.puzzleStates.portraitSolved,
-                    this.puzzleStates.deskUnlocked,
-                    this.puzzleStates.clockRepaired,
-                    this.puzzleStates.cabinetUnlocked
-                ];
-
-                let completedSteps = 0;
-                steps.forEach((completed, index) => {
-                    const stepNum = index + 1;
-                    const circle = document.getElementById(`step${stepNum}`);
-                    const label = document.getElementById(`label${stepNum}`);
-
-                    circle.classList.remove('active', 'completed');
-                    label.classList.remove('active', 'completed');
-
-                    if (completed) {
-                        circle.classList.add('completed');
-                        label.classList.add('completed');
-                        completedSteps++;
-                    } else if (stepNum === this.gameState.currentStep) {
-                        circle.classList.add('active');
-                        label.classList.add('active');
-                    }
-                });
-
-                // Update progress bar
-                const progressPercent = (completedSteps / 4) * 100;
-                document.getElementById('progressFill').style.width = progressPercent + '%';
+            getPortraitModal() {
+                if (!this.puzzleStates.portrait.examined) {
+                    this.puzzleStates.portrait.examined = true;
+                    return `
+                        <h2 class="modal-title">Victorian Portrait</h2>
+                        <div class="modal-description">
+                            An old portrait hangs on the wall. A stern Victorian gentleman stares back at you.
+                            Behind the frame, you notice something scratched into the wood...
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 100px; margin: 30px 0;">🖼️</div>
+                            <div style="color: #c9a56f; font-style: italic; margin: 20px 0;">
+                                "The key lies beneath where papers rest"
+                            </div>
+                        </div>
+                        <button class="modal-btn" onclick="game.solvePortraitPuzzle()">Take the Hint</button>
+                    `;
+                } else {
+                    return `
+                        <h2 class="modal-title">Victorian Portrait</h2>
+                        <div class="modal-description">
+                            The portrait has already revealed its secret.
+                            The message reads: "The key lies beneath where papers rest"
+                        </div>
+                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
+                    `;
+                }
             }
 
-            // Update tutorial box
-            updateTutorial() {
-                const step = this.gameState.currentStep;
-                if (step > 4) return;
+            solvePortraitPuzzle() {
+                if (!this.puzzleStates.portrait.solved) {
+                    this.puzzleStates.portrait.solved = true;
+                    this.addClue({
+                        icon: '📜',
+                        text: 'Hint: Check desk',
+                        type: 'hint'
+                    });
+                    this.addLog("Found a cryptic message behind the portrait!", "important");
+                }
+                this.closeModal();
+            }
 
-                const tutorial = this.tutorialMessages[step];
-                document.getElementById('tutorialTitle').textContent = tutorial.title;
-                document.getElementById('tutorialText').textContent = tutorial.text;
-                document.getElementById('tutorialHint').textContent = tutorial.hint;
+            getWindowModal() {
+                return `
+                    <h2 class="modal-title">Window</h2>
+                    <div class="modal-description">
+                        Through the frosted glass, you see nothing but darkness.
+                        The window is sealed shut. A cold draft seeps through the cracks.
+                    </div>
+                    <div class="furniture-view">
+                        <div style="font-size: 100px; margin: 30px 0;">🪟</div>
+                        <div style="color: #888; font-style: italic;">
+                            No escape this way...
+                        </div>
+                    </div>
+                    <button class="modal-btn" onclick="game.closeModal()">Close</button>
+                `;
+            }
 
-                // Re-animate tutorial box
-                const box = document.getElementById('tutorialBox');
-                box.style.animation = 'none';
+            getDeskModal() {
+                if (this.puzzleStates.desk.locked) {
+                    return `
+                        <h2 class="modal-title">Wooden Desk</h2>
+                        <div class="modal-description">
+                            A sturdy wooden desk with a single drawer.
+                            The drawer has a small keyhole.
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 100px; margin: 30px 0;">🗄️</div>
+                            <div class="lock-icon">🔒</div>
+                            <div style="color: #ff6b6b;">Locked - Need a key</div>
+                        </div>
+                        <input type="text" class="modal-input" placeholder="Enter action or use key..." id="deskInput">
+                        <button class="modal-btn" onclick="game.tryUnlockDesk()">Unlock</button>
+                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
+                    `;
+                } else {
+                    return `
+                        <h2 class="modal-title">Wooden Desk</h2>
+                        <div class="modal-description">
+                            The drawer is now open. Inside you find a precision gear
+                            and a note with strange symbols.
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 100px; margin: 30px 0;">⚙️</div>
+                        </div>
+                        <button class="modal-btn" onclick="game.collectDeskItems()">Take Items</button>
+                    `;
+                }
+            }
+
+            tryUnlockDesk() {
+                const input = document.getElementById('deskInput');
+                const value = input ? input.value.toLowerCase() : '';
+
+                if (value.includes('key') || this.hasClue('key')) {
+                    this.puzzleStates.desk.locked = false;
+                    this.puzzleStates.desk.solved = true;
+                    this.addLog("Unlocked the desk drawer!", "important");
+                    this.openInteractionModal('desk');
+                } else {
+                    this.addLog("You don't have the key yet...", "error");
+                }
+            }
+
+            collectDeskItems() {
+                if (!this.hasClue('gear')) {
+                    this.addClue({ icon: '⚙️', text: 'Precision Gear', type: 'item' });
+                    this.addClue({ icon: '📄', text: 'Note: 376', type: 'clue' });
+                    this.addLog("Collected gear and note from desk!", "important");
+                }
+                this.closeModal();
+            }
+
+            getClockModal() {
+                if (!this.puzzleStates.clock.solved) {
+                    return `
+                        <h2 class="modal-title">Grandfather Clock</h2>
+                        <div class="modal-description">
+                            An antique grandfather clock. The pendulum is missing.
+                            There's a space where a gear should be...
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 120px; margin: 30px 0;">🕰️</div>
+                            <div style="color: #ff6b6b; margin: 20px 0;">Missing: Gear</div>
+                        </div>
+                        <button class="modal-btn" onclick="game.tryFixClock()">Insert Gear</button>
+                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
+                    `;
+                } else {
+                    return `
+                        <h2 class="modal-title">Grandfather Clock</h2>
+                        <div class="modal-description">
+                            The clock is now ticking. As the hands move, a secret compartment
+                            opens, revealing a small brass key!
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 120px; margin: 30px 0;">🕐</div>
+                            <div style="font-size: 60px; color: #c9a56f;">🔑</div>
+                        </div>
+                        <button class="modal-btn" onclick="game.collectClockKey()">Take Key</button>
+                    `;
+                }
+            }
+
+            tryFixClock() {
+                if (this.hasClue('gear')) {
+                    this.puzzleStates.clock.solved = true;
+                    this.addLog("The clock springs to life!", "important");
+                    this.openInteractionModal('clock');
+                } else {
+                    this.addLog("You need a gear to fix the clock...", "error");
+                }
+            }
+
+            collectClockKey() {
+                if (!this.hasClue('key')) {
+                    this.addClue({ icon: '🔑', text: 'Brass Key', type: 'key' });
+                    this.addLog("Obtained the brass key!", "important");
+                }
+                this.closeModal();
+            }
+
+            getCabinetModal() {
+                if (this.puzzleStates.cabinet.locked) {
+                    return `
+                        <h2 class="modal-title">Cabinet</h2>
+                        <div class="modal-description">
+                            A tall wooden cabinet with a numerical lock.
+                            You need to enter a 3-digit code.
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 100px; margin: 30px 0;">🚪</div>
+                            <div class="lock-icon">🔢</div>
+                        </div>
+                        <input type="text" class="modal-input" placeholder="Enter 3-digit code..."
+                               id="cabinetCode" maxlength="3">
+                        <button class="modal-btn" onclick="game.tryUnlockCabinet()">Unlock</button>
+                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
+                    `;
+                } else {
+                    return `
+                        <h2 class="modal-title">Cabinet</h2>
+                        <div class="modal-description">
+                            The cabinet door swings open. Inside, resting on black velvet,
+                            is the mysterious Black Cube!
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 120px; margin: 30px 0;">⬛</div>
+                            <div style="color: #c9a56f; font-size: 24px; margin: 20px 0;">
+                                You Win!
+                            </div>
+                        </div>
+                        <button class="modal-btn" onclick="game.winGame()">Take the Black Cube</button>
+                    `;
+                }
+            }
+
+            tryUnlockCabinet() {
+                const input = document.getElementById('cabinetCode');
+                const code = input ? input.value : '';
+
+                if (code === '376') {
+                    this.puzzleStates.cabinet.locked = false;
+                    this.puzzleStates.cabinet.solved = true;
+                    this.addLog("Cabinet unlocked! You found the Black Cube!", "important");
+                    this.openInteractionModal('cabinet');
+                } else {
+                    this.addLog("Wrong code...", "error");
+                }
+            }
+
+            winGame() {
+                this.addClue({ icon: '⬛', text: 'Black Cube', type: 'final' });
+                this.addLog("CONGRATULATIONS! You escaped the room!", "important");
+                this.closeModal();
+
                 setTimeout(() => {
-                    box.style.animation = 'slideDown 0.5s ease-out';
-                }, 10);
+                    alert('🎉 Congratulations! You solved the mystery and found the Black Cube!\n\nThank you for playing!');
+                }, 500);
             }
 
-            // Show achievement notification
-            showAchievement(title, text) {
-                const notif = document.getElementById('achievementNotif');
-                document.getElementById('achievementTitle').textContent = title;
-                document.getElementById('achievementText').textContent = text;
+            addClue(clue) {
+                if (this.clues.length < 8) {
+                    this.clues.push(clue);
+                    const index = this.clues.length - 1;
+                    const clueBox = document.getElementById(`clue-${index}`);
 
-                notif.classList.add('show');
-                setTimeout(() => {
-                    notif.classList.remove('show');
-                }, 3000);
-            }
+                    clueBox.classList.remove('empty');
+                    clueBox.classList.add('filled', 'new-item');
+                    clueBox.innerHTML = `
+                        <div>
+                            <div class="clue-icon">${clue.icon}</div>
+                            <div class="clue-text">${clue.text}</div>
+                        </div>
+                    `;
 
-            // Trigger random mystery event
-            triggerRandomEvent() {
-                const event = this.mysteryEvents[Math.floor(Math.random() * this.mysteryEvents.length)];
-                this.addMessage(event, 'mystery');
-                this.gameState.mysteryEvents++;
-
-                // 20% chance for a helpful hint
-                if (Math.random() < 0.2) {
-                    const hints = [
-                        'The portrait knows something...',
-                        'The secret of time lies within the clock...',
-                        'The number 376 echoes in your mind...',
-                        'The key is the beginning of everything...'
-                    ];
-                    const hint = hints[Math.floor(Math.random() * hints.length)];
-                    setTimeout(() => this.addMessage(hint, 'warning'), 1000);
+                    setTimeout(() => clueBox.classList.remove('new-item'), 1000);
                 }
             }
 
-            // Add message to log
-            addMessage(text, type = 'normal') {
-                const log = document.getElementById('messageLog');
-                const msg = document.createElement('div');
-                msg.className = 'message' + (type !== 'normal' ? ' ' + type : '');
-                msg.textContent = text;
-                log.appendChild(msg);
-                log.scrollTop = log.scrollHeight;
+            hasClue(type) {
+                return this.clues.some(c => c.text.toLowerCase().includes(type) || c.type === type);
             }
 
-            // Update statistics
-            updateStats() {
-                document.getElementById('itemCount').textContent = this.inventory.length;
-                document.getElementById('interactionCount').textContent = this.gameState.totalInteractions;
-
-                const solvedPuzzles = Object.values(this.puzzleStates).filter(v => v).length;
-                document.getElementById('puzzleCount').textContent = `${solvedPuzzles}/4`;
+            addLog(message, type = '') {
+                const logContainer = document.getElementById('logContainer');
+                const logMsg = document.createElement('div');
+                logMsg.className = `log-message ${type}`;
+                logMsg.textContent = message;
+                logContainer.appendChild(logMsg);
+                logContainer.scrollTop = logContainer.scrollHeight;
             }
 
-            // Check victory condition
-            checkVictory() {
-                if (this.inventory.some(item => item.id === 'black_cube')) {
-                    this.gameState.gameWon = true;
-                    this.addMessage('', 'success');
-                    this.addMessage('🎉 You found the Black Cube! Victory! 🎉', 'success');
-
-                    setTimeout(() => {
-                        document.getElementById('victoryModal').style.display = 'flex';
-                    }, 1500);
-                }
+            closeModal() {
+                document.getElementById('modal').classList.remove('active');
             }
 
-            // Save game
             saveGame() {
                 const saveData = {
-                    items: this.items,
-                    inventory: this.inventory,
-                    puzzleStates: this.puzzleStates,
-                    gameState: this.gameState,
-                    version: '2.2'
+                    currentWall: this.currentWall,
+                    clues: this.clues,
+                    puzzleStates: this.puzzleStates
                 };
-
                 localStorage.setItem('rustyLakeSave', JSON.stringify(saveData));
-                this.addMessage('Game saved successfully!', 'success');
-                this.showAchievement('Game Saved', 'Your progress has been saved');
+                this.addLog("Game saved!", "important");
             }
 
-            // Load game
             loadGame() {
                 const saveData = localStorage.getItem('rustyLakeSave');
+                if (saveData) {
+                    const data = JSON.parse(saveData);
+                    this.currentWall = data.currentWall;
+                    this.puzzleStates = data.puzzleStates;
+                    this.clues = [];
 
-                if (!saveData) {
-                    this.addMessage('No save file found...', 'warning');
-                    return;
-                }
+                    // Clear clue boxes
+                    for (let i = 0; i < 8; i++) {
+                        const box = document.getElementById(`clue-${i}`);
+                        box.classList.add('empty');
+                        box.classList.remove('filled');
+                        box.innerHTML = '';
+                    }
 
-                const data = JSON.parse(saveData);
-                this.items = data.items;
-                this.inventory = data.inventory;
-                this.puzzleStates = data.puzzleStates;
-                this.gameState = {...data.gameState, selectedRoomItem: null};
+                    // Restore clues
+                    data.clues.forEach(clue => this.addClue(clue));
 
-                this.renderItems();
-                this.renderInventory();
-                this.updateStats();
-                this.updateProgress();
-                this.updateTutorial();
-                this.addMessage('Game loaded successfully!', 'success');
-
-                if (this.gameState.gameWon) {
-                    this.addMessage('You have already completed this game!', 'mystery');
+                    this.updateWall();
+                    this.addLog("Game loaded!", "important");
+                } else {
+                    this.addLog("No save file found!", "error");
                 }
             }
         }
 
         // Initialize game
-        let game;
-        window.onload = () => {
-            game = new RustyLakeGame();
-            console.log('Rusty Lake Mystery v2.2 - Loaded');
-        };
+        const game = new RustyLakeGame();
     </script>
 </body>
 </html>
