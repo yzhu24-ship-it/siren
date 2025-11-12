@@ -2100,48 +2100,7 @@ print(total)`,
                 if (progress < 1) {
                     requestAnimationFrame(forwardWalkAnimation);
                 } else {
-                    // 向前走完成，重置行走进度，开始转身背对屏幕
-                    gameState.walkProgress = 0;
-                    render();
-                    turnBackAnimation();
-                }
-            }
-
-            // 第四阶段：转身背对屏幕（200ms）
-            const turnBackDuration = 200;
-            const turnBackStartTime = Date.now();
-
-            function turnBackAnimation() {
-                const elapsed = Date.now() - turnBackStartTime;
-                if (elapsed < turnBackDuration) {
-                    requestAnimationFrame(turnBackAnimation);
-                } else {
-                    // 转身完成，设置为背对屏幕
-                    gameState.facing = 'back';
-                    render();
-                    // 开始贴门动画
-                    approachDoorAnimation();
-                }
-            }
-
-            // 第五阶段：向前走贴到门（600ms）
-            const approachDuration = 600;
-            const finalTargetY = doorY + 100; // 贴近门
-            const approachStartY = gameState.playerY;
-            const approachStartTime = Date.now();
-
-            function approachDoorAnimation() {
-                const elapsed = Date.now() - approachStartTime;
-                const progress = Math.min(elapsed / approachDuration, 1);
-
-                gameState.playerY = approachStartY + (finalTargetY - approachStartY) * easeInOutQuad(progress);
-                gameState.walkProgress = progress; // 更新行走进度用于迈步动画
-                render();
-
-                if (progress < 1) {
-                    requestAnimationFrame(approachDoorAnimation);
-                } else {
-                    // 所有动画完成，重置行走进度
+                    // 所有行走完成，重置行走进度
                     gameState.walkProgress = 0;
                     render();
 
