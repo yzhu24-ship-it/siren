@@ -1257,11 +1257,14 @@ print(total)`,
             setTimeout(() => {
                 gameState.currentModule = nextModule;
                 gameState.playerX = canvas.width / 2;
+                gameState.animating = false;
                 render();
 
                 const newModule = modules[nextModule];
                 if (newModule.type === 'ending') {
                     showMessage(newModule.title, newModule.message, 5000);
+                } else if (newModule.type === 'choice') {
+                    showMessage(newModule.title, newModule.question, 4000);
                 }
             }, 500);
         }
@@ -1404,11 +1407,14 @@ print(total)`,
             setTimeout(() => {
                 gameState.currentModule = nextModule;
                 gameState.playerX = canvas.width / 2;
+                gameState.animating = false;
                 render();
 
                 const newModule = modules[nextModule];
                 if (newModule.type === 'ending') {
                     showMessage(newModule.title, newModule.message, 5000);
+                } else if (newModule.type === 'choice') {
+                    showMessage(newModule.title, newModule.question, 4000);
                 }
             }, 500);
         }
@@ -1535,11 +1541,14 @@ print(total)`,
             setTimeout(() => {
                 gameState.currentModule = nextModule;
                 gameState.playerX = canvas.width / 2;
+                gameState.animating = false;
                 render();
 
                 const newModule = modules[nextModule];
                 if (newModule.type === 'ending') {
                     showMessage(newModule.title, newModule.message, 5000);
+                } else if (newModule.type === 'choice') {
+                    showMessage(newModule.title, newModule.question, 4000);
                 }
             }, 500);
         }
@@ -1755,11 +1764,14 @@ print(total)`,
             setTimeout(() => {
                 gameState.currentModule = nextModule;
                 gameState.playerX = canvas.width / 2;
+                gameState.animating = false;
                 render();
 
                 const newModule = modules[nextModule];
                 if (newModule.type === 'ending') {
                     showMessage(newModule.title, newModule.message, 5000);
+                } else if (newModule.type === 'choice') {
+                    showMessage(newModule.title, newModule.question, 4000);
                 }
             }, 500);
         }
@@ -1820,7 +1832,7 @@ print(total)`,
                 label: choice.label
             });
 
-            showMessage(`你选择了: ${choice.label}`, choice.description);
+            showMessage(`You chose: ${choice.label}`, choice.description);
 
             // 角色移动
             const targetX = door === 'left' ? canvas.width * 0.25 : canvas.width * 0.75;
