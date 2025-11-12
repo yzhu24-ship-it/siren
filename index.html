@@ -767,7 +767,10 @@
                 this.selectedHotspot = null;
                 this.clues = [];
                 this.puzzleStates = {
+                    bookshelf: { examined: false },
+                    window: { examined: false, foundSymbol: false },
                     desk: { examined: false },
+                    storage: { locked: true },
                     cabinet: { locked: true },
                     gameWon: false
                 };
@@ -778,6 +781,7 @@
             init() {
                 this.addLog("Welcome to Rusty Lake Mystery...", "important");
                 this.addLog("Explore the room by clicking on objects and switching between walls.");
+                this.addLog("Hint: Start by examining the bookshelf...", "important");
             }
 
             nextWall() {
@@ -866,44 +870,108 @@
 
 
             getWindowModal() {
-                return `
-                    <h2 class="modal-title">Window</h2>
-                    <div class="modal-description">
-                        Through the frosted glass, you see nothing but darkness.
-                        The window is sealed shut. A cold draft seeps through the cracks.
-                    </div>
-                    <div class="furniture-view">
-                        <div style="font-size: 100px; margin: 30px 0;">🪟</div>
-                        <div style="color: #888; font-style: italic;">
-                            No escape this way...
+                if (this.hasClue('note1') && !this.puzzleStates.window.foundSymbol) {
+                    this.puzzleStates.window.examined = true;
+                    return `
+                        <h2 class="modal-title">Window</h2>
+                        <div class="modal-description">
+                            You look closely at the window as the note suggested.
+                            Through the dust on the glass, you notice numbers etched into the frame!
                         </div>
-                    </div>
-                    <button class="modal-btn" onclick="game.closeModal()">Close</button>
-                `;
+                        <div class="furniture-view">
+                            <div style="font-size: 100px; margin: 30px 0;">🪟</div>
+                            <div style="color: #c9a56f; font-size: 32px; font-weight: bold; margin: 20px 0;">
+                                3 ... 7 ... ?
+                            </div>
+                            <div style="color: #888; font-style: italic; font-size: 14px;">
+                                Two numbers visible, but the third is worn away...
+                            </div>
+                        </div>
+                        <button class="modal-btn" onclick="game.collectWindowClue()">Remember the Numbers</button>
+                    `;
+                } else if (this.puzzleStates.window.foundSymbol) {
+                    return `
+                        <h2 class="modal-title">Window</h2>
+                        <div class="modal-description">
+                            The window frame shows the numbers: 3 ... 7 ... ?<br>
+                            The third number is still missing.
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 100px; margin: 30px 0;">🪟</div>
+                        </div>
+                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
+                    `;
+                } else {
+                    return `
+                        <h2 class="modal-title">Window</h2>
+                        <div class="modal-description">
+                            Through the frosted glass, you see nothing but darkness.
+                            The window is sealed shut. Maybe you need to examine it more carefully?
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 100px; margin: 30px 0;">🪟</div>
+                            <div style="color: #888; font-style: italic;">
+                                No escape this way...
+                            </div>
+                        </div>
+                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
+                    `;
+                }
+            }
+
+            collectWindowClue() {
+                if (!this.hasClue('numbers')) {
+                    this.puzzleStates.window.foundSymbol = true;
+                    this.addClue({ icon: '🔢', text: 'Clue 2: Numbers 3-7-?', type: 'numbers' });
+                    this.addLog("Clue 2: Found partial code on window frame!", "important");
+                }
+                this.closeModal();
             }
 
             getDeskModal() {
-                if (!this.puzzleStates.desk.examined) {
+                if (this.hasClue('numbers') && !this.puzzleStates.desk.examined) {
                     this.puzzleStates.desk.examined = true;
                     return `
                         <h2 class="modal-title">Wooden Desk</h2>
                         <div class="modal-description">
-                            A simple wooden desk with a drawer.
-                            You open the drawer and find a note with numbers written on it...
+                            You open the desk drawer and find a piece of paper with strange drawings.
+                            At the bottom, there's a single number circled: <strong>6</strong>
                         </div>
                         <div class="furniture-view">
                             <div style="font-size: 80px; margin: 30px 0;">📝</div>
-                            <div style="color: #c9a56f; font-size: 36px; font-weight: bold; margin: 20px 0;">
-                                3 - 7 - 6
+                            <div style="color: #c9a56f; font-size: 48px; font-weight: bold; margin: 20px 0;">
+                                6
+                            </div>
+                            <div style="color: #888; font-style: italic; font-size: 14px;">
+                                This must be the missing third number!
                             </div>
                         </div>
-                        <button class="modal-btn" onclick="game.collectDeskClue()">Take the Note</button>
+                        <button class="modal-btn" onclick="game.collectDeskClue()">Take the Paper</button>
+                    `;
+                } else if (this.puzzleStates.desk.examined) {
+                    return `
+                        <h2 class="modal-title">Wooden Desk</h2>
+                        <div class="modal-description">
+                            The drawer is empty now. You already took the paper.<br>
+                            The complete code is: <strong>3-7-6</strong>
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 80px; margin: 30px 0;">📝</div>
+                        </div>
+                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
                     `;
                 } else {
                     return `
                         <h2 class="modal-title">Wooden Desk</h2>
                         <div class="modal-description">
-                            The drawer is empty now. You already took the note with numbers: 3-7-6
+                            A simple wooden desk with a locked drawer.
+                            You can't seem to open it yet. Maybe you need more information first?
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 80px; margin: 30px 0;">📝</div>
+                            <div style="color: #888; font-style: italic;">
+                                The drawer won't budge...
+                            </div>
                         </div>
                         <button class="modal-btn" onclick="game.closeModal()">Close</button>
                     `;
@@ -911,87 +979,155 @@
             }
 
             collectDeskClue() {
-                if (!this.hasClue('code')) {
-                    this.addClue({ icon: '📄', text: 'Code: 376', type: 'code' });
-                    this.addLog("Found a code: 376", "important");
+                if (!this.hasClue('complete_code')) {
+                    this.addClue({ icon: '6️⃣', text: 'Clue 3: Number 6', type: 'number6' });
+                    this.addClue({ icon: '🔐', text: 'Complete Code: 376', type: 'complete_code' });
+                    this.addLog("Clue 3: Found the missing number! Code is 3-7-6", "important");
                 }
                 this.closeModal();
             }
 
             getStorageModal() {
-                return `
-                    <h2 class="modal-title">Storage Cabinet</h2>
-                    <div class="modal-description">
-                        A low storage cabinet with two doors.
-                        Inside you find old tools and supplies. Nothing immediately useful...
-                    </div>
-                    <div class="furniture-view">
-                        <div style="font-size: 100px; margin: 30px 0;">🗄️</div>
-                        <div style="color: #888; font-style: italic;">
-                            Just storage. Nothing special here.
-                        </div>
-                    </div>
-                    <button class="modal-btn" onclick="game.closeModal()">Close</button>
-                `;
-            }
-
-            getCabinetModal() {
-                if (this.puzzleStates.cabinet.locked) {
+                if (this.puzzleStates.storage.locked && this.hasClue('complete_code')) {
                     return `
-                        <h2 class="modal-title">Cabinet</h2>
+                        <h2 class="modal-title">Storage Cabinet</h2>
                         <div class="modal-description">
-                            A tall wooden cabinet with a numerical lock.
-                            You need to enter a 3-digit code.
+                            A low storage cabinet with a combination lock on the doors.
+                            You need to enter a 3-digit code to open it.
                         </div>
                         <div class="furniture-view">
-                            <div style="font-size: 100px; margin: 30px 0;">🚪</div>
+                            <div style="font-size: 100px; margin: 30px 0;">🗄️</div>
                             <div class="lock-icon">🔢</div>
                         </div>
                         <input type="text" class="modal-input" placeholder="Enter 3-digit code..."
-                               id="cabinetCode" maxlength="3">
-                        <button class="modal-btn" onclick="game.tryUnlockCabinet()">Unlock</button>
+                               id="storageCode" maxlength="3">
+                        <button class="modal-btn" onclick="game.tryUnlockStorage()">Unlock</button>
                         <button class="modal-btn" onclick="game.closeModal()">Close</button>
+                    `;
+                } else if (!this.puzzleStates.storage.locked) {
+                    return `
+                        <h2 class="modal-title">Storage Cabinet</h2>
+                        <div class="modal-description">
+                            The cabinet doors swing open. Inside, resting on a velvet cushion,
+                            you find an ornate brass key!
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 100px; margin: 30px 0;">🔑</div>
+                            <div style="color: #c9a56f; font-style: italic;">
+                                This key must open something important...
+                            </div>
+                        </div>
+                        <button class="modal-btn" onclick="game.collectStorageKey()">Take the Key</button>
                     `;
                 } else {
                     return `
-                        <h2 class="modal-title">Cabinet</h2>
+                        <h2 class="modal-title">Storage Cabinet</h2>
                         <div class="modal-description">
-                            The cabinet door swings open. Inside, resting on black velvet,
-                            is the mysterious Black Cube!
+                            A low storage cabinet with a combination lock.
+                            The lock looks like it needs a 3-digit code, but you don't have enough information yet.
                         </div>
                         <div class="furniture-view">
-                            <div style="font-size: 120px; margin: 30px 0;">⬛</div>
-                            <div style="color: #c9a56f; font-size: 24px; margin: 20px 0;">
-                                You Win!
+                            <div style="font-size: 100px; margin: 30px 0;">🗄️</div>
+                            <div style="color: #888; font-style: italic;">
+                                Locked. Need a code...
                             </div>
                         </div>
-                        <button class="modal-btn" onclick="game.winGame()">Take the Black Cube</button>
+                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
                     `;
                 }
             }
 
-            tryUnlockCabinet() {
-                const input = document.getElementById('cabinetCode');
+            tryUnlockStorage() {
+                const input = document.getElementById('storageCode');
                 const code = input ? input.value : '';
 
                 if (code === '376') {
-                    this.puzzleStates.cabinet.locked = false;
-                    this.puzzleStates.cabinet.solved = true;
-                    this.addLog("Cabinet unlocked! You found the Black Cube!", "important");
-                    this.openInteractionModal('cabinet');
+                    this.puzzleStates.storage.locked = false;
+                    this.addLog("Storage cabinet unlocked!", "important");
+                    this.openInteractionModal('storage');
                 } else {
                     this.addLog("Wrong code...", "error");
                 }
             }
 
+            collectStorageKey() {
+                if (!this.hasClue('key')) {
+                    this.addClue({ icon: '🔑', text: 'Clue 4: Brass Key', type: 'key' });
+                    this.addLog("Clue 4: Obtained the brass key!", "important");
+                }
+                this.closeModal();
+            }
+
+            getCabinetModal() {
+                if (this.puzzleStates.cabinet.locked && this.hasClue('key')) {
+                    return `
+                        <h2 class="modal-title">Tall Cabinet</h2>
+                        <div class="modal-description">
+                            A tall wooden cabinet with a keyhole.
+                            You have the brass key - try using it!
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 100px; margin: 30px 0;">🚪</div>
+                            <div class="lock-icon">🔒</div>
+                            <div style="color: #c9a56f; font-style: italic;">
+                                The brass key fits perfectly...
+                            </div>
+                        </div>
+                        <button class="modal-btn" onclick="game.tryUnlockCabinet()">Use Key</button>
+                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
+                    `;
+                } else if (!this.puzzleStates.cabinet.locked) {
+                    return `
+                        <h2 class="modal-title">Tall Cabinet</h2>
+                        <div class="modal-description">
+                            The cabinet door swings open with a creak. Inside, resting on black velvet,
+                            is the mysterious Black Cube!
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 120px; margin: 30px 0;">⬛</div>
+                            <div style="color: #c9a56f; font-size: 20px; margin: 20px 0;">
+                                The final piece of the puzzle...
+                            </div>
+                        </div>
+                        <button class="modal-btn" onclick="game.winGame()">Take the Black Cube</button>
+                    `;
+                } else {
+                    return `
+                        <h2 class="modal-title">Tall Cabinet</h2>
+                        <div class="modal-description">
+                            A tall wooden cabinet with a sturdy lock.
+                            You need a key to open it.
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 100px; margin: 30px 0;">🚪</div>
+                            <div class="lock-icon">🔒</div>
+                            <div style="color: #888; font-style: italic;">
+                                Locked tight. Where's the key?
+                            </div>
+                        </div>
+                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
+                    `;
+                }
+            }
+
+            tryUnlockCabinet() {
+                if (this.hasClue('key')) {
+                    this.puzzleStates.cabinet.locked = false;
+                    this.addLog("Cabinet unlocked with the brass key!", "important");
+                    this.openInteractionModal('cabinet');
+                } else {
+                    this.addLog("You need a key to unlock this cabinet...", "error");
+                }
+            }
+
             winGame() {
                 this.addClue({ icon: '⬛', text: 'Black Cube', type: 'final' });
-                this.addLog("CONGRATULATIONS! You escaped the room!", "important");
+                this.addLog("Found the Black Cube! Now find the exit door!", "important");
                 this.puzzleStates.gameWon = true;
                 this.closeModal();
 
                 setTimeout(() => {
-                    alert('🎉 Congratulations! You solved the mystery and found the Black Cube!\n\nNow you can use it to open the exit door on Wall 4!');
+                    alert('🎉 You found the Black Cube!\n\nNow use it to open the exit door on Wall 1!');
                 }, 500);
             }
 
@@ -1035,21 +1171,46 @@
             }
 
             getBookshelfModal() {
-                return `
-                    <h2 class="modal-title">Bookshelf</h2>
-                    <div class="modal-description">
-                        An old wooden bookshelf filled with dusty volumes.
-                        You pull out a few books - they're all written in strange symbols.
-                        One book titled "The Theory of Cubes" catches your eye...
-                    </div>
-                    <div class="furniture-view">
-                        <div style="font-size: 100px; margin: 30px 0;">📚</div>
-                        <div style="color: #c9a56f; font-style: italic; margin: 20px 0;">
-                            "When darkness is complete, the cube shall provide the key to freedom."
+                if (!this.puzzleStates.bookshelf.examined) {
+                    this.puzzleStates.bookshelf.examined = true;
+                    return `
+                        <h2 class="modal-title">Bookshelf</h2>
+                        <div class="modal-description">
+                            An old wooden bookshelf filled with dusty volumes.
+                            You pull out a thick book with a black cover. Inside, a note falls out...
                         </div>
-                    </div>
-                    <button class="modal-btn" onclick="game.closeModal()">Close</button>
-                `;
+                        <div class="furniture-view">
+                            <div style="font-size: 100px; margin: 30px 0;">📚</div>
+                            <div style="color: #c9a56f; font-style: italic; margin: 20px 0; font-size: 18px;">
+                                "The windows hold secrets written in light.<br>
+                                Look closely at the glass when shadows are right."
+                            </div>
+                        </div>
+                        <button class="modal-btn" onclick="game.collectBookClue()">Take the Note</button>
+                    `;
+                } else {
+                    return `
+                        <h2 class="modal-title">Bookshelf</h2>
+                        <div class="modal-description">
+                            The bookshelf is now mostly empty. You already took the important note.
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 100px; margin: 30px 0;">📚</div>
+                            <div style="color: #888; font-style: italic;">
+                                Just old books remain...
+                            </div>
+                        </div>
+                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
+                    `;
+                }
+            }
+
+            collectBookClue() {
+                if (!this.hasClue('note1')) {
+                    this.addClue({ icon: '📜', text: 'Clue 1: Check windows', type: 'note1' });
+                    this.addLog("Clue 1: Found a cryptic note about windows!", "important");
+                }
+                this.closeModal();
             }
 
 
