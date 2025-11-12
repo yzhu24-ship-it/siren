@@ -1989,7 +1989,7 @@ print(total)`,
                 }
             }
 
-            // 第二阶段：行走动画（1200ms），带迈步动作
+            // 第二阶段：横向行走动画（1200ms），带迈步动作
             const targetX = door === 'left' ? canvas.width * 0.25 : canvas.width * 0.75;
             const walkDuration = 1200;
             const startX = gameState.playerX;
@@ -2006,7 +2006,32 @@ print(total)`,
                 if (progress < 1) {
                     requestAnimationFrame(walkAnimation);
                 } else {
-                    // 行走完成，重置行走进度
+                    // 横向行走完成，开始向前走
+                    gameState.walkProgress = 0;
+                    render();
+                    forwardWalkAnimation();
+                }
+            }
+
+            // 第三阶段：向前走到门前（800ms）
+            const doorY = canvas.height * 0.35;
+            const targetY = doorY + 200; // 走到门前
+            const forwardDuration = 800;
+            const startY = gameState.playerY;
+            const forwardStartTime = Date.now();
+
+            function forwardWalkAnimation() {
+                const elapsed = Date.now() - forwardStartTime;
+                const progress = Math.min(elapsed / forwardDuration, 1);
+
+                gameState.playerY = startY + (targetY - startY) * easeInOutQuad(progress);
+                gameState.walkProgress = progress; // 更新行走进度用于迈步动画
+                render();
+
+                if (progress < 1) {
+                    requestAnimationFrame(forwardWalkAnimation);
+                } else {
+                    // 所有行走完成，重置行走进度
                     gameState.walkProgress = 0;
                     render();
 
