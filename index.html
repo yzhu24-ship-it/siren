@@ -413,16 +413,6 @@
             position: relative;
         }
 
-        .wall-4::after {
-            content: 'Empty Wall';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 36px;
-            color: rgba(0, 0, 0, 0.1);
-        }
-
         /* Placeholder objects drawn with CSS */
         .portrait-placeholder {
             width: 200px;
@@ -529,6 +519,75 @@
             transform: translate(-50%, -50%);
             font-size: 60px;
         }
+
+        .door-placeholder {
+            width: 200px;
+            height: 320px;
+            background: linear-gradient(135deg, #8b6935 0%, #6b4f25 100%);
+            border: 8px solid #5a3f1f;
+            border-radius: 10px 10px 5px 5px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .door-placeholder::before {
+            content: '🚪';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 80px;
+        }
+
+        .door-placeholder::after {
+            content: '';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            width: 15px;
+            height: 15px;
+            background: #d4a574;
+            border-radius: 50%;
+            transform: translateY(-50%);
+        }
+
+        .bookshelf-placeholder {
+            width: 220px;
+            height: 280px;
+            background: linear-gradient(135deg, #c9964a 0%, #8b6935 100%);
+            border: 6px solid #5a3f1f;
+            border-radius: 5px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        .bookshelf-placeholder::before {
+            content: '📚';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 80px;
+        }
+
+        .lamp-placeholder {
+            width: 100px;
+            height: 180px;
+            background: linear-gradient(180deg, #d4a574 0%, #8b6935 100%);
+            border: 4px solid #6b4f25;
+            border-radius: 50% 50% 10px 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .lamp-placeholder::before {
+            content: '💡';
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 50px;
+        }
     </style>
 </head>
 <body>
@@ -587,9 +646,28 @@
                     </div>
                 </div>
 
-                <!-- Wall 4: Empty -->
+                <!-- Wall 4: Door, Bookshelf, and Lamp -->
                 <div class="wall wall-4" id="wall-4">
-                    <!-- This wall is empty as specified -->
+                    <!-- Exit Door hotspot (center) -->
+                    <div class="hotspot door-placeholder"
+                         style="position: absolute; top: 20%; left: 50%; transform: translateX(-50%);"
+                         onclick="game.clickHotspot('door')"
+                         id="hotspot-door">
+                    </div>
+
+                    <!-- Bookshelf hotspot (left side) -->
+                    <div class="hotspot bookshelf-placeholder"
+                         style="position: absolute; top: 25%; left: 12%;"
+                         onclick="game.clickHotspot('bookshelf')"
+                         id="hotspot-bookshelf">
+                    </div>
+
+                    <!-- Lamp hotspot (right side, upper) -->
+                    <div class="hotspot lamp-placeholder"
+                         style="position: absolute; top: 18%; right: 15%;"
+                         onclick="game.clickHotspot('lamp')"
+                         id="hotspot-lamp">
+                    </div>
                 </div>
             </div>
 
@@ -640,7 +718,8 @@
                     portrait: { solved: false, examined: false },
                     desk: { solved: false, locked: true },
                     clock: { solved: false, examined: false },
-                    cabinet: { solved: false, locked: true }
+                    cabinet: { solved: false, locked: true },
+                    gameWon: false
                 };
 
                 this.init();
@@ -696,7 +775,10 @@
                     window: "Window",
                     desk: "Wooden Desk",
                     clock: "Grandfather Clock",
-                    cabinet: "Cabinet"
+                    cabinet: "Cabinet",
+                    door: "Exit Door",
+                    bookshelf: "Bookshelf",
+                    lamp: "Oil Lamp"
                 };
                 return names[key] || key;
             }
@@ -722,6 +804,15 @@
                         break;
                     case 'cabinet':
                         content = this.getCabinetModal();
+                        break;
+                    case 'door':
+                        content = this.getDoorModal();
+                        break;
+                    case 'bookshelf':
+                        content = this.getBookshelfModal();
+                        break;
+                    case 'lamp':
+                        content = this.getLampModal();
                         break;
                 }
 
@@ -944,11 +1035,87 @@
             winGame() {
                 this.addClue({ icon: '⬛', text: 'Black Cube', type: 'final' });
                 this.addLog("CONGRATULATIONS! You escaped the room!", "important");
+                this.puzzleStates.gameWon = true;
                 this.closeModal();
 
                 setTimeout(() => {
-                    alert('🎉 Congratulations! You solved the mystery and found the Black Cube!\n\nThank you for playing!');
+                    alert('🎉 Congratulations! You solved the mystery and found the Black Cube!\n\nNow you can use it to open the exit door on Wall 4!');
                 }, 500);
+            }
+
+            getDoorModal() {
+                if (!this.puzzleStates.gameWon) {
+                    return `
+                        <h2 class="modal-title">Exit Door</h2>
+                        <div class="modal-description">
+                            A heavy wooden door. It's locked from the inside.
+                            You need something special to unlock it...
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 120px; margin: 30px 0;">🚪</div>
+                            <div class="lock-icon">🔒</div>
+                            <div style="color: #ff6b6b;">
+                                The door won't budge. You need to find the Black Cube first.
+                            </div>
+                        </div>
+                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
+                    `;
+                } else {
+                    return `
+                        <h2 class="modal-title">Exit Door</h2>
+                        <div class="modal-description">
+                            You place the Black Cube into the door's lock mechanism.
+                            With a deep rumble, the door swings open!
+                            Blinding light floods in from the outside...
+                        </div>
+                        <div class="furniture-view">
+                            <div style="font-size: 120px; margin: 30px 0;">🚪✨</div>
+                            <div style="color: #90ff90; font-size: 24px; margin: 20px 0;">
+                                Freedom at last!
+                            </div>
+                            <div style="color: #c9a56f; font-style: italic; margin: 20px 0;">
+                                "Thank you for playing Rusty Lake Mystery!"
+                            </div>
+                        </div>
+                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
+                    `;
+                }
+            }
+
+            getBookshelfModal() {
+                return `
+                    <h2 class="modal-title">Bookshelf</h2>
+                    <div class="modal-description">
+                        An old wooden bookshelf filled with dusty volumes.
+                        You pull out a few books - they're all written in strange symbols.
+                        One book titled "The Theory of Cubes" catches your eye...
+                    </div>
+                    <div class="furniture-view">
+                        <div style="font-size: 100px; margin: 30px 0;">📚</div>
+                        <div style="color: #c9a56f; font-style: italic; margin: 20px 0;">
+                            "When darkness is complete, the cube shall provide the key to freedom."
+                        </div>
+                    </div>
+                    <button class="modal-btn" onclick="game.closeModal()">Close</button>
+                `;
+            }
+
+            getLampModal() {
+                return `
+                    <h2 class="modal-title">Oil Lamp</h2>
+                    <div class="modal-description">
+                        An antique oil lamp mounted on the wall.
+                        The flame flickers gently, casting dancing shadows across the room.
+                        It provides the only light in this mysterious place.
+                    </div>
+                    <div class="furniture-view">
+                        <div style="font-size: 100px; margin: 30px 0;">💡</div>
+                        <div style="color: #f0d98a; font-style: italic;">
+                            The warm glow is strangely comforting...
+                        </div>
+                    </div>
+                    <button class="modal-btn" onclick="game.closeModal()">Close</button>
+                `;
             }
 
             addClue(clue) {
