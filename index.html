@@ -980,8 +980,8 @@ print(total)`,
             const facing = gameState.facing;
             const walkProgress = gameState.walkProgress;
 
-            // 计算迈步动画
-            const stepCycle = Math.sin(walkProgress * Math.PI * 4) * 8; // 腿部前后摆动
+            // 计算迈步动画 - 增加步幅使动作更明显
+            const stepCycle = Math.sin(walkProgress * Math.PI * 6) * 12; // 腿部前后摆动，增加频率和幅度
             const leftLegOffset = gameState.animating ? stepCycle : 0;
             const rightLegOffset = gameState.animating ? -stepCycle : 0;
 
