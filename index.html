@@ -895,7 +895,114 @@
                     gameWon: false
                 };
 
+                // Audio system
+                this.sounds = {
+                    bird: new Audio(),
+                    metal: new Audio(),
+                    wood: new Audio()
+                };
+
+                // Set up sounds (using data URIs for simple sine wave sounds as placeholders)
+                this.setupSounds();
+
                 this.init();
+            }
+
+            setupSounds() {
+                // Create simple sound effects using Web Audio API
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.audioContext = new AudioContext();
+
+                // These are placeholder sounds - you can replace with real audio files
+                // Just set: this.sounds.bird.src = 'bird-sound.mp3';
+                this.sounds.bird.volume = 0.5;
+                this.sounds.metal.volume = 0.5;
+                this.sounds.wood.volume = 0.5;
+            }
+
+            playSound(soundType) {
+                try {
+                    if (soundType === 'bird') {
+                        this.playBirdSound();
+                    } else if (soundType === 'metal') {
+                        this.playMetalSound();
+                    } else if (soundType === 'wood') {
+                        this.playWoodSound();
+                    }
+                } catch (e) {
+                    console.log('Audio playback failed:', e);
+                }
+            }
+
+            playBirdSound() {
+                // Synthesize bird chirp sound
+                const ctx = this.audioContext;
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(2000, ctx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(3000, ctx.currentTime + 0.1);
+                oscillator.frequency.exponentialRampToValueAtTime(2500, ctx.currentTime + 0.2);
+
+                gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+
+                oscillator.start(ctx.currentTime);
+                oscillator.stop(ctx.currentTime + 0.3);
+            }
+
+            playMetalSound() {
+                // Synthesize metal clang sound
+                const ctx = this.audioContext;
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                oscillator.type = 'square';
+                oscillator.frequency.setValueAtTime(200, ctx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.5);
+
+                gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
+
+                oscillator.start(ctx.currentTime);
+                oscillator.stop(ctx.currentTime + 0.6);
+            }
+
+            playWoodSound() {
+                // Synthesize wood knock sound
+                const ctx = this.audioContext;
+                const bufferSize = ctx.sampleRate * 0.1;
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+
+                // Generate noise burst for wood sound
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const source = ctx.createBufferSource();
+                const filter = ctx.createBiquadFilter();
+                const gainNode = ctx.createGain();
+
+                source.buffer = buffer;
+                filter.type = 'lowpass';
+                filter.frequency.value = 500;
+
+                source.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+
+                source.start(ctx.currentTime);
             }
 
             init() {
@@ -922,6 +1029,15 @@
             }
 
             clickHotspot(itemKey) {
+                // Play appropriate sound effect
+                if (itemKey === 'window1' || itemKey === 'window2') {
+                    this.playSound('bird');
+                } else if (itemKey === 'door') {
+                    this.playSound('metal');
+                } else if (itemKey === 'desk' || itemKey === 'bookshelf' || itemKey === 'cabinet' || itemKey === 'storage') {
+                    this.playSound('wood');
+                }
+
                 // Clear previous selection
                 this.clearSelection();
 
