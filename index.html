@@ -664,47 +664,56 @@ print(total)`,
             ending_mediocre: {
                 type: 'ending',
                 title: "Ordinary Life",
-                message: "Despite studying hard, results were mediocre. You got into an average college and live a simple but stable life."
+                message: "Despite studying hard, results were mediocre. You got into an average college and live a simple but stable life.",
+                outfit: 'casual'
             },
             ending_olympic_champion: {
                 type: 'ending',
                 title: "Olympic Champion",
-                message: "Through relentless training, you represented your country at the Olympics and won gold! You are a national hero!"
+                message: "Through relentless training, you represented your country at the Olympics and won gold! You are a national hero!",
+                outfit: 'champion'
             },
             ending_coach: {
                 type: 'ending',
                 title: "Gold Medal Coach",
-                message: "You retired early and became a coach, training many world champions."
+                message: "You retired early and became a coach, training many world champions.",
+                outfit: 'coach'
             },
             ending_failed_athlete: {
                 type: 'ending',
                 title: "Regretful Retirement",
-                message: "Despite your great efforts, you never made the national team and retired with regret."
+                message: "Despite your great efforts, you never made the national team and retired with regret.",
+                outfit: 'sport'
             },
             ending_restart_success: {
                 type: 'ending',
                 title: "Fresh Start",
-                message: "You adjusted your life direction in time. Through hard study, you got into a good university and found a satisfying job."
+                message: "You adjusted your life direction in time. Through hard study, you got into a good university and found a satisfying job.",
+                outfit: 'business'
             },
             ending_liberal_arts_success: {
                 type: 'ending',
                 title: "Career Elite",
-                message: "You excelled in college, joined a major company after graduation, and your life went smoothly."
+                message: "You excelled in college, joined a major company after graduation, and your life went smoothly.",
+                outfit: 'suit'
             },
             ending_liberal_arts_fail: {
                 type: 'ending',
                 title: "Office Clerk",
-                message: "You slacked off in college with average grades and became an ordinary office clerk."
+                message: "You slacked off in college with average grades and became an ordinary office clerk.",
+                outfit: 'business'
             },
             ending_science_success: {
                 type: 'ending',
                 title: "Tech Director",
-                message: "With clear logic and excellent grades, you became a tech director leading teams through challenges."
+                message: "With clear logic and excellent grades, you became a tech director leading teams through challenges.",
+                outfit: 'suit'
             },
             ending_science_fail: {
                 type: 'ending',
                 title: "Code Monkey",
-                message: "With poor fundamentals and bad grades, you became an ordinary programmer working overtime daily."
+                message: "With poor fundamentals and bad grades, you became an ordinary programmer working overtime daily.",
+                outfit: 'tshirt'
             }
         };
 
@@ -737,7 +746,8 @@ print(total)`,
             playerChoices: [], // 记录玩家的选择历史
             minigameActive: false,
             facing: 'front', // 'front', 'left', 'right'
-            walkProgress: 0 // 行走进度 0-1
+            walkProgress: 0, // 行走进度 0-1
+            outfit: 'casual' // 服装类型: 'casual', 'sport', 'suit', 'tshirt', 'champion'
         };
         // ============================================
         // 数独游戏逻辑
@@ -973,6 +983,143 @@ print(total)`,
             }
         }
 
+        // 绘制服装
+        function drawOutfit(x, y, outfit, facing, bounce) {
+            const outline = '#B0B0B0';
+
+            if (outfit === 'casual') {
+                // 休闲服 - 简单的T恤和裤子
+                if (facing === 'front' || facing === 'back') {
+                    // T恤
+                    ctx.fillStyle = '#87CEEB'; // 天蓝色
+                    ctx.fillRect(x - 18, y - 15 + bounce, 36, 25);
+                    ctx.strokeStyle = outline;
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x - 18, y - 15 + bounce, 36, 25);
+                }
+            } else if (outfit === 'sport') {
+                // 运动服 - 鲜艳的运动上衣
+                if (facing === 'front' || facing === 'back') {
+                    ctx.fillStyle = '#FF6B6B'; // 红色运动服
+                    ctx.fillRect(x - 18, y - 15 + bounce, 36, 25);
+                    // 白色条纹
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(x - 18, y - 5 + bounce, 36, 3);
+                    ctx.strokeStyle = outline;
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x - 18, y - 15 + bounce, 36, 25);
+                }
+            } else if (outfit === 'champion') {
+                // 冠军服 - 运动服 + 金牌
+                if (facing === 'front' || facing === 'back') {
+                    // 红色运动服
+                    ctx.fillStyle = '#FF6B6B';
+                    ctx.fillRect(x - 18, y - 15 + bounce, 36, 25);
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(x - 18, y - 5 + bounce, 36, 3);
+                    ctx.strokeStyle = outline;
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x - 18, y - 15 + bounce, 36, 25);
+
+                    // 金牌
+                    ctx.fillStyle = '#FFD700'; // 金色
+                    ctx.beginPath();
+                    ctx.arc(x, y + 5 + bounce, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#DAA520';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    // 绶带
+                    ctx.strokeStyle = '#FF0000';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - 15 + bounce);
+                    ctx.lineTo(x, y - 3 + bounce);
+                    ctx.stroke();
+                }
+            } else if (outfit === 'coach') {
+                // 教练服 - 运动服 + 哨子
+                if (facing === 'front' || facing === 'back') {
+                    ctx.fillStyle = '#4A90E2'; // 蓝色教练服
+                    ctx.fillRect(x - 18, y - 15 + bounce, 36, 25);
+                    ctx.strokeStyle = outline;
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x - 18, y - 15 + bounce, 36, 25);
+
+                    // 哨子
+                    ctx.fillStyle = '#C0C0C0'; // 银色哨子
+                    ctx.beginPath();
+                    ctx.ellipse(x, y + 8 + bounce, 4, 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#808080';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    // 哨子挂绳
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - 15 + bounce);
+                    ctx.lineTo(x, y + 5 + bounce);
+                    ctx.stroke();
+                }
+            } else if (outfit === 'suit') {
+                // 西装 - 正式商务装
+                if (facing === 'front' || facing === 'back') {
+                    // 西装外套
+                    ctx.fillStyle = '#2C3E50'; // 深蓝色西装
+                    ctx.fillRect(x - 18, y - 15 + bounce, 36, 25);
+                    // 白衬衫领子
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath();
+                    ctx.moveTo(x - 8, y - 12 + bounce);
+                    ctx.lineTo(x, y - 8 + bounce);
+                    ctx.lineTo(x + 8, y - 12 + bounce);
+                    ctx.fill();
+                    // 领带
+                    ctx.fillStyle = '#E74C3C'; // 红色领带
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - 8 + bounce);
+                    ctx.lineTo(x - 3, y + 5 + bounce);
+                    ctx.lineTo(x + 3, y + 5 + bounce);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = outline;
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x - 18, y - 15 + bounce, 36, 25);
+                }
+            } else if (outfit === 'business') {
+                // 商务休闲 - 衬衫
+                if (facing === 'front' || facing === 'back') {
+                    ctx.fillStyle = '#FFFFFF'; // 白衬衫
+                    ctx.fillRect(x - 18, y - 15 + bounce, 36, 25);
+                    ctx.strokeStyle = outline;
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x - 18, y - 15 + bounce, 36, 25);
+                    // 纽扣
+                    ctx.fillStyle = '#95A5A6';
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.arc(x, y - 10 + i * 8 + bounce, 1.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            } else if (outfit === 'tshirt') {
+                // T恤 - 程序员装扮
+                if (facing === 'front' || facing === 'back') {
+                    ctx.fillStyle = '#34495E'; // 深灰色T恤
+                    ctx.fillRect(x - 18, y - 15 + bounce, 36, 25);
+                    // 简单的代码图案
+                    ctx.fillStyle = '#ECF0F1';
+                    ctx.font = 'bold 10px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('</>', x, y + bounce);
+                    ctx.strokeStyle = outline;
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x - 18, y - 15 + bounce, 36, 25);
+                }
+            }
+        }
+
         // 绘制白色粘土人角色
         function drawCharacter(x, y) {
             const time = Date.now() / 1000;
@@ -1051,6 +1198,9 @@ print(total)`,
                 ctx.arc(x + 28, y + 10 + bounce, 5, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
+
+                // 绘制服装
+                drawOutfit(x, y, gameState.outfit, facing, bounce);
 
                 // 头部
                 ctx.fillStyle = white;
@@ -1226,6 +1376,9 @@ print(total)`,
                 ctx.arc(x + 28, y + 10 + bounce, 5, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
+
+                // 绘制服装
+                drawOutfit(x, y, gameState.outfit, facing, bounce);
 
                 // 头部（背面，看不到脸）
                 ctx.fillStyle = white;
@@ -2126,6 +2279,10 @@ print(total)`,
                                 showHurdlesGame();
                             }
                         } else if (newModule.type === 'ending') {
+                            // 设置结局对应的服装
+                            if (newModule.outfit) {
+                                gameState.outfit = newModule.outfit;
+                            }
                             render();
                             showMessage(newModule.title, newModule.message, 5000);
                         } else {
