@@ -502,67 +502,174 @@
                 0 2px 4px rgba(0,0,0,0.3);
         }
 
-        /* Desk legs using background gradients */
+        /* Desk legs using background gradients - ENHANCED VISIBILITY */
         #hotspot-desk {
             background-image:
-                /* Front left leg */
+                /* Front left leg - wider and darker borders */
                 linear-gradient(to bottom,
                     transparent 0%,
                     transparent 24%,
-                    #8b6935 24%,
+                    #4a2f0f 24%,
+                    #8b6935 24.5%,
                     #a88550 25%,
-                    #8b6935 26%,
-                    #6b4f25 27%,
+                    #c9964a 26%,
+                    #8b6935 27%,
+                    #6b4f25 45%,
                     #5a3f1f 50%,
-                    #6b4f25 73%,
-                    #8b6935 74%,
+                    #6b4f25 55%,
+                    #8b6935 73%,
                     #6b4f25 100%
-                ) 10% 0/12% 100% no-repeat,
-                /* Front right leg */
+                ) 8% 0/15% 100% no-repeat,
+                /* Front right leg - wider and darker borders */
                 linear-gradient(to bottom,
                     transparent 0%,
                     transparent 24%,
-                    #8b6935 24%,
+                    #4a2f0f 24%,
+                    #8b6935 24.5%,
                     #a88550 25%,
-                    #8b6935 26%,
-                    #6b4f25 27%,
+                    #c9964a 26%,
+                    #8b6935 27%,
+                    #6b4f25 45%,
                     #5a3f1f 50%,
-                    #6b4f25 73%,
-                    #8b6935 74%,
+                    #6b4f25 55%,
+                    #8b6935 73%,
                     #6b4f25 100%
-                ) 78% 0/12% 100% no-repeat,
-                /* Back left leg (slightly darker) */
+                ) 77% 0/15% 100% no-repeat,
+                /* Back left leg shadow */
                 linear-gradient(to bottom,
                     transparent 0%,
                     transparent 24%,
-                    #6b4f25 24%,
-                    #8b6935 25%,
+                    #3a1f0a 24%,
+                    #5a3f1f 25%,
                     #6b4f25 26%,
-                    #5a3f1f 27%,
+                    #5a3f1f 45%,
                     #4a2f0f 50%,
-                    #5a3f1f 73%,
-                    #6b4f25 74%,
+                    #5a3f1f 55%,
+                    #6b4f25 73%,
                     #5a3f1f 100%
-                ) 20% 0/10% 100% no-repeat,
-                /* Back right leg (slightly darker) */
+                ) 18% 0/13% 100% no-repeat,
+                /* Back right leg shadow */
                 linear-gradient(to bottom,
                     transparent 0%,
                     transparent 24%,
-                    #6b4f25 24%,
-                    #8b6935 25%,
+                    #3a1f0a 24%,
+                    #5a3f1f 25%,
                     #6b4f25 26%,
-                    #5a3f1f 27%,
+                    #5a3f1f 45%,
                     #4a2f0f 50%,
-                    #5a3f1f 73%,
-                    #6b4f25 74%,
+                    #5a3f1f 55%,
+                    #6b4f25 73%,
                     #5a3f1f 100%
-                ) 70% 0/10% 100% no-repeat,
+                ) 69% 0/13% 100% no-repeat,
+                /* Leg shadows on ground - more visible */
+                radial-gradient(ellipse at center,
+                    rgba(0,0,0,0.5) 0%,
+                    rgba(0,0,0,0.3) 40%,
+                    transparent 70%
+                ) 50% 96%/90% 8% no-repeat;
+
+            /* Add dark borders around legs for definition */
+            background-color: transparent;
+        }
+
+        /* Add side borders to legs for more definition */
+        #hotspot-desk {
+            background-image:
+                /* Left border of front left leg */
+                linear-gradient(to right,
+                    transparent 0%,
+                    transparent 7.5%,
+                    #3a1f0a 7.5%,
+                    #3a1f0a 8%,
+                    transparent 8%
+                ) 0 24%/100% 76% no-repeat,
+                /* Right border of front left leg */
+                linear-gradient(to right,
+                    transparent 0%,
+                    transparent 22.5%,
+                    #3a1f0a 22.5%,
+                    #3a1f0a 23%,
+                    transparent 23%
+                ) 0 24%/100% 76% no-repeat,
+                /* Left border of front right leg */
+                linear-gradient(to right,
+                    transparent 0%,
+                    transparent 76.5%,
+                    #3a1f0a 76.5%,
+                    #3a1f0a 77%,
+                    transparent 77%
+                ) 0 24%/100% 76% no-repeat,
+                /* Right border of front right leg */
+                linear-gradient(to right,
+                    transparent 0%,
+                    transparent 91.5%,
+                    #3a1f0a 91.5%,
+                    #3a1f0a 92%,
+                    transparent 92%
+                ) 0 24%/100% 76% no-repeat,
+                /* Front left leg body */
+                linear-gradient(to bottom,
+                    transparent 0%,
+                    transparent 24%,
+                    #4a2f0f 24%,
+                    #8b6935 24.5%,
+                    #a88550 25%,
+                    #c9964a 26%,
+                    #8b6935 27%,
+                    #6b4f25 45%,
+                    #5a3f1f 50%,
+                    #6b4f25 55%,
+                    #8b6935 73%,
+                    #6b4f25 100%
+                ) 8% 0/15% 100% no-repeat,
+                /* Front right leg body */
+                linear-gradient(to bottom,
+                    transparent 0%,
+                    transparent 24%,
+                    #4a2f0f 24%,
+                    #8b6935 24.5%,
+                    #a88550 25%,
+                    #c9964a 26%,
+                    #8b6935 27%,
+                    #6b4f25 45%,
+                    #5a3f1f 50%,
+                    #6b4f25 55%,
+                    #8b6935 73%,
+                    #6b4f25 100%
+                ) 77% 0/15% 100% no-repeat,
+                /* Back left leg shadow */
+                linear-gradient(to bottom,
+                    transparent 0%,
+                    transparent 24%,
+                    #3a1f0a 24%,
+                    #5a3f1f 25%,
+                    #6b4f25 26%,
+                    #5a3f1f 45%,
+                    #4a2f0f 50%,
+                    #5a3f1f 55%,
+                    #6b4f25 73%,
+                    #5a3f1f 100%
+                ) 18% 0/13% 100% no-repeat,
+                /* Back right leg shadow */
+                linear-gradient(to bottom,
+                    transparent 0%,
+                    transparent 24%,
+                    #3a1f0a 24%,
+                    #5a3f1f 25%,
+                    #6b4f25 26%,
+                    #5a3f1f 45%,
+                    #4a2f0f 50%,
+                    #5a3f1f 55%,
+                    #6b4f25 73%,
+                    #5a3f1f 100%
+                ) 69% 0/13% 100% no-repeat,
                 /* Leg shadows on ground */
                 radial-gradient(ellipse at center,
-                    rgba(0,0,0,0.4) 0%,
-                    rgba(0,0,0,0.2) 50%,
-                    transparent 70%
-                ) 50% 95%/80% 10% no-repeat;
+                    rgba(0,0,0,0.6) 0%,
+                    rgba(0,0,0,0.4) 40%,
+                    rgba(0,0,0,0.1) 70%,
+                    transparent 80%
+                ) 50% 96%/90% 8% no-repeat;
         }
 
         /* Tall Cabinet - Wood with drawer details */
