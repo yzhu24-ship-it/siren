@@ -1172,6 +1172,75 @@ print(total)`,
                 ctx.beginPath();
                 ctx.arc(x + dir * 15, y - 32 + bounce, 5, dir > 0 ? Math.PI * 0.8 : Math.PI * 0.2, dir > 0 ? Math.PI * 1.2 : Math.PI * 1.8);
                 ctx.stroke();
+            } else if (facing === 'back') {
+                // ========== 背面视角 ==========
+                // 腿（圆柱形，背面视角）
+                ctx.fillStyle = darkGray;
+                ctx.strokeStyle = outline;
+                ctx.lineWidth = 1.5;
+                ctx.fillRect(x - 12, y + 15 + leftLegOffset, 8, 30);
+                ctx.strokeRect(x - 12, y + 15 + leftLegOffset, 8, 30);
+                ctx.fillRect(x + 4, y + 15 + rightLegOffset, 8, 30);
+                ctx.strokeRect(x + 4, y + 15 + rightLegOffset, 8, 30);
+
+                // 脚（背面）
+                ctx.fillStyle = white;
+                ctx.beginPath();
+                ctx.ellipse(x - 8, y + 48 + leftLegOffset, 6, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.ellipse(x + 8, y + 48 + rightLegOffset, 6, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // 身体（背面）
+                ctx.fillStyle = white;
+                ctx.beginPath();
+                ctx.roundRect(x - 18, y - 15 + bounce, 36, 35, 8);
+                ctx.fill();
+                ctx.stroke();
+
+                // 手臂（背面）
+                ctx.lineWidth = 8;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = darkGray;
+                ctx.beginPath();
+                ctx.moveTo(x - 18, y - 5 + bounce);
+                ctx.lineTo(x - 28, y + 10 + bounce);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x + 18, y - 5 + bounce);
+                ctx.lineTo(x + 28, y + 10 + bounce);
+                ctx.stroke();
+
+                // 手（背面）
+                ctx.fillStyle = white;
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = outline;
+                ctx.beginPath();
+                ctx.arc(x - 28, y + 10 + bounce, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(x + 28, y + 10 + bounce, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // 头部（背面，看不到脸）
+                ctx.fillStyle = white;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(x, y - 35 + bounce, 28, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // 头发轮廓线（背面的一些细节）
+                ctx.strokeStyle = outline;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(x, y - 35 + bounce, 26, Math.PI * 0.2, Math.PI * 0.8);
+                ctx.stroke();
             }
         }
 
@@ -2031,7 +2100,48 @@ print(total)`,
                 if (progress < 1) {
                     requestAnimationFrame(forwardWalkAnimation);
                 } else {
-                    // 所有行走完成，重置行走进度
+                    // 向前走完成，重置行走进度，开始转身背对屏幕
+                    gameState.walkProgress = 0;
+                    render();
+                    turnBackAnimation();
+                }
+            }
+
+            // 第四阶段：转身背对屏幕（200ms）
+            const turnBackDuration = 200;
+            const turnBackStartTime = Date.now();
+
+            function turnBackAnimation() {
+                const elapsed = Date.now() - turnBackStartTime;
+                if (elapsed < turnBackDuration) {
+                    requestAnimationFrame(turnBackAnimation);
+                } else {
+                    // 转身完成，设置为背对屏幕
+                    gameState.facing = 'back';
+                    render();
+                    // 开始贴门动画
+                    approachDoorAnimation();
+                }
+            }
+
+            // 第五阶段：向前走贴到门（600ms）
+            const approachDuration = 600;
+            const finalTargetY = doorY + 100; // 贴近门
+            const approachStartY = gameState.playerY;
+            const approachStartTime = Date.now();
+
+            function approachDoorAnimation() {
+                const elapsed = Date.now() - approachStartTime;
+                const progress = Math.min(elapsed / approachDuration, 1);
+
+                gameState.playerY = approachStartY + (finalTargetY - approachStartY) * easeInOutQuad(progress);
+                gameState.walkProgress = progress; // 更新行走进度用于迈步动画
+                render();
+
+                if (progress < 1) {
+                    requestAnimationFrame(approachDoorAnimation);
+                } else {
+                    // 所有动画完成，重置行走进度
                     gameState.walkProgress = 0;
                     render();
 
