@@ -966,74 +966,147 @@ print(total)`,
             }
         }
 
-        // 绘制软体橡皮人角色
+        // 绘制白色粘土人角色
         function drawCharacter(x, y) {
             const time = Date.now() / 1000;
-            const bounce = Math.sin(time * 2) * 3;
+            const bounce = Math.sin(time * 2) * 2; // 轻微弹跳
 
-            // 阴影
-            ctx.fillStyle = config.shadowColor;
+            // 地面阴影
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
             ctx.beginPath();
-            ctx.ellipse(x, y + 45, 35, 10, 0, 0, Math.PI * 2);
+            ctx.ellipse(x, y + 48, 25, 8, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // 身体
-            ctx.fillStyle = config.characterColor;
-            ctx.strokeStyle = config.characterOutline;
-            ctx.lineWidth = 3;
+            // 颜色设置 - 纯白色粘土人
+            const white = '#FFFFFF';
+            const lightGray = '#F0F0F0';
+            const darkGray = '#D0D0D0';
+            const outline = '#B0B0B0';
 
+            // === 腿（圆柱形）===
+            // 左腿
+            const legGradientL = ctx.createLinearGradient(x - 10, y + 15, x - 5, y + 15);
+            legGradientL.addColorStop(0, lightGray);
+            legGradientL.addColorStop(0.5, white);
+            legGradientL.addColorStop(1, darkGray);
+            ctx.fillStyle = legGradientL;
+            ctx.fillRect(x - 12, y + 15, 8, 30);
+            ctx.strokeStyle = outline;
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(x - 12, y + 15, 8, 30);
+
+            // 左脚
+            ctx.fillStyle = white;
             ctx.beginPath();
-            ctx.moveTo(x, y - 40 + bounce);
-            ctx.bezierCurveTo(x - 25, y - 30 + bounce, x - 30, y + 10, x - 20, y + 40);
-            ctx.bezierCurveTo(x - 10, y + 45, x + 10, y + 45, x + 20, y + 40);
-            ctx.bezierCurveTo(x + 30, y + 10, x + 25, y - 30 + bounce, x, y - 40 + bounce);
-            ctx.closePath();
+            ctx.ellipse(x - 8, y + 48, 6, 4, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
 
-            // 头
+            // 右腿
+            const legGradientR = ctx.createLinearGradient(x + 5, y + 15, x + 10, y + 15);
+            legGradientR.addColorStop(0, darkGray);
+            legGradientR.addColorStop(0.5, white);
+            legGradientR.addColorStop(1, lightGray);
+            ctx.fillStyle = legGradientR;
+            ctx.fillRect(x + 4, y + 15, 8, 30);
+            ctx.strokeStyle = outline;
+            ctx.strokeRect(x + 4, y + 15, 8, 30);
+
+            // 右脚
+            ctx.fillStyle = white;
             ctx.beginPath();
-            ctx.arc(x, y - 50 + bounce, 25, 0, Math.PI * 2);
+            ctx.ellipse(x + 8, y + 48, 6, 4, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
 
-            // 眼睛
+            // === 身体（圆柱形）===
+            const bodyGradient = ctx.createLinearGradient(x - 20, y - 15, x + 20, y - 15);
+            bodyGradient.addColorStop(0, lightGray);
+            bodyGradient.addColorStop(0.3, white);
+            bodyGradient.addColorStop(0.7, white);
+            bodyGradient.addColorStop(1, darkGray);
+
+            ctx.fillStyle = bodyGradient;
+            ctx.beginPath();
+            ctx.roundRect(x - 18, y - 15 + bounce, 36, 35, 8);
+            ctx.fill();
+            ctx.strokeStyle = outline;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // === 手臂（圆柱形）===
+            // 左臂
+            ctx.fillStyle = white;
+            ctx.strokeStyle = outline;
+            ctx.lineWidth = 1.5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            ctx.beginPath();
+            ctx.moveTo(x - 18, y - 10 + bounce);
+            ctx.lineTo(x - 28, y + 5 + bounce);
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = lightGray;
+            ctx.stroke();
+
+            // 左手
+            ctx.fillStyle = white;
+            ctx.beginPath();
+            ctx.arc(x - 28, y + 5 + bounce, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = outline;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // 右臂
+            ctx.beginPath();
+            ctx.moveTo(x + 18, y - 10 + bounce);
+            ctx.lineTo(x + 28, y + 5 + bounce);
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = darkGray;
+            ctx.stroke();
+
+            // 右手
+            ctx.fillStyle = white;
+            ctx.beginPath();
+            ctx.arc(x + 28, y + 5 + bounce, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = outline;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // === 头部（大蘑菇头）===
+            const headGradient = ctx.createRadialGradient(
+                x - 5, y - 40 + bounce, 5,
+                x, y - 35 + bounce, 28
+            );
+            headGradient.addColorStop(0, white);
+            headGradient.addColorStop(0.7, white);
+            headGradient.addColorStop(1, lightGray);
+
+            ctx.fillStyle = headGradient;
+            ctx.beginPath();
+            ctx.arc(x, y - 35 + bounce, 28, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = outline;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // === 五官 ===
+            // 眼睛（小黑点）
             ctx.fillStyle = '#000';
             ctx.beginPath();
-            ctx.arc(x - 8, y - 53 + bounce, 3, 0, Math.PI * 2);
+            ctx.arc(x - 9, y - 38 + bounce, 2.5, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.arc(x + 8, y - 53 + bounce, 3, 0, Math.PI * 2);
+            ctx.arc(x + 9, y - 38 + bounce, 2.5, 0, Math.PI * 2);
             ctx.fill();
 
-            // 嘴巴
+            // 简单的嘴巴
             ctx.strokeStyle = '#000';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
-            ctx.arc(x, y - 45 + bounce, 8, 0.2, Math.PI - 0.2);
-            ctx.stroke();
-
-            // 手臂
-            ctx.strokeStyle = config.characterOutline;
-            ctx.lineWidth = 3;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(x - 22, y - 20 + bounce);
-            ctx.quadraticCurveTo(x - 40, y - 10, x - 35, y + 5);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x + 22, y - 20 + bounce);
-            ctx.quadraticCurveTo(x + 40, y - 10, x + 35, y + 5);
-            ctx.stroke();
-
-            // 腿
-            ctx.beginPath();
-            ctx.moveTo(x - 10, y + 40);
-            ctx.quadraticCurveTo(x - 15, y + 50, x - 10, y + 60);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x + 10, y + 40);
-            ctx.quadraticCurveTo(x + 15, y + 50, x + 10, y + 60);
+            ctx.arc(x, y - 32 + bounce, 6, 0.3, Math.PI - 0.3);
             ctx.stroke();
         }
 
