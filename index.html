@@ -608,44 +608,164 @@
             box-shadow: 0 0 3px rgba(0,0,0,0.2);
         }
 
-        /* Bookshelf - Dark wood with shelves */
+        /* Bookshelf - Realistic multi-layer design with books */
         #hotspot-bookshelf {
             background: linear-gradient(to bottom,
                 #8b6935 0%,
-                #6b4f25 3%,
-                #5a3f1f 15%,
-                #4a2f0f 50%,
-                #5a3f1f 85%,
-                #6b4f25 97%,
-                #8b6935 100%);
-            border: 4px solid #3a1f0a;
+                #6b4f25 100%);
+            border: 6px solid #3a1f0a;
             box-shadow:
-                inset 0 0 0 2px #a88550,
-                inset 0 10px 20px rgba(0,0,0,0.4),
+                inset 0 0 0 3px #a88550,
                 0 15px 30px rgba(0,0,0,0.5);
             position: relative;
+            overflow: hidden;
         }
 
+        /* Top shelf */
         #hotspot-bookshelf::before {
             content: '';
             position: absolute;
-            top: 33%;
-            left: 5%;
-            right: 5%;
-            height: 3px;
-            background: linear-gradient(to right, #3a1f0a 0%, #6b4f25 50%, #3a1f0a 100%);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 28%;
+            background:
+                /* Books on top shelf */
+                repeating-linear-gradient(to right,
+                    #8b4513 0px, #8b4513 25px,
+                    #2d1810 25px, #2d1810 28px,
+                    #654321 28px, #654321 48px,
+                    #2d1810 48px, #2d1810 51px,
+                    #a0522d 51px, #a0522d 72px,
+                    #2d1810 72px, #2d1810 75px,
+                    #7b3f00 75px, #7b3f00 95px,
+                    #2d1810 95px, #2d1810 98px,
+                    transparent 98px, transparent 100%
+                );
+            box-shadow:
+                inset 0 -3px 5px rgba(0,0,0,0.5),
+                inset 0 3px 3px rgba(255,255,255,0.1);
         }
 
+        /* Middle shelf */
         #hotspot-bookshelf::after {
             content: '';
             position: absolute;
-            top: 66%;
-            left: 5%;
-            right: 5%;
-            height: 3px;
-            background: linear-gradient(to right, #3a1f0a 0%, #6b4f25 50%, #3a1f0a 100%);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            top: 36%;
+            left: 0;
+            right: 0;
+            height: 28%;
+            background:
+                /* Books on middle shelf */
+                repeating-linear-gradient(to right,
+                    #6b4423 0px, #6b4423 30px,
+                    #2d1810 30px, #2d1810 33px,
+                    #8b6914 33px, #8b6914 58px,
+                    #2d1810 58px, #2d1810 61px,
+                    #7b5b3f 61px, #7b5b3f 83px,
+                    #2d1810 83px, #2d1810 86px,
+                    #9b6b3f 86px, #9b6b3f 110px,
+                    #2d1810 110px, transparent 113px
+                );
+            box-shadow:
+                inset 0 -3px 5px rgba(0,0,0,0.5),
+                inset 0 3px 3px rgba(255,255,255,0.1);
+        }
+
+        /* Shelf dividers (horizontal wooden planks) */
+        #hotspot-bookshelf {
+            background-image:
+                /* Bottom shelf plank */
+                linear-gradient(to bottom,
+                    transparent 0%,
+                    transparent 70%,
+                    #a88550 70%,
+                    #c9964a 71%,
+                    #8b6935 72%,
+                    #6b4f25 73%,
+                    transparent 73%),
+                /* Middle shelf plank */
+                linear-gradient(to bottom,
+                    transparent 0%,
+                    transparent 35%,
+                    #a88550 35%,
+                    #c9964a 36%,
+                    #8b6935 37%,
+                    #6b4f25 38%,
+                    transparent 38%),
+                /* Top shelf plank */
+                linear-gradient(to bottom,
+                    transparent 0%,
+                    #a88550 0%,
+                    #c9964a 1%,
+                    #8b6935 2%,
+                    #6b4f25 3%,
+                    transparent 3%),
+                /* Background wood */
+                linear-gradient(to bottom,
+                    #8b6935 0%,
+                    #6b4f25 100%);
+            background-size: 100% 100%;
+        }
+
+        /* Add bottom shelf books using a gradient overlay */
+        #hotspot-bookshelf {
+            background-image:
+                /* Books on bottom shelf */
+                repeating-linear-gradient(to right,
+                    transparent 0%,
+                    transparent 72%,
+                    #7b3f00 72%,
+                    #7b3f00 72.5%,
+                    #2d1810 72.5%,
+                    #2d1810 73%,
+                    #654321 73%,
+                    #654321 76%,
+                    #2d1810 76%,
+                    #2d1810 76.5%,
+                    #8b4513 76.5%,
+                    #8b4513 80%,
+                    #2d1810 80%,
+                    #2d1810 80.5%,
+                    #a0522d 80.5%,
+                    #a0522d 84%,
+                    #2d1810 84%,
+                    #2d1810 84.5%,
+                    #9b6b3f 84.5%,
+                    #9b6b3f 88%,
+                    transparent 88%,
+                    transparent 100%
+                ) 0 72%/100% 28% no-repeat,
+                /* Bottom shelf plank */
+                linear-gradient(to bottom,
+                    transparent 0%,
+                    transparent 70%,
+                    #a88550 70%,
+                    #c9964a 71%,
+                    #8b6935 72%,
+                    #6b4f25 73%,
+                    transparent 73%),
+                /* Middle shelf plank */
+                linear-gradient(to bottom,
+                    transparent 0%,
+                    transparent 35%,
+                    #a88550 35%,
+                    #c9964a 36%,
+                    #8b6935 37%,
+                    #6b4f25 38%,
+                    transparent 38%),
+                /* Top shelf plank */
+                linear-gradient(to bottom,
+                    transparent 0%,
+                    #a88550 0%,
+                    #c9964a 1%,
+                    #8b6935 2%,
+                    #6b4f25 3%,
+                    transparent 3%),
+                /* Background wood */
+                linear-gradient(to bottom,
+                    #8b6935 0%,
+                    #6b4f25 100%);
         }
     </style>
 </head>
