@@ -1075,7 +1075,7 @@ print(total)`,
                 ctx.beginPath();
                 ctx.arc(x, y - 32 + bounce, 6, 0.3, Math.PI - 0.3);
                 ctx.stroke();
-            } else {
+            } else if (facing === 'left' || facing === 'right') {
                 // ========== 侧面视角（左或右）==========
                 const dir = facing === 'left' ? -1 : 1;
 
