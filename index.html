@@ -1972,7 +1972,24 @@ print(total)`,
 
             showMessage(`You chose: ${choice.label}`, choice.description);
 
-            // 第一阶段：行走动画（1200ms），保持面向屏幕
+            // 第一阶段：转身面向门（200ms）
+            const turnDuration = 200;
+            const turnStartTime = Date.now();
+
+            function turnAnimation() {
+                const elapsed = Date.now() - turnStartTime;
+                if (elapsed < turnDuration) {
+                    requestAnimationFrame(turnAnimation);
+                } else {
+                    // 转身完成，设置朝向
+                    gameState.facing = door;
+                    render();
+                    // 开始行走动画
+                    walkAnimation();
+                }
+            }
+
+            // 第二阶段：行走动画（1200ms），带迈步动作
             const targetX = door === 'left' ? canvas.width * 0.25 : canvas.width * 0.75;
             const walkDuration = 1200;
             const startX = gameState.playerX;
@@ -1991,22 +2008,6 @@ print(total)`,
                 } else {
                     // 行走完成，重置行走进度
                     gameState.walkProgress = 0;
-                    // 开始转身动画
-                    turnAnimation();
-                }
-            }
-
-            // 第二阶段：转身面向门（200ms）
-            const turnDuration = 200;
-            const turnStartTime = Date.now();
-
-            function turnAnimation() {
-                const elapsed = Date.now() - turnStartTime;
-                if (elapsed < turnDuration) {
-                    requestAnimationFrame(turnAnimation);
-                } else {
-                    // 转身完成，设置朝向
-                    gameState.facing = door;
                     render();
 
                     // 等待一会儿后进入下一个模块
@@ -2016,7 +2017,6 @@ print(total)`,
                         gameState.playerX = canvas.width / 2;
                         gameState.playerY = canvas.height * 0.75;
                         gameState.facing = 'front'; // 重置为正面
-                        gameState.walkProgress = 0; // 重置行走进度
                         gameState.animating = false;
 
                         const newModule = modules[nextModule];
@@ -2041,7 +2041,7 @@ print(total)`,
                 }
             }
 
-            walkAnimation();
+            turnAnimation();
         }
 
         function easeInOutQuad(t) {
