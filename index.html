@@ -717,6 +717,11 @@ print(total)`,
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            // 更新人物位置以适应新的画布尺寸
+            if (!gameState.animating) {
+                gameState.playerX = canvas.width / 2;
+                gameState.playerY = canvas.height * 0.75;
+            }
             render();
         }
 
@@ -726,7 +731,7 @@ print(total)`,
         const gameState = {
             currentModule: 'module0',
             playerX: canvas.width / 2,
-            playerY: canvas.height * 0.85, // 站在屏幕下方
+            playerY: canvas.height * 0.75, // 站在屏幕下方地板上
             hoveredDoor: null,
             animating: false,
             playerChoices: [], // 记录玩家的选择历史
