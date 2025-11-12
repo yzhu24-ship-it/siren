@@ -1972,7 +1972,31 @@ print(total)`,
 
             showMessage(`You chose: ${choice.label}`, choice.description);
 
-            // 第一阶段：转身（200ms）
+            // 第一阶段：行走动画（1200ms），保持面向屏幕
+            const targetX = door === 'left' ? canvas.width * 0.25 : canvas.width * 0.75;
+            const walkDuration = 1200;
+            const startX = gameState.playerX;
+            const walkStartTime = Date.now();
+
+            function walkAnimation() {
+                const elapsed = Date.now() - walkStartTime;
+                const progress = Math.min(elapsed / walkDuration, 1);
+
+                gameState.playerX = startX + (targetX - startX) * easeInOutQuad(progress);
+                gameState.walkProgress = progress; // 更新行走进度用于迈步动画
+                render();
+
+                if (progress < 1) {
+                    requestAnimationFrame(walkAnimation);
+                } else {
+                    // 行走完成，重置行走进度
+                    gameState.walkProgress = 0;
+                    // 开始转身动画
+                    turnAnimation();
+                }
+            }
+
+            // 第二阶段：转身面向门（200ms）
             const turnDuration = 200;
             const turnStartTime = Date.now();
 
@@ -1984,34 +2008,13 @@ print(total)`,
                     // 转身完成，设置朝向
                     gameState.facing = door;
                     render();
-                    // 开始行走动画
-                    walkAnimation();
-                }
-            }
 
-            // 第二阶段：行走动画（1200ms）
-            const targetX = door === 'left' ? canvas.width * 0.25 : canvas.width * 0.75;
-            const walkDuration = 1200;
-            const startX = gameState.playerX;
-            const startTime = Date.now();
-
-            function walkAnimation() {
-                const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / walkDuration, 1);
-
-                gameState.playerX = startX + (targetX - startX) * easeInOutQuad(progress);
-                gameState.walkProgress = progress; // 更新行走进度用于迈步动画
-                render();
-
-                if (progress < 1) {
-                    requestAnimationFrame(walkAnimation);
-                } else {
-                    // 行走完成
+                    // 等待一会儿后进入下一个模块
                     setTimeout(() => {
                         const nextModule = choice.nextModule;
                         gameState.currentModule = nextModule;
                         gameState.playerX = canvas.width / 2;
-                        gameState.playerY = canvas.height * 0.85;
+                        gameState.playerY = canvas.height * 0.75;
                         gameState.facing = 'front'; // 重置为正面
                         gameState.walkProgress = 0; // 重置行走进度
                         gameState.animating = false;
@@ -2034,11 +2037,11 @@ print(total)`,
                         } else {
                             render();
                         }
-                    }, 1000);
+                    }, 500);
                 }
             }
 
-            turnAnimation();
+            walkAnimation();
         }
 
         function easeInOutQuad(t) {
