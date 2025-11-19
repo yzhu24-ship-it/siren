@@ -66,38 +66,156 @@
 
         /* Wall 1 - Front wall (桌子+柜子) */
         .wall-front {
-            background: linear-gradient(180deg, #c9a982 0%, #a68968 50%, #8b7355 100%);
+            background:
+                repeating-linear-gradient(90deg,
+                    transparent 0px,
+                    transparent 4px,
+                    rgba(0,0,0,0.05) 4px,
+                    rgba(0,0,0,0.05) 5px
+                ),
+                linear-gradient(180deg,
+                    #d4b89c 0%,
+                    #c9a982 30%,
+                    #a68968 50%,
+                    #8b7355 80%,
+                    #6b5645 100%
+                );
         }
 
         /* Wall 2 - Right wall (窗户) */
         .wall-right {
-            background: linear-gradient(180deg, #c9a982 0%, #a68968 50%, #8b7355 100%);
+            background:
+                repeating-linear-gradient(90deg,
+                    transparent 0px,
+                    transparent 4px,
+                    rgba(0,0,0,0.05) 4px,
+                    rgba(0,0,0,0.05) 5px
+                ),
+                linear-gradient(180deg,
+                    #d4b89c 0%,
+                    #c9a982 30%,
+                    #a68968 50%,
+                    #8b7355 80%,
+                    #6b5645 100%
+                );
         }
 
         /* Wall 3 - Back wall (书架) */
         .wall-back {
-            background: linear-gradient(180deg, #c9a982 0%, #a68968 50%, #8b7355 100%);
+            background:
+                repeating-linear-gradient(90deg,
+                    transparent 0px,
+                    transparent 4px,
+                    rgba(0,0,0,0.05) 4px,
+                    rgba(0,0,0,0.05) 5px
+                ),
+                linear-gradient(180deg,
+                    #d4b89c 0%,
+                    #c9a982 30%,
+                    #a68968 50%,
+                    #8b7355 80%,
+                    #6b5645 100%
+                );
         }
 
         /* Wall 4 - Left wall (门) */
         .wall-left {
-            background: linear-gradient(180deg, #c9a982 0%, #a68968 50%, #8b7355 100%);
+            background:
+                repeating-linear-gradient(90deg,
+                    transparent 0px,
+                    transparent 4px,
+                    rgba(0,0,0,0.05) 4px,
+                    rgba(0,0,0,0.05) 5px
+                ),
+                linear-gradient(180deg,
+                    #d4b89c 0%,
+                    #c9a982 30%,
+                    #a68968 50%,
+                    #8b7355 80%,
+                    #6b5645 100%
+                );
         }
 
-        /* Ceiling */
+        /* Ceiling with perspective */
         .ceiling {
-            background: linear-gradient(180deg, #d4b89c 0%, #c9a982 100%);
+            background:
+                /* Corner shadows */
+                radial-gradient(ellipse at 0% 0%, rgba(0,0,0,0.3) 0%, transparent 40%),
+                radial-gradient(ellipse at 100% 0%, rgba(0,0,0,0.3) 0%, transparent 40%),
+                radial-gradient(ellipse at 0% 100%, rgba(0,0,0,0.3) 0%, transparent 40%),
+                radial-gradient(ellipse at 100% 100%, rgba(0,0,0,0.3) 0%, transparent 40%),
+                /* Wood planks */
+                repeating-linear-gradient(0deg,
+                    transparent 0px,
+                    transparent 39px,
+                    rgba(0,0,0,0.1) 39px,
+                    rgba(0,0,0,0.1) 40px
+                ),
+                linear-gradient(180deg,
+                    #e8d4b8 0%,
+                    #d4b89c 50%,
+                    #c9a982 100%
+                );
         }
 
-        /* Floor */
+        /* Floor with wood texture */
         .floor {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
             height: 20%;
-            background: linear-gradient(180deg, #4a3f35 0%, #3a2f25 50%, #2a1f15 100%);
+            background:
+                /* Wood planks horizontal */
+                repeating-linear-gradient(0deg,
+                    transparent 0%,
+                    transparent 18%,
+                    rgba(0,0,0,0.2) 18%,
+                    rgba(0,0,0,0.2) 20%,
+                    transparent 20%
+                ),
+                /* Shadow at wall edge */
+                linear-gradient(180deg,
+                    rgba(0,0,0,0.4) 0%,
+                    transparent 20%
+                ),
+                /* Base wood color */
+                linear-gradient(180deg,
+                    #4a3f35 0%,
+                    #3a2f25 50%,
+                    #2a1f15 100%
+                );
             z-index: 10;
+        }
+
+        /* Side walls for perspective */
+        .wall-left-edge,
+        .wall-right-edge {
+            position: absolute;
+            top: 0;
+            bottom: 20%;
+            width: 8%;
+            background: linear-gradient(90deg,
+                rgba(0,0,0,0.5),
+                rgba(0,0,0,0.2)
+            );
+            z-index: 5;
+        }
+
+        .wall-left-edge {
+            left: 0;
+            background: linear-gradient(90deg,
+                rgba(0,0,0,0.5),
+                transparent
+            );
+        }
+
+        .wall-right-edge {
+            right: 120px;
+            background: linear-gradient(-90deg,
+                rgba(0,0,0,0.5),
+                transparent
+            );
         }
 
         /* Navigation arrows */
@@ -297,6 +415,10 @@
                 <!-- Ceiling content will go here -->
             </div>
 
+            <!-- Side edges for perspective (not visible on ceiling view) -->
+            <div class="wall-left-edge" id="left-edge"></div>
+            <div class="wall-right-edge" id="right-edge"></div>
+
             <!-- Floor (always visible) -->
             <div class="floor"></div>
 
@@ -379,8 +501,14 @@
                 // Show current wall
                 if (this.currentWall === 5) {
                     document.getElementById('ceiling').classList.add('active');
+                    // Hide side edges when viewing ceiling
+                    document.getElementById('left-edge').style.display = 'none';
+                    document.getElementById('right-edge').style.display = 'none';
                 } else {
                     document.getElementById(`wall-${this.currentWall}`).classList.add('active');
+                    // Show side edges when viewing walls
+                    document.getElementById('left-edge').style.display = 'block';
+                    document.getElementById('right-edge').style.display = 'block';
                 }
 
                 this.updateWallIndicator();
