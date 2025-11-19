@@ -519,15 +519,64 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.5);
         }
 
-        /* Floor - HIDDEN, images already have floor */
+        /* Floor with wood planks */
         .floor {
-            display: none;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 120px; /* Account for toolbar */
+            height: 20%;
+            background:
+                /* Wood planks horizontal */
+                repeating-linear-gradient(0deg,
+                    transparent 0%,
+                    transparent 18%,
+                    rgba(0,0,0,0.2) 18%,
+                    rgba(0,0,0,0.2) 20%,
+                    transparent 20%
+                ),
+                /* Shadow at wall edge */
+                linear-gradient(180deg,
+                    rgba(0,0,0,0.4) 0%,
+                    transparent 20%
+                ),
+                /* Base wood color */
+                linear-gradient(180deg,
+                    #5a4a35 0%,
+                    #4a3a25 50%,
+                    #3a2a15 100%
+                );
+            z-index: 10;
         }
 
-        /* Side walls - HIDDEN, images already have side edges */
-        .wall-left-edge,
+        /* Left side wall edge for perspective */
+        .wall-left-edge {
+            position: absolute;
+            top: 0;
+            bottom: 20%;
+            left: 0;
+            width: 8%;
+            background: linear-gradient(90deg,
+                rgba(0,0,0,0.6) 0%,
+                rgba(0,0,0,0.3) 50%,
+                transparent 100%
+            );
+            z-index: 5;
+        }
+
+        /* Right side wall edge for perspective */
         .wall-right-edge {
-            display: none;
+            position: absolute;
+            top: 0;
+            bottom: 20%;
+            right: 120px; /* Account for toolbar */
+            width: 8%;
+            background: linear-gradient(-90deg,
+                rgba(0,0,0,0.6) 0%,
+                rgba(0,0,0,0.3) 50%,
+                transparent 100%
+            );
+            z-index: 5;
         }
 
         /* Navigation arrows */
@@ -837,11 +886,23 @@
                     wall.classList.remove('active');
                 });
 
+                const floor = document.querySelector('.floor');
+                const leftEdge = document.getElementById('left-edge');
+                const rightEdge = document.getElementById('right-edge');
+
                 // Show current wall
                 if (this.currentWall === 5) {
+                    // Ceiling view - hide floor and edges
                     document.getElementById('ceiling').classList.add('active');
+                    if (floor) floor.style.display = 'none';
+                    if (leftEdge) leftEdge.style.display = 'none';
+                    if (rightEdge) rightEdge.style.display = 'none';
                 } else {
+                    // Wall view - show floor and edges
                     document.getElementById(`wall-${this.currentWall}`).classList.add('active');
+                    if (floor) floor.style.display = 'block';
+                    if (leftEdge) leftEdge.style.display = 'block';
+                    if (rightEdge) rightEdge.style.display = 'block';
                 }
 
                 this.updateWallIndicator();
