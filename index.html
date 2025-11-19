@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rusty Lake Mystery - Escape Room</title>
+    <title>Rusty Lake Mystery Room</title>
     <style>
         * {
             margin: 0;
@@ -31,10 +31,11 @@
         .scene-area {
             flex: 1;
             position: relative;
-            background: #8b7355;
+            background: #2a1f1a;
             overflow: hidden;
         }
 
+        /* Vignette dark edges effect */
         .scene-area::before {
             content: '';
             position: absolute;
@@ -47,8 +48,8 @@
             z-index: 1000;
         }
 
-        /* Scene backgrounds */
-        .scene {
+        /* Room walls */
+        .room-wall {
             width: 100%;
             height: 100%;
             position: absolute;
@@ -59,8 +60,44 @@
             background-position: center;
         }
 
-        .scene.active {
+        .room-wall.active {
             display: block;
+        }
+
+        /* Wall 1 - Front wall (桌子+柜子) */
+        .wall-front {
+            background: linear-gradient(180deg, #c9a982 0%, #a68968 50%, #8b7355 100%);
+        }
+
+        /* Wall 2 - Right wall (窗户) */
+        .wall-right {
+            background: linear-gradient(180deg, #c9a982 0%, #a68968 50%, #8b7355 100%);
+        }
+
+        /* Wall 3 - Back wall (书架) */
+        .wall-back {
+            background: linear-gradient(180deg, #c9a982 0%, #a68968 50%, #8b7355 100%);
+        }
+
+        /* Wall 4 - Left wall (门) */
+        .wall-left {
+            background: linear-gradient(180deg, #c9a982 0%, #a68968 50%, #8b7355 100%);
+        }
+
+        /* Ceiling */
+        .ceiling {
+            background: linear-gradient(180deg, #d4b89c 0%, #c9a982 100%);
+        }
+
+        /* Floor */
+        .floor {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20%;
+            background: linear-gradient(180deg, #4a3f35 0%, #3a2f25 50%, #2a1f15 100%);
+            z-index: 10;
         }
 
         /* Navigation arrows */
@@ -103,6 +140,27 @@
 
         .nav-arrow.right:hover {
             border-left-color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Up arrow for ceiling */
+        .nav-up {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 30px solid rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 1001;
+        }
+
+        .nav-up:hover {
+            transform: translateX(-50%) scale(1.2);
+            border-bottom-color: rgba(255, 255, 255, 0.9);
         }
 
         /* Right toolbar */
@@ -163,29 +221,23 @@
             transform: none;
         }
 
-        /* Item image in toolbar */
-        .toolbar-icon img {
-            max-width: 70%;
-            max-height: 70%;
-            object-fit: contain;
-        }
-
-        /* Hotspots for clickable areas */
-        .hotspot {
+        /* Wall indicator */
+        .wall-indicator {
             position: absolute;
-            cursor: pointer;
-            transition: all 0.3s;
-            z-index: 100;
-        }
-
-        .hotspot:hover {
-            filter: brightness(1.2);
+            top: 20px;
+            right: 140px;
+            color: #fff;
+            font-size: 18px;
+            z-index: 1001;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 16px;
+            border-radius: 20px;
         }
 
         /* Dialog box */
         .dialog {
             position: absolute;
-            bottom: 100px;
+            bottom: 120px;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.9);
@@ -214,208 +266,44 @@
             color: rgba(0, 0, 0, 0.9);
             font-size: 20px;
         }
-
-        /* Modal for mini-games */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-        }
-
-        .modal.show {
-            display: flex;
-        }
-
-        .modal-content {
-            background: #8b7355;
-            padding: 40px;
-            border-radius: 10px;
-            border: 5px solid #5a4a35;
-            position: relative;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            width: 40px;
-            height: 40px;
-            background: rgba(0,0,0,0.7);
-            color: #fff;
-            border: 2px solid #fff;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 24px;
-            line-height: 36px;
-            text-align: center;
-        }
-
-        .modal-close:hover {
-            background: rgba(0,0,0,0.9);
-        }
-
-        /* Scene counter */
-        .scene-counter {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            color: #fff;
-            font-size: 18px;
-            z-index: 1001;
-            background: rgba(0,0,0,0.6);
-            padding: 8px 16px;
-            border-radius: 20px;
-        }
-
-        /* Inventory item display */
-        .item-name {
-            position: absolute;
-            bottom: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 10px;
-            color: #5a4a35;
-            font-weight: bold;
-            text-align: center;
-            width: 100%;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Fish game styles */
-        .fishing-game {
-            text-align: center;
-        }
-
-        .fishing-canvas {
-            width: 100%;
-            max-width: 500px;
-            height: 300px;
-            background: linear-gradient(180deg, #87CEEB 0%, #4682B4 100%);
-            border: 3px solid #5a4a35;
-            margin: 20px auto;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .fishing-hook {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: #ff6347;
-            border-radius: 50%;
-            left: 50%;
-            transform: translateX(-50%);
-            transition: top 0.5s ease;
-        }
-
-        /* Puzzle styles */
-        .puzzle-container {
-            text-align: center;
-            color: #fff;
-        }
-
-        .puzzle-input {
-            width: 200px;
-            height: 40px;
-            font-size: 24px;
-            text-align: center;
-            margin: 20px auto;
-            border: 3px solid #5a4a35;
-            border-radius: 5px;
-        }
-
-        .puzzle-submit {
-            padding: 10px 30px;
-            font-size: 18px;
-            background: #e8d4a0;
-            border: 3px solid #5a4a35;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .puzzle-submit:hover {
-            background: #ffd700;
-        }
-
-        /* Tree puzzle */
-        .tree-puzzle {
-            text-align: center;
-            color: #fff;
-        }
-
-        .tree-image {
-            width: 400px;
-            height: 400px;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle cx="50" cy="50" r="20" fill="white"/><circle cx="150" cy="50" r="20" fill="white"/><circle cx="100" cy="150" r="20" fill="white"/><circle cx="100" cy="100" r="20" fill="white"/><line x1="100" y1="100" x2="50" y2="50" stroke="white" stroke-width="2"/><line x1="100" y1="100" x2="150" y2="50" stroke="white" stroke-width="2"/><line x1="100" y1="100" x2="100" y2="150" stroke="white" stroke-width="2"/></svg>') center no-repeat;
-            background-size: contain;
-            margin: 20px auto;
-            position: relative;
-        }
-
-        .gem-slot {
-            width: 40px;
-            height: 40px;
-            border: 3px dashed #fff;
-            border-radius: 50%;
-            position: absolute;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .gem-slot:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        .gem {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), transparent);
-        }
-
-        .gem.blue {
-            background: radial-gradient(circle at 30% 30%, #6db3f2, #1e60ab);
-        }
-
-        .gem.green {
-            background: radial-gradient(circle at 30% 30%, #6df26d, #1eab1e);
-        }
     </style>
 </head>
 <body>
     <div class="game-container">
         <!-- Main scene area -->
         <div class="scene-area">
-            <!-- Scene counter -->
-            <div class="scene-counter">
-                <span id="sceneNumber">1/12</span>
+            <!-- Wall indicator -->
+            <div class="wall-indicator">
+                <span id="wallName">前墙</span>
             </div>
 
-            <!-- Scenes -->
-            <div class="scene active" id="scene-1" style="background-image: url('30451762908484_.pic_hd.jpg');">
-                <!-- Hotspots will be added dynamically -->
+            <!-- Up arrow for ceiling view -->
+            <div class="nav-up" onclick="game.viewCeiling()"></div>
+
+            <!-- Room walls -->
+            <div class="room-wall wall-front active" id="wall-1">
+                <!-- Front wall content will go here -->
             </div>
-            <div class="scene" id="scene-2" style="background-image: url('30471762909008_.pic_hd.jpg');"></div>
-            <div class="scene" id="scene-3" style="background-image: url('30481762909291_.pic_hd.jpg');"></div>
-            <div class="scene" id="scene-4" style="background-image: url('30441762907866_.pic_hd.jpg');"></div>
+            <div class="room-wall wall-right" id="wall-2">
+                <!-- Right wall content will go here -->
+            </div>
+            <div class="room-wall wall-back" id="wall-3">
+                <!-- Back wall content will go here -->
+            </div>
+            <div class="room-wall wall-left" id="wall-4">
+                <!-- Left wall content will go here -->
+            </div>
+            <div class="room-wall ceiling" id="ceiling">
+                <!-- Ceiling content will go here -->
+            </div>
+
+            <!-- Floor (always visible) -->
+            <div class="floor"></div>
 
             <!-- Navigation arrows -->
             <div class="nav-container">
-                <div class="nav-arrow left" onclick="game.previousScene()"></div>
-                <div class="nav-arrow right" onclick="game.nextScene()"></div>
+                <div class="nav-arrow left" onclick="game.previousWall()"></div>
+                <div class="nav-arrow right" onclick="game.nextWall()"></div>
             </div>
 
             <!-- Dialog box -->
@@ -428,61 +316,22 @@
         </div>
     </div>
 
-    <!-- Modal for mini-games -->
-    <div class="modal" id="modal">
-        <div class="modal-content" id="modal-content">
-            <div class="modal-close" onclick="game.closeModal()">×</div>
-            <div id="modal-body"></div>
-        </div>
-    </div>
-
     <script>
-        class RustyLakeGame {
+        class RustyLakeRoom {
             constructor() {
-                this.currentScene = 1;
-                this.totalScenes = 12;
+                this.currentWall = 1;
+                this.wallNames = ['前墙', '右墙', '后墙', '左墙', '天花板'];
                 this.inventory = [];
                 this.maxInventorySlots = 8;
                 this.selectedItem = null;
-                this.gameState = {
-                    // Collected items
-                    hasRod: false,
-                    hasLine: false,
-                    hasWorm: false,
-                    hasKnife: false,
-                    hasNote: false,
-                    hasShrimp: false,
-                    hasShrimpHead: false,
-                    hasKey: false,
-                    hasMagnet: false,
-                    hasFish: false,
-                    hasCoins: false,
-                    hasBlueGem: false,
-                    hasGreenGem: false,
-
-                    // Progress flags
-                    floorChecked: false,
-                    shadowSeen: false,
-                    shrimpCut: false,
-                    cabinetOpened: false,
-                    fishCut: false,
-                    treeGrown: false,
-                    mathSolved: false,
-                    seasonsSolved: false,
-                    treePuzzleSolved: false,
-                    gameWon: false
-                };
 
                 this.init();
             }
 
             init() {
                 this.setupToolbar();
-                this.setupHotspots();
-                this.updateSceneCounter();
-
-                // Show initial message
-                this.showDialog('先收集物品<br>捡起地上的一根鱼竿<br>抽屉里有一把刀<br>窗框上有一张纸条');
+                this.updateWallIndicator();
+                this.showDialog('欢迎来到神秘房间');
             }
 
             setupToolbar() {
@@ -494,401 +343,51 @@
                     const slot = document.createElement('div');
                     slot.className = 'toolbar-icon empty';
                     slot.id = `slot-${i}`;
-                    slot.onclick = () => this.selectItem(i);
                     toolbar.appendChild(slot);
                 }
             }
 
-            addItem(itemName, icon) {
-                if (this.inventory.length < this.maxInventorySlots) {
-                    this.inventory.push({ name: itemName, icon: icon });
-                    this.updateToolbar();
-                    this.showDialog(`获得：${itemName}`);
+            nextWall() {
+                if (this.currentWall === 5) {
+                    this.currentWall = 1;
                 } else {
-                    this.showDialog('物品栏已满！');
+                    this.currentWall = this.currentWall === 4 ? 1 : this.currentWall + 1;
                 }
+                this.updateWall();
             }
 
-            removeItem(itemName) {
-                const index = this.inventory.findIndex(item => item.name === itemName);
-                if (index !== -1) {
-                    this.inventory.splice(index, 1);
-                    this.updateToolbar();
-                }
-            }
-
-            hasItem(itemName) {
-                return this.inventory.some(item => item.name === itemName);
-            }
-
-            updateToolbar() {
-                for (let i = 0; i < this.maxInventorySlots; i++) {
-                    const slot = document.getElementById(`slot-${i}`);
-                    if (i < this.inventory.length) {
-                        slot.className = 'toolbar-icon';
-                        slot.innerHTML = this.inventory[i].icon;
-                        if (this.selectedItem === i) {
-                            slot.classList.add('active');
-                        }
-                    } else {
-                        slot.className = 'toolbar-icon empty';
-                        slot.innerHTML = '';
-                    }
-                }
-            }
-
-            selectItem(index) {
-                if (index < this.inventory.length) {
-                    // Double click to use item
-                    if (this.selectedItem === index) {
-                        this.useItem(index);
-                        this.selectedItem = null;
-                    } else {
-                        this.selectedItem = index;
-                        this.showDialog(`已选择：${this.inventory[this.selectedItem].name}`);
-                    }
-                    this.updateToolbar();
-                }
-            }
-
-            useItem(index) {
-                const item = this.inventory[index];
-                if (!item) return;
-
-                switch (item.name) {
-                    case '虾':
-                        if (this.hasItem('小刀') && !this.gameState.shrimpCut) {
-                            this.showDialog('把虾切开<br>获得虾头和一把钥匙！🔑');
-                            this.gameState.shrimpCut = true;
-                            this.removeItem('虾');
-                            this.addItem('虾头', '🦐');
-                            this.addItem('钥匙', '🔑');
-                            this.gameState.hasKey = true;
-                            this.gameState.hasShrimpHead = true;
-                        } else {
-                            this.showDialog('需要用刀来切虾');
-                        }
-                        break;
-
-                    case '吸铁石':
-                        this.showDialog('用吸铁石吸地上的绳子<br>可以收获满满！');
-                        if (!this.gameState.hasMagnet) {
-                            this.gameState.hasMagnet = true;
-                            this.addItem('磁铁', '🧲');
-                            this.addItem('硬币', '🪙');
-                            this.showDialog('获得了磁铁和硬币！');
-                        }
-                        break;
-
-                    case '纸条':
-                        this.showDialog('纸条上写着：<br>"THE PAST IS NEVER DEAD<br>IT IS NOT EVEN PAST"');
-                        break;
-
-                    default:
-                        this.showDialog(`${item.name} 无法直接使用`);
-                }
-            }
-
-            setupHotspots() {
-                // Scene 1 hotspots - Desk and Cabinet wall
-                this.addHotspot(1, 15, 65, 30, 25, () => {
-                    if (!this.gameState.hasRod) {
-                        this.gameState.hasRod = true;
-                        this.addItem('鱼竿', '🎣');
-                    } else {
-                        this.showDialog('这里是地上，已经捡过鱼竿了');
-                    }
-                });
-
-                this.addHotspot(1, 30, 40, 25, 30, () => {
-                    if (!this.gameState.hasKnife) {
-                        this.gameState.hasKnife = true;
-                        this.addItem('小刀', '🔪');
-                    } else {
-                        this.clickDesk();
-                    }
-                });
-
-                this.addHotspot(1, 60, 35, 20, 40, () => {
-                    this.clickCabinet();
-                });
-
-                // Scene 2 hotspots - Window wall
-                this.addHotspot(2, 30, 30, 35, 50, () => {
-                    this.clickWindow();
-                });
-
-                // Scene 3 hotspots - Bookshelf
-                this.addHotspot(3, 35, 30, 30, 45, () => {
-                    if (!this.gameState.hasNote) {
-                        this.gameState.hasNote = true;
-                        this.addItem('纸条', '📄');
-                        this.showDialog('窗框上有一张纸条');
-                    } else {
-                        this.showDialog('这是书架，没有更多东西了');
-                    }
-                });
-
-                // Scene 3 - Add math puzzle hotspot (bookshelf area)
-                this.addHotspot(3, 10, 50, 20, 30, () => {
-                    if (!this.gameState.mathSolved) {
-                        this.startMathPuzzle();
-                    } else {
-                        this.showDialog('数学谜题已经解决了');
-                    }
-                });
-
-                // Scene 3 - Add seasons puzzle hotspot
-                this.addHotspot(3, 70, 50, 20, 30, () => {
-                    if (!this.gameState.seasonsSolved) {
-                        this.startSeasonsPuzzle();
-                    } else {
-                        this.showDialog('四季谜题已经解决了');
-                    }
-                });
-
-                // Scene 4 hotspots - Tree puzzle
-                this.addHotspot(4, 20, 25, 35, 50, () => {
-                    if (this.gameState.treeGrown && !this.gameState.treePuzzleSolved) {
-                        this.startTreePuzzle();
-                    } else if (this.gameState.treePuzzleSolved) {
-                        this.showDialog('树谜题已经完成！');
-                    } else {
-                        this.showDialog('需要先让树长出来');
-                    }
-                });
-
-                // Scene 4 - Door
-                this.addHotspot(4, 60, 35, 25, 45, () => {
-                    if (this.gameState.gameWon) {
-                        this.showDialog('恭喜通关！🎉<br>THE PAST IS NEVER DEAD<br>IT IS NOT EVEN PAST');
-                    } else {
-                        this.showDialog('门还锁着，需要完成所有谜题');
-                    }
-                });
-            }
-
-            addHotspot(sceneId, left, top, width, height, callback) {
-                const scene = document.getElementById(`scene-${sceneId}`);
-                const hotspot = document.createElement('div');
-                hotspot.className = 'hotspot';
-                hotspot.style.left = left + '%';
-                hotspot.style.top = top + '%';
-                hotspot.style.width = width + '%';
-                hotspot.style.height = height + '%';
-                hotspot.onclick = callback;
-                scene.appendChild(hotspot);
-            }
-
-            clickDesk() {
-                if (this.hasItem('鱼') && this.hasItem('小刀') && !this.gameState.fishCut) {
-                    this.showDialog('把鱼切开<br>竟然长出了一棵树！🌳');
-                    this.gameState.fishCut = true;
-                    this.gameState.treeGrown = true;
-                    this.removeItem('鱼');
-                } else if (!this.gameState.hasLine) {
-                    this.gameState.hasLine = true;
-                    this.addItem('鱼线', '🧵');
+            previousWall() {
+                if (this.currentWall === 5) {
+                    this.currentWall = 1;
                 } else {
-                    this.showDialog('这是桌子，抽屉里有一把刀');
+                    this.currentWall = this.currentWall === 1 ? 4 : this.currentWall - 1;
                 }
+                this.updateWall();
             }
 
-            clickCabinet() {
-                if (this.hasItem('钥匙') && !this.gameState.cabinetOpened) {
-                    this.gameState.cabinetOpened = true;
-                    this.addItem('吸铁石', '🧲');
-                    this.addItem('虫子', '🐛');
-                    this.removeItem('钥匙');
-                    this.showDialog('钥匙打开柜子<br>得到吸铁石和虫子');
-                } else if (this.gameState.cabinetOpened) {
-                    this.showDialog('柜子已经打开过了');
+            viewCeiling() {
+                this.currentWall = 5;
+                this.updateWall();
+            }
+
+            updateWall() {
+                // Hide all walls
+                document.querySelectorAll('.room-wall').forEach(wall => {
+                    wall.classList.remove('active');
+                });
+
+                // Show current wall
+                if (this.currentWall === 5) {
+                    document.getElementById('ceiling').classList.add('active');
                 } else {
-                    this.showDialog('这个柜子需要钥匙');
-                }
-            }
-
-            clickWindow() {
-                if (!this.gameState.floorChecked) {
-                    this.showDialog('掀顶有一只虫子<br>应该是鱼饵');
-                    this.addItem('虫子', '🐛');
-                    this.gameState.floorChecked = true;
-                    this.gameState.shadowSeen = true;
-                } else if (this.canFish()) {
-                    this.startFishing();
-                } else {
-                    this.showDialog('这里是窗户，可以钓鱼<br>需要：鱼竿、鱼线、虫子');
-                }
-            }
-
-            canFish() {
-                return this.hasItem('鱼竿') && this.hasItem('鱼线') && this.hasItem('虫子');
-            }
-
-            startFishing() {
-                this.showModal(`
-                    <div class="fishing-game">
-                        <h2 style="color: #fff;">钓鱼游戏</h2>
-                        <p style="color: #fff;">点击画面开始钓鱼！</p>
-                        <div class="fishing-canvas" onclick="game.catchFish()">
-                            <div class="fishing-hook" style="top: 20px;"></div>
-                        </div>
-                    </div>
-                `);
-            }
-
-            catchFish() {
-                this.closeModal();
-
-                if (!this.gameState.hasShrimp) {
-                    this.gameState.hasShrimp = true;
-                    this.addItem('虾', '🦐');
-                    this.removeItem('虫子');
-                    this.showDialog('钓到了一只虾！');
-                } else if (!this.gameState.hasFish && this.hasItem('虫子')) {
-                    this.gameState.hasFish = true;
-                    this.addItem('鱼', '🐟');
-                    this.removeItem('虫子');
-                    this.showDialog('利用虫子可以钓到一只鱼');
-                } else {
-                    this.showDialog('没有鱼饵了');
-                }
-            }
-
-            startMathPuzzle() {
-                this.showModal(`
-                    <div class="puzzle-container">
-                        <h2>一道数学题</h2>
-                        <p>他说是镜像</p>
-                        <p>我们可以看出是：</p>
-                        <h3 style="color: #ff6347;">6×237=1422</h3>
-                        <p>请输入正确答案：</p>
-                        <input type="text" id="mathAnswer" class="puzzle-input" placeholder="输入答案">
-                        <br>
-                        <button class="puzzle-submit" onclick="game.checkMathAnswer()">提交</button>
-                    </div>
-                `);
-            }
-
-            checkMathAnswer() {
-                const answer = document.getElementById('mathAnswer').value;
-                if (answer === '1422') {
-                    this.gameState.mathSolved = true;
-                    this.gameState.hasBlueGem = true;
-                    this.addItem('蓝宝石', '💎');
-                    this.closeModal();
-                    this.showDialog('答对了！获得蓝宝石！');
-                } else {
-                    this.showDialog('答案不对，再想想...');
-                }
-            }
-
-            startSeasonsPuzzle() {
-                this.showModal(`
-                    <div class="puzzle-container">
-                        <h2>联系到四季了</h2>
-                        <p style="color: #e8d4a0;">Remember the Seasons</p>
-                        <p>请输入四个季节的符号（用数字1-4表示）：</p>
-                        <p>春(1) 夏(2) 秋(3) 冬(4)</p>
-                        <input type="text" id="seasonsAnswer" class="puzzle-input" placeholder="例如：1234">
-                        <br>
-                        <button class="puzzle-submit" onclick="game.checkSeasonsAnswer()">提交</button>
-                    </div>
-                `);
-            }
-
-            checkSeasonsAnswer() {
-                const answer = document.getElementById('seasonsAnswer').value;
-                // Accept various answers like "1234", "1324", etc.
-                if (answer.length === 4 && answer.includes('1') && answer.includes('2') &&
-                    answer.includes('3') && answer.includes('4')) {
-                    this.gameState.seasonsSolved = true;
-                    this.gameState.hasGreenGem = true;
-                    this.addItem('绿宝石', '💚');
-                    this.closeModal();
-                    this.showDialog('答对了！获得绿宝石！');
-                } else {
-                    this.showDialog('答案不对，想想四季的顺序...');
-                }
-            }
-
-            startTreePuzzle() {
-                if (!this.hasItem('蓝宝石') || !this.hasItem('绿宝石')) {
-                    this.showDialog('需要先获得宝石才能解开树谜题');
-                    return;
+                    document.getElementById(`wall-${this.currentWall}`).classList.add('active');
                 }
 
-                this.showModal(`
-                    <div class="tree-puzzle">
-                        <h2 style="color: #fff;">树谜题</h2>
-                        <p style="color: #e8d4a0;">根据图纸提示摆放宝石</p>
-                        <p style="color: #e8d4a0;">两种宝石会得到不同的答案</p>
-                        <div style="margin: 20px auto; max-width: 400px;">
-                            <svg width="400" height="400" viewBox="0 0 200 200" style="background: #8b7355; border: 3px solid #5a4a35;">
-                                <!-- Tree structure -->
-                                <line x1="100" y1="100" x2="50" y2="50" stroke="#e8d4a0" stroke-width="3"/>
-                                <line x1="100" y1="100" x2="150" y2="50" stroke="#e8d4a0" stroke-width="3"/>
-                                <line x1="100" y1="100" x2="100" y2="150" stroke="#e8d4a0" stroke-width="3"/>
-                                <line x1="100" y1="100" x2="50" y2="150" stroke="#e8d4a0" stroke-width="3"/>
-                                <line x1="100" y1="100" x2="150" y2="150" stroke="#e8d4a0" stroke-width="3"/>
-
-                                <!-- Clickable gem slots -->
-                                <circle cx="50" cy="50" r="15" fill="rgba(255,255,255,0.3)" stroke="#fff" stroke-width="2"
-                                    onclick="game.placeGem(0)" style="cursor: pointer;" id="slot-0"/>
-                                <circle cx="150" cy="50" r="15" fill="rgba(255,255,255,0.3)" stroke="#fff" stroke-width="2"
-                                    onclick="game.placeGem(1)" style="cursor: pointer;" id="slot-1"/>
-                                <circle cx="100" cy="100" r="15" fill="rgba(255,255,255,0.3)" stroke="#fff" stroke-width="2"
-                                    onclick="game.placeGem(2)" style="cursor: pointer;" id="slot-2"/>
-                                <circle cx="100" cy="150" r="15" fill="rgba(255,255,255,0.3)" stroke="#fff" stroke-width="2"
-                                    onclick="game.placeGem(3)" style="cursor: pointer;" id="slot-3"/>
-                                <circle cx="50" cy="150" r="15" fill="rgba(255,255,255,0.3)" stroke="#fff" stroke-width="2"
-                                    onclick="game.placeGem(4)" style="cursor: pointer;" id="slot-4"/>
-                            </svg>
-                        </div>
-                        <div style="margin-top: 20px;">
-                            <p style="color: #fff;">选择宝石：</p>
-                            <button class="puzzle-submit" onclick="game.selectGemType('blue')"
-                                style="background: #6db3f2; margin: 10px;">蓝宝石</button>
-                            <button class="puzzle-submit" onclick="game.selectGemType('green')"
-                                style="background: #6df26d; margin: 10px;">绿宝石</button>
-                        </div>
-                        <button class="puzzle-submit" onclick="game.checkTreePuzzle()"
-                            style="margin-top: 20px; background: #ffd700;">完成摆放</button>
-                    </div>
-                `);
-
-                this.treeGems = [null, null, null, null, null];
-                this.selectedGemType = 'blue';
+                this.updateWallIndicator();
             }
 
-            selectGemType(type) {
-                this.selectedGemType = type;
-                this.showDialog(`已选择${type === 'blue' ? '蓝宝石' : '绿宝石'}`);
-            }
-
-            placeGem(slotIndex) {
-                if (!this.selectedGemType) return;
-
-                this.treeGems[slotIndex] = this.selectedGemType;
-                const slot = document.getElementById(`slot-${slotIndex}`);
-                if (slot) {
-                    slot.setAttribute('fill', this.selectedGemType === 'blue' ? '#6db3f2' : '#6df26d');
-                }
-            }
-
-            checkTreePuzzle() {
-                // Check if gems are placed correctly
-                const blueCount = this.treeGems.filter(g => g === 'blue').length;
-                const greenCount = this.treeGems.filter(g => g === 'green').length;
-
-                if (blueCount > 0 || greenCount > 0) {
-                    this.gameState.treePuzzleSolved = true;
-                    this.gameState.gameWon = true;
-                    this.closeModal();
-                    this.showDialog('恭喜通关！🎉<br>根据图上提示摆放<br>两种钻石会得到不同的答案！');
-                } else {
-                    this.showDialog('请先放置宝石');
-                }
+            updateWallIndicator() {
+                document.getElementById('wallName').textContent = this.wallNames[this.currentWall - 1];
             }
 
             showDialog(message) {
@@ -899,50 +398,10 @@
                     dialog.classList.remove('show');
                 }, 3000);
             }
-
-            showModal(content) {
-                const modal = document.getElementById('modal');
-                const modalBody = document.getElementById('modal-body');
-                modalBody.innerHTML = content;
-                modal.classList.add('show');
-            }
-
-            closeModal() {
-                const modal = document.getElementById('modal');
-                modal.classList.remove('show');
-            }
-
-            nextScene() {
-                this.currentScene = (this.currentScene % this.totalScenes) + 1;
-                this.updateScene();
-            }
-
-            previousScene() {
-                this.currentScene = this.currentScene === 1 ? this.totalScenes : this.currentScene - 1;
-                this.updateScene();
-            }
-
-            updateScene() {
-                document.querySelectorAll('.scene').forEach(scene => {
-                    scene.classList.remove('active');
-                });
-
-                const targetScene = Math.min(this.currentScene, 4); // We only have 4 wall images
-                const scene = document.getElementById(`scene-${targetScene}`);
-                if (scene) {
-                    scene.classList.add('active');
-                }
-
-                this.updateSceneCounter();
-            }
-
-            updateSceneCounter() {
-                document.getElementById('sceneNumber').textContent = `${this.currentScene}/12`;
-            }
         }
 
         // Initialize game
-        const game = new RustyLakeGame();
+        const game = new RustyLakeRoom();
     </script>
 </body>
 </html>
