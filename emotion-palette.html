@@ -331,8 +331,65 @@
             isLongPressing: false,
             longPressTimer: null,
             draggedElement: null,
-            savedEmotions: []
+            savedEmotions: [],
+            lastPlayedColor: null,
+            lastPlayTime: 0
         };
+
+        // Audio system using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Color to frequency mapping (musical notes)
+        const colorSounds = {
+            '255,107,107': 261.63,   // Red - C4 (warm, passionate)
+            '77,171,247': 329.63,    // Blue - E4 (calm, cool)
+            '255,212,59': 392.00,    // Yellow - G4 (bright, happy)
+            '173,181,189': 220.00    // Gray - A3 (neutral, mellow)
+        };
+
+        function playSound(frequency, duration = 0.15, type = 'sine') {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function playColorMixSound(color) {
+            const frequency = colorSounds[color];
+            if (frequency) {
+                playSound(frequency, 0.12, 'sine');
+            }
+        }
+
+        function playPickupSound() {
+            playSound(440, 0.08, 'square');
+        }
+
+        function playSaveSound() {
+            // Play a chord (three notes)
+            const now = audioContext.currentTime;
+
+            // Create a beautiful chord progression
+            [261.63, 329.63, 392.00].forEach((freq, i) => {
+                setTimeout(() => {
+                    playSound(freq, 0.3, 'sine');
+                }, i * 80);
+            });
+        }
+
+        function playLoadSound() {
+            playSound(523.25, 0.2, 'triangle'); // C5 - higher gentle chime
+        }
 
         // Elements
         const emotionCanvas = document.querySelector('.emotion-canvas');
@@ -492,6 +549,9 @@
 
             originalPosition.x = rect.left;
             originalPosition.y = rect.top;
+
+            // Play pickup sound
+            playPickupSound();
         }
 
         function handleMove(e) {
@@ -520,12 +580,24 @@
 
             if (isOverCanvas) {
                 const color = state.draggedElement.dataset.color;
+                const now = Date.now();
+
                 if (!state.currentColors.includes(color)) {
                     state.currentColors.push(color);
                     state.colorWeights.push(1);
+                    playColorMixSound(color);
+                    state.lastPlayedColor = color;
+                    state.lastPlayTime = now;
                 } else {
                     const index = state.currentColors.indexOf(color);
                     state.colorWeights[index] = Math.min(5, state.colorWeights[index] + 0.1);
+
+                    // Play sound periodically while dragging (throttled to every 200ms)
+                    if (now - state.lastPlayTime > 200 || state.lastPlayedColor !== color) {
+                        playColorMixSound(color);
+                        state.lastPlayedColor = color;
+                        state.lastPlayTime = now;
+                    }
                 }
                 updateEmotionCanvas();
             }
@@ -576,6 +648,9 @@
             // Save to localStorage
             localStorage.setItem('emotionPalette', JSON.stringify(state.savedEmotions));
 
+            // Play save sound
+            playSaveSound();
+
             // Visual feedback
             saveFeedback.style.background = `radial-gradient(circle, ${color}, transparent)`;
             saveFeedback.classList.add('active');
@@ -603,6 +678,9 @@
             state.currentColors = [...emotion.colors];
             state.colorWeights = [...emotion.weights];
             updateEmotionCanvas();
+
+            // Play load sound
+            playLoadSound();
         }
 
         // Event listeners
