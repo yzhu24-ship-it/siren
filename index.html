@@ -177,6 +177,7 @@
             height: 32%;
             background: linear-gradient(180deg, #8b9a6a 0%, #7a8a5a 50%, #6a7a4a 100%);
             border: 3px solid #5a6a3a;
+            perspective: 600px;
         }
 
         /* Desk drawer */
@@ -190,6 +191,7 @@
             background: linear-gradient(135deg, #6a7a4a 0%, #5a6a3a 100%);
             border: 2px solid #4a5a2a;
             border-radius: 3px;
+            transition: transform 0.4s ease;
         }
 
         /* Desk drawer handle */
@@ -203,6 +205,8 @@
             height: 6%;
             background: linear-gradient(90deg, #d4a050 0%, #c49040 50%, #a47830 100%);
             border-radius: 8px;
+            transition: transform 0.4s ease;
+            z-index: 2;
         }
 
         /* Tall cabinet on right wall */
@@ -214,6 +218,7 @@
             height: 45%;
             background: linear-gradient(180deg, #7a9a6a 0%, #6a8a5a 100%);
             border: 4px solid #5a7a4a;
+            perspective: 800px;
         }
 
         /* Cabinet top door */
@@ -228,6 +233,8 @@
             border: 3px solid #4a6a3a;
             border-radius: 4px;
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.5s ease;
+            transform-style: preserve-3d;
         }
 
         /* Cabinet bottom door */
@@ -241,6 +248,8 @@
             border: 3px solid #4a6a3a;
             border-radius: 4px;
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.5s ease;
+            transform-style: preserve-3d;
         }
 
         /* Cabinet door handles */
@@ -295,6 +304,7 @@
             background: linear-gradient(180deg, #8a9a7a 0%, #7a8a6a 100%);
             border: 3px solid #5a6a4a;
             box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            perspective: 600px;
         }
 
         /* Wall cabinet shelves (3 layers) */
@@ -307,17 +317,34 @@
             height: 2px;
             background: #4a5a3a;
             box-shadow: 0 34% 0 #4a5a3a;
+            z-index: 1;
+        }
+
+        /* Wall cabinet door */
+        .wall-cabinet-door {
+            position: absolute;
+            top: 5%;
+            left: 5%;
+            right: 5%;
+            bottom: 5%;
+            background: linear-gradient(135deg, #7a8a6a 0%, #6a7a5a 100%);
+            border: 2px solid #5a6a4a;
+            border-radius: 3px;
+            box-shadow: inset 1px 1px 3px rgba(0,0,0,0.3);
+            transition: transform 0.5s ease;
+            transform-style: preserve-3d;
+            z-index: 3;
         }
 
         /* Wall cabinet door handle */
-        .wall-cabinet::after {
+        .wall-cabinet-door::after {
             content: '';
             position: absolute;
-            left: 15%;
+            left: 10%;
             top: 50%;
             transform: translateY(-50%);
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
             background: #2a2a2a;
             border-radius: 50%;
         }
@@ -331,6 +358,7 @@
             height: 28%;
             background: linear-gradient(180deg, #7a9a6a 0%, #6a8a5a 100%);
             border: 4px solid #5a7a4a;
+            perspective: 800px;
         }
 
         /* Floor cabinet left door */
@@ -345,6 +373,8 @@
             border: 3px solid #4a6a3a;
             border-radius: 4px;
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.5s ease;
+            transform-style: preserve-3d;
         }
 
         /* Floor cabinet right door */
@@ -358,6 +388,8 @@
             border: 3px solid #4a6a3a;
             border-radius: 4px;
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.5s ease;
+            transform-style: preserve-3d;
         }
 
         /* Floor cabinet handles */
@@ -759,7 +791,14 @@
 
         /* Desk drawer - opened state */
         .desk.opened::before {
-            transform: translateY(20px);
+            transform: rotateX(-85deg);
+            transform-origin: top center;
+        }
+
+        /* Desk drawer handle - opened state */
+        .desk.opened::after {
+            transform: translateX(-50%) rotateX(-85deg);
+            transform-origin: top center;
         }
 
         /* Desk interior shadow when opened */
@@ -767,9 +806,9 @@
             box-shadow: inset 0 10px 30px rgba(0,0,0,0.6);
         }
 
-        /* Cabinet doors - opened state */
+        /* Tall cabinet top door - opened state */
         .tall-cabinet.opened::before {
-            transform: rotateY(-120deg);
+            transform: rotateY(-110deg);
             transform-origin: left center;
         }
 
@@ -778,24 +817,26 @@
             box-shadow: inset 0 20px 40px rgba(0,0,0,0.7);
         }
 
+        /* Tall cabinet bottom door - opened state */
         .cabinet-bottom-door.opened {
-            transform: rotateY(-120deg);
+            transform: rotateY(-110deg);
             transform-origin: left center;
         }
 
+        /* Wall cabinet - opened state */
         .wall-cabinet.opened {
-            perspective: 400px;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
         }
 
-        .wall-cabinet.opened::after {
-            transform: translateY(-50%) rotateY(-90deg);
+        /* Wall cabinet door - opened state */
+        .wall-cabinet-door.opened {
+            transform: rotateY(-110deg);
             transform-origin: left center;
         }
 
-        /* Floor cabinet doors - opened state */
+        /* Floor cabinet left door - opened state */
         .floor-cabinet.opened::before {
-            transform: rotateY(-120deg);
+            transform: rotateY(-110deg);
             transform-origin: left center;
         }
 
@@ -804,8 +845,9 @@
             box-shadow: inset 0 0 30px rgba(0,0,0,0.7);
         }
 
+        /* Floor cabinet right door - opened state */
         .floor-cabinet-right-door.opened {
-            transform: rotateY(120deg);
+            transform: rotateY(110deg);
             transform-origin: right center;
         }
     </style>
@@ -844,7 +886,9 @@
             </div>
             <div class="room-wall wall-back" id="wall-3">
                 <!-- Wall cabinet (3 shelves) -->
-                <div class="wall-cabinet interactive" id="wall-cabinet"></div>
+                <div class="wall-cabinet interactive" id="wall-cabinet">
+                    <div class="wall-cabinet-door interactive" id="wall-cabinet-door"></div>
+                </div>
                 <!-- Floor cabinet with 2 doors -->
                 <div class="floor-cabinet interactive" id="floor-cabinet">
                     <div class="floor-cabinet-right-door interactive" id="floor-cabinet-right-door">
@@ -942,13 +986,17 @@
                     });
                 }
 
-                // Wall cabinet
-                const wallCabinet = document.getElementById('wall-cabinet');
-                if (wallCabinet) {
-                    wallCabinet.addEventListener('click', (e) => {
+                // Wall cabinet door
+                const wallCabinetDoor = document.getElementById('wall-cabinet-door');
+                if (wallCabinetDoor) {
+                    wallCabinetDoor.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        wallCabinet.classList.toggle('opened');
-                        const state = wallCabinet.classList.contains('opened') ? '打开' : '关闭';
+                        const wallCabinet = document.getElementById('wall-cabinet');
+                        wallCabinetDoor.classList.toggle('opened');
+                        if (wallCabinet) {
+                            wallCabinet.classList.toggle('opened');
+                        }
+                        const state = wallCabinetDoor.classList.contains('opened') ? '打开' : '关闭';
                         this.showDialog(`壁柜已${state}`);
                     });
                 }
