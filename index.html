@@ -746,6 +746,52 @@
             color: rgba(0, 0, 0, 0.9);
             font-size: 20px;
         }
+
+        /* Interactive elements */
+        .interactive {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .interactive:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Desk drawer - opened state */
+        .desk.opened::before {
+            transform: translateY(20px);
+        }
+
+        /* Cabinet doors - opened state */
+        .tall-cabinet.opened::before {
+            transform: rotateY(-120deg);
+            transform-origin: left center;
+        }
+
+        .cabinet-bottom-door.opened {
+            transform: rotateY(-120deg);
+            transform-origin: left center;
+        }
+
+        .wall-cabinet.opened {
+            perspective: 400px;
+        }
+
+        .wall-cabinet.opened::after {
+            transform: translateY(-50%) rotateY(-90deg);
+            transform-origin: left center;
+        }
+
+        /* Floor cabinet doors - opened state */
+        .floor-cabinet.opened::before {
+            transform: rotateY(-120deg);
+            transform-origin: left center;
+        }
+
+        .floor-cabinet-right-door.opened {
+            transform: rotateY(120deg);
+            transform-origin: right center;
+        }
     </style>
 </head>
 <body>
@@ -769,10 +815,10 @@
             </div>
             <div class="room-wall wall-right" id="wall-2">
                 <!-- Desk with drawer -->
-                <div class="desk"></div>
+                <div class="desk interactive" id="desk"></div>
                 <!-- Tall cabinet with 2 doors -->
-                <div class="tall-cabinet">
-                    <div class="cabinet-bottom-door">
+                <div class="tall-cabinet interactive" id="tall-cabinet">
+                    <div class="cabinet-bottom-door interactive" id="cabinet-bottom-door">
                         <div class="cabinet-handle"></div>
                     </div>
                     <div class="cabinet-handle" style="top: 25%;"></div>
@@ -782,10 +828,10 @@
             </div>
             <div class="room-wall wall-back" id="wall-3">
                 <!-- Wall cabinet (3 shelves) -->
-                <div class="wall-cabinet"></div>
+                <div class="wall-cabinet interactive" id="wall-cabinet"></div>
                 <!-- Floor cabinet with 2 doors -->
-                <div class="floor-cabinet">
-                    <div class="floor-cabinet-right-door">
+                <div class="floor-cabinet interactive" id="floor-cabinet">
+                    <div class="floor-cabinet-right-door interactive" id="floor-cabinet-right-door">
                         <div class="floor-cabinet-handle" style="left: 15%;"></div>
                     </div>
                     <div class="floor-cabinet-handle" style="left: 65%;"></div>
@@ -842,7 +888,76 @@
             init() {
                 this.setupToolbar();
                 this.updateWallIndicator();
+                this.setupInteractions();
                 this.showDialog('欢迎来到神秘房间');
+            }
+
+            setupInteractions() {
+                // Desk drawer
+                const desk = document.getElementById('desk');
+                if (desk) {
+                    desk.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        desk.classList.toggle('opened');
+                        const state = desk.classList.contains('opened') ? '打开' : '关闭';
+                        this.showDialog(`书桌抽屉已${state}`);
+                    });
+                }
+
+                // Tall cabinet top door
+                const tallCabinet = document.getElementById('tall-cabinet');
+                if (tallCabinet) {
+                    tallCabinet.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        tallCabinet.classList.toggle('opened');
+                        const state = tallCabinet.classList.contains('opened') ? '打开' : '关闭';
+                        this.showDialog(`高柜上门已${state}`);
+                    });
+                }
+
+                // Tall cabinet bottom door
+                const cabinetBottomDoor = document.getElementById('cabinet-bottom-door');
+                if (cabinetBottomDoor) {
+                    cabinetBottomDoor.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        cabinetBottomDoor.classList.toggle('opened');
+                        const state = cabinetBottomDoor.classList.contains('opened') ? '打开' : '关闭';
+                        this.showDialog(`高柜下门已${state}`);
+                    });
+                }
+
+                // Wall cabinet
+                const wallCabinet = document.getElementById('wall-cabinet');
+                if (wallCabinet) {
+                    wallCabinet.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        wallCabinet.classList.toggle('opened');
+                        const state = wallCabinet.classList.contains('opened') ? '打开' : '关闭';
+                        this.showDialog(`壁柜已${state}`);
+                    });
+                }
+
+                // Floor cabinet left door
+                const floorCabinet = document.getElementById('floor-cabinet');
+                if (floorCabinet) {
+                    floorCabinet.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        floorCabinet.classList.toggle('opened');
+                        const state = floorCabinet.classList.contains('opened') ? '打开' : '关闭';
+                        this.showDialog(`地柜左门已${state}`);
+                    });
+                }
+
+                // Floor cabinet right door
+                const floorCabinetRightDoor = document.getElementById('floor-cabinet-right-door');
+                if (floorCabinetRightDoor) {
+                    floorCabinetRightDoor.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        floorCabinetRightDoor.classList.toggle('opened');
+                        const state = floorCabinetRightDoor.classList.contains('opened') ? '打开' : '关闭';
+                        this.showDialog(`地柜右门已${state}`);
+                    });
+                }
             }
 
             setupToolbar() {
