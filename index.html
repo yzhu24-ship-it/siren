@@ -1,13 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rusty Lake Mystery - The Black Cube</title>
-    <!-- Version 3.0 - Visual Image-Based Interface -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+    <title>Rusty Lake Mystery - Escape Room</title>
     <style>
         * {
             margin: 0;
@@ -16,1699 +12,932 @@
         }
 
         body {
-            font-family: 'Courier New', monospace;
-            background: #0a0a0a;
-            color: #e8e8e8;
+            font-family: 'Georgia', serif;
+            background: #000;
             overflow: hidden;
-            height: 100vh;
-        }
-
-        .game-layout {
-            display: flex;
             height: 100vh;
             width: 100vw;
         }
 
-        /* Main view area - 75% width */
-        .main-view {
-            flex: 0 0 75%;
-            position: relative;
-            background: linear-gradient(180deg, #a8d8f0 0%, #b8e8ff 100%);
+        /* Main game container */
+        .game-container {
             display: flex;
-            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
         }
 
-        .wall-container {
+        /* Main scene area - with vignette effect */
+        .scene-area {
             flex: 1;
             position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: #8b7355;
             overflow: hidden;
         }
 
-        .wall {
+        .scene-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            box-shadow: inset 0 0 200px 100px rgba(0,0,0,0.8);
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Scene backgrounds */
+        .scene {
             width: 100%;
             height: 100%;
             position: absolute;
+            top: 0;
+            left: 0;
             display: none;
             background-size: cover;
             background-position: center;
-            background-repeat: no-repeat;
         }
 
-        .wall.active {
+        .scene.active {
             display: block;
         }
 
         /* Navigation arrows */
-        .nav-arrows {
+        .nav-container {
             position: absolute;
-            bottom: 20px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 40px;
-            z-index: 100;
+            gap: 200px;
+            z-index: 1001;
         }
 
-        .nav-btn {
-            width: 50px;
-            height: 50px;
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid #8b7355;
-            border-radius: 50%;
+        .nav-arrow {
+            width: 0;
+            height: 0;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: #c9a56f;
             transition: all 0.3s;
-            user-select: none;
         }
 
-        .nav-btn:hover {
-            background: rgba(0, 0, 0, 0.7);
-            box-shadow: 0 0 15px rgba(201, 165, 111, 0.5);
-            transform: scale(1.1);
+        .nav-arrow.left {
+            border-top: 20px solid transparent;
+            border-bottom: 20px solid transparent;
+            border-right: 30px solid rgba(255, 255, 255, 0.6);
         }
 
-        .wall-indicator {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.7);
-            padding: 10px 20px;
-            border-radius: 20px;
-            border: 2px solid #8b7355;
-            color: #c9a56f;
-            font-size: 16px;
-            z-index: 100;
+        .nav-arrow.right {
+            border-top: 20px solid transparent;
+            border-bottom: 20px solid transparent;
+            border-left: 30px solid rgba(255, 255, 255, 0.6);
         }
 
-        /* Right side panel - 25% width */
-        .right-panel {
-            flex: 0 0 25%;
-            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-            border-left: 3px solid #8b7355;
+        .nav-arrow:hover {
+            transform: scale(1.2);
+        }
+
+        .nav-arrow.left:hover {
+            border-right-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .nav-arrow.right:hover {
+            border-left-color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Right toolbar */
+        .toolbar {
+            width: 120px;
+            background: linear-gradient(180deg, #2a2520 0%, #1a1510 100%);
             display: flex;
             flex-direction: column;
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        .panel-header {
-            text-align: center;
-            font-size: 24px;
-            color: #c9a56f;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-        }
-
-        .clues-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            align-items: center;
+            padding: 20px 10px;
             gap: 15px;
-            margin-bottom: 30px;
+            position: relative;
+            z-index: 1002;
         }
 
-        .clue-box {
-            aspect-ratio: 1;
-            border: 2px solid #8b7355;
-            border-radius: 10px;
-            background: rgba(26, 26, 46, 0.8);
+        /* Toolbar icons (inventory slots) */
+        .toolbar-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #e8d4a0 0%, #c9b888 100%);
+            border: 3px solid #8b7355;
+            border-radius: 8px;
+            box-shadow:
+                inset 0 2px 5px rgba(255,255,255,0.3),
+                inset 0 -2px 5px rgba(0,0,0,0.3),
+                0 4px 8px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s;
+            font-size: 32px;
         }
 
-        .clue-box.empty {
-            border-style: dashed;
-            opacity: 0.4;
+        .toolbar-icon:hover {
+            transform: scale(1.05);
+            box-shadow:
+                inset 0 2px 5px rgba(255,255,255,0.3),
+                inset 0 -2px 5px rgba(0,0,0,0.3),
+                0 6px 12px rgba(0,0,0,0.7);
         }
 
-        .clue-box.filled {
-            border-color: #c9a56f;
-            box-shadow: 0 0 15px rgba(201, 165, 111, 0.3);
+        .toolbar-icon.active {
+            background: linear-gradient(135deg, #ffd700 0%, #e8b800 100%);
+            box-shadow:
+                inset 0 2px 5px rgba(255,255,255,0.5),
+                inset 0 -2px 5px rgba(0,0,0,0.2),
+                0 0 20px rgba(255,215,0,0.6);
         }
 
-        .clue-box.new-item {
-            animation: itemPulse 1s ease-in-out;
+        .toolbar-icon.empty {
+            background: linear-gradient(135deg, #d4c4a0 0%, #b9a888 100%);
+            cursor: default;
         }
 
-        @keyframes itemPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); box-shadow: 0 0 25px rgba(201, 165, 111, 0.8); }
+        .toolbar-icon.empty:hover {
+            transform: none;
         }
 
-        .clue-image {
-            width: 90%;
-            height: 90%;
+        /* Item image in toolbar */
+        .toolbar-icon img {
+            max-width: 70%;
+            max-height: 70%;
             object-fit: contain;
         }
 
-        .clue-text {
-            text-align: center;
-            padding: 10px;
-            font-size: 12px;
-            color: #c9a56f;
-            word-wrap: break-word;
-        }
-
-        .clue-icon {
-            font-size: 40px;
-        }
-
-        /* Event log */
-        .event-log {
-            flex: 1;
-            border: 2px solid #8b7355;
-            border-radius: 10px;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.5);
-            overflow-y: auto;
-            max-height: 200px;
-        }
-
-        .log-title {
-            color: #c9a56f;
-            font-size: 14px;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        .log-message {
-            padding: 5px;
-            margin: 5px 0;
-            font-size: 12px;
-            border-left: 2px solid #8b7355;
-            padding-left: 10px;
-            animation: fadeIn 0.5s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateX(-10px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        .log-message.important {
-            color: #90ff90;
-            border-left-color: #90ff90;
-        }
-
-        .log-message.error {
-            color: #ff6b6b;
-            border-left-color: #ff6b6b;
-        }
-
-        /* Clickable hotspots on walls */
+        /* Hotspots for clickable areas */
         .hotspot {
             position: absolute;
             cursor: pointer;
             transition: all 0.3s;
-            border: 3px solid transparent;
-            border-radius: 5px;
+            z-index: 100;
         }
 
         .hotspot:hover {
-            border-color: rgba(201, 165, 111, 0.8);
-            box-shadow: 0 0 20px rgba(201, 165, 111, 0.6);
-            transform: scale(1.05);
+            filter: brightness(1.2);
         }
 
-        .hotspot.selected {
-            border-color: #90ff90;
-            animation: hotspotGlow 1.5s infinite;
-        }
-
-        @keyframes hotspotGlow {
-            0%, 100% { box-shadow: 0 0 15px rgba(144, 255, 144, 0.6); }
-            50% { box-shadow: 0 0 30px rgba(144, 255, 144, 1); }
-        }
-
-        /* Modal for detailed views */
-        .modal {
+        /* Dialog box */
+        .dialog {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 20px 30px;
+            border-radius: 10px;
+            border: 2px solid #8b7355;
+            max-width: 500px;
             display: none;
+            z-index: 1003;
+            font-size: 16px;
+            text-align: center;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.8);
+        }
+
+        .dialog.show {
+            display: block;
+        }
+
+        .dialog::after {
+            content: '▼';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(0, 0, 0, 0.9);
+            font-size: 20px;
+        }
+
+        /* Modal for mini-games */
+        .modal {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 1000;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
             align-items: center;
             justify-content: center;
+            z-index: 2000;
         }
 
-        .modal.active {
+        .modal.show {
             display: flex;
         }
 
         .modal-content {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            border: 3px solid #8b7355;
-            border-radius: 15px;
+            background: #8b7355;
             padding: 40px;
+            border-radius: 10px;
+            border: 5px solid #5a4a35;
+            position: relative;
             max-width: 600px;
             max-height: 80vh;
             overflow-y: auto;
-            position: relative;
         }
 
         .modal-close {
             position: absolute;
             top: 10px;
-            right: 15px;
-            font-size: 30px;
+            left: 10px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            border: 2px solid #fff;
+            border-radius: 50%;
             cursor: pointer;
-            color: #c9a56f;
-            border: none;
-            background: none;
+            font-size: 24px;
+            line-height: 36px;
+            text-align: center;
         }
 
         .modal-close:hover {
-            color: #ff6b6b;
+            background: rgba(0,0,0,0.9);
         }
 
-        .modal-title {
-            font-size: 28px;
-            color: #c9a56f;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .modal-description {
-            font-size: 16px;
-            line-height: 1.6;
-            margin-bottom: 20px;
-            color: #e8e8e8;
-        }
-
-        .modal-input {
-            width: 100%;
-            padding: 15px;
-            font-size: 18px;
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid #8b7355;
-            border-radius: 5px;
-            color: #c9a56f;
-            text-align: center;
-            font-family: 'Courier New', monospace;
-            margin: 20px 0;
-        }
-
-        .modal-btn {
-            width: 100%;
-            padding: 15px;
-            font-size: 18px;
-            background: #8b7355;
-            border: none;
-            border-radius: 5px;
-            color: #fff;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-            margin-top: 10px;
-            transition: all 0.3s;
-        }
-
-        .modal-btn:hover {
-            background: #a88866;
-            box-shadow: 0 0 15px rgba(139, 115, 85, 0.6);
-        }
-
-        .modal-btn:disabled {
-            background: #555;
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
-        /* Control buttons */
-        .controls {
+        /* Scene counter */
+        .scene-counter {
             position: absolute;
             top: 20px;
             right: 20px;
-            display: flex;
-            gap: 10px;
-            z-index: 100;
+            color: #fff;
+            font-size: 18px;
+            z-index: 1001;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 16px;
+            border-radius: 20px;
         }
 
-        .control-btn {
-            padding: 10px 20px;
-            background: rgba(0, 0, 0, 0.7);
-            border: 2px solid #8b7355;
-            border-radius: 5px;
-            color: #c9a56f;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        .control-btn:hover {
-            background: rgba(0, 0, 0, 0.9);
-            box-shadow: 0 0 10px rgba(139, 115, 85, 0.6);
-        }
-
-        /* Cabinet/Furniture styles */
-        .furniture-view {
+        /* Inventory item display */
+        .item-name {
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #5a4a35;
+            font-weight: bold;
+            text-align: center;
             width: 100%;
-            max-width: 500px;
-            margin: 20px auto;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Fish game styles */
+        .fishing-game {
             text-align: center;
         }
 
-        .furniture-image {
+        .fishing-canvas {
             width: 100%;
-            height: auto;
-            border: 2px solid #8b7355;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .lock-icon {
-            font-size: 60px;
-            margin: 20px 0;
-        }
-
-        /* Wall placeholder backgrounds */
-        .wall-1 {
-            background-image: url('30441762907866_.pic_hd.jpg');
-            background-size: cover;
-            background-position: center;
-        }
-
-        .wall-2 {
-            background-image: url('30451762908484_.pic_hd.jpg');
-            background-size: cover;
-            background-position: center;
-        }
-
-        .wall-3 {
-            background-image: url('30471762909008_.pic_hd.jpg');
-            background-size: cover;
-            background-position: center;
-        }
-
-        .wall-4 {
-            background-image: url('30481762909291_.pic_hd.jpg');
-            background-size: cover;
-            background-position: center;
-        }
-
-        /* Furniture color overlays - 3D realistic style */
-
-        /* Door - Black with 3D depth */
-        #hotspot-door {
-            background: linear-gradient(to right,
-                #1a1a1a 0%,
-                #2d2d2d 5%,
-                #1a1a1a 50%,
-                #2d2d2d 95%,
-                #1a1a1a 100%);
-            border: 4px solid #0a0a0a;
-            box-shadow:
-                inset 0 0 0 2px #3a3a3a,
-                inset 15px 0 20px rgba(0,0,0,0.4),
-                inset -15px 0 20px rgba(0,0,0,0.4),
-                0 10px 30px rgba(0,0,0,0.6);
+            max-width: 500px;
+            height: 300px;
+            background: linear-gradient(180deg, #87CEEB 0%, #4682B4 100%);
+            border: 3px solid #5a4a35;
+            margin: 20px auto;
             position: relative;
+            cursor: pointer;
         }
 
-        #hotspot-door::before {
-            content: '';
+        .fishing-hook {
             position: absolute;
-            right: 30px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 12px;
-            height: 12px;
-            background: radial-gradient(circle, #555 0%, #2a2a2a 100%);
+            width: 20px;
+            height: 20px;
+            background: #ff6347;
             border-radius: 50%;
-            box-shadow:
-                0 2px 4px rgba(0,0,0,0.5),
-                inset 0 1px 2px rgba(255,255,255,0.1);
+            left: 50%;
+            transform: translateX(-50%);
+            transition: top 0.5s ease;
         }
 
-        /* Desk - Wood brown with tabletop and 4 legs */
-        #hotspot-desk {
-            background: transparent;
-            border: none;
-            box-shadow: none;
+        /* Puzzle styles */
+        .puzzle-container {
+            text-align: center;
+            color: #fff;
+        }
+
+        .puzzle-input {
+            width: 200px;
+            height: 40px;
+            font-size: 24px;
+            text-align: center;
+            margin: 20px auto;
+            border: 3px solid #5a4a35;
+            border-radius: 5px;
+        }
+
+        .puzzle-submit {
+            padding: 10px 30px;
+            font-size: 18px;
+            background: #e8d4a0;
+            border: 3px solid #5a4a35;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .puzzle-submit:hover {
+            background: #ffd700;
+        }
+
+        /* Tree puzzle */
+        .tree-puzzle {
+            text-align: center;
+            color: #fff;
+        }
+
+        .tree-image {
+            width: 400px;
+            height: 400px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle cx="50" cy="50" r="20" fill="white"/><circle cx="150" cy="50" r="20" fill="white"/><circle cx="100" cy="150" r="20" fill="white"/><circle cx="100" cy="100" r="20" fill="white"/><line x1="100" y1="100" x2="50" y2="50" stroke="white" stroke-width="2"/><line x1="100" y1="100" x2="150" y2="50" stroke="white" stroke-width="2"/><line x1="100" y1="100" x2="100" y2="150" stroke="white" stroke-width="2"/></svg>') center no-repeat;
+            background-size: contain;
+            margin: 20px auto;
             position: relative;
         }
 
-        /* Desk tabletop */
-        #hotspot-desk::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 25%;
-            background: linear-gradient(to bottom,
-                #e6b887 0%,
-                #d4a574 5%,
-                #c9964a 15%,
-                #b88644 50%,
-                #a88550 85%,
-                #8b6935 100%);
-            border: 3px solid #6b4f25;
-            border-radius: 3px 3px 0 0;
-            box-shadow:
-                inset 0 2px 4px rgba(255,255,255,0.3),
-                inset 0 -2px 8px rgba(0,0,0,0.3),
-                0 4px 8px rgba(0,0,0,0.4);
-        }
-
-        /* Desk drawer in tabletop */
-        #hotspot-desk::after {
-            content: '';
-            position: absolute;
-            top: 5%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40%;
-            height: 15%;
-            background: linear-gradient(135deg, #a88550 0%, #8b6935 100%);
-            border: 2px solid #5a3f1f;
-            border-radius: 2px;
-            box-shadow:
-                inset 0 1px 3px rgba(0,0,0,0.4),
-                0 2px 4px rgba(0,0,0,0.3);
-        }
-
-        /* Desk legs using background gradients - ENHANCED VISIBILITY */
-        #hotspot-desk {
-            background-image:
-                /* Front left leg - wider and darker borders */
-                linear-gradient(to bottom,
-                    transparent 0%,
-                    transparent 24%,
-                    #4a2f0f 24%,
-                    #8b6935 24.5%,
-                    #a88550 25%,
-                    #c9964a 26%,
-                    #8b6935 27%,
-                    #6b4f25 45%,
-                    #5a3f1f 50%,
-                    #6b4f25 55%,
-                    #8b6935 73%,
-                    #6b4f25 100%
-                ) 8% 0/15% 100% no-repeat,
-                /* Front right leg - wider and darker borders */
-                linear-gradient(to bottom,
-                    transparent 0%,
-                    transparent 24%,
-                    #4a2f0f 24%,
-                    #8b6935 24.5%,
-                    #a88550 25%,
-                    #c9964a 26%,
-                    #8b6935 27%,
-                    #6b4f25 45%,
-                    #5a3f1f 50%,
-                    #6b4f25 55%,
-                    #8b6935 73%,
-                    #6b4f25 100%
-                ) 77% 0/15% 100% no-repeat,
-                /* Back left leg shadow */
-                linear-gradient(to bottom,
-                    transparent 0%,
-                    transparent 24%,
-                    #3a1f0a 24%,
-                    #5a3f1f 25%,
-                    #6b4f25 26%,
-                    #5a3f1f 45%,
-                    #4a2f0f 50%,
-                    #5a3f1f 55%,
-                    #6b4f25 73%,
-                    #5a3f1f 100%
-                ) 18% 0/13% 100% no-repeat,
-                /* Back right leg shadow */
-                linear-gradient(to bottom,
-                    transparent 0%,
-                    transparent 24%,
-                    #3a1f0a 24%,
-                    #5a3f1f 25%,
-                    #6b4f25 26%,
-                    #5a3f1f 45%,
-                    #4a2f0f 50%,
-                    #5a3f1f 55%,
-                    #6b4f25 73%,
-                    #5a3f1f 100%
-                ) 69% 0/13% 100% no-repeat,
-                /* Leg shadows on ground - more visible */
-                radial-gradient(ellipse at center,
-                    rgba(0,0,0,0.5) 0%,
-                    rgba(0,0,0,0.3) 40%,
-                    transparent 70%
-                ) 50% 96%/90% 8% no-repeat;
-
-            /* Add dark borders around legs for definition */
-            background-color: transparent;
-        }
-
-        /* Add side borders to legs for more definition */
-        #hotspot-desk {
-            background-image:
-                /* Left border of front left leg */
-                linear-gradient(to right,
-                    transparent 0%,
-                    transparent 7.5%,
-                    #3a1f0a 7.5%,
-                    #3a1f0a 8%,
-                    transparent 8%
-                ) 0 24%/100% 76% no-repeat,
-                /* Right border of front left leg */
-                linear-gradient(to right,
-                    transparent 0%,
-                    transparent 22.5%,
-                    #3a1f0a 22.5%,
-                    #3a1f0a 23%,
-                    transparent 23%
-                ) 0 24%/100% 76% no-repeat,
-                /* Left border of front right leg */
-                linear-gradient(to right,
-                    transparent 0%,
-                    transparent 76.5%,
-                    #3a1f0a 76.5%,
-                    #3a1f0a 77%,
-                    transparent 77%
-                ) 0 24%/100% 76% no-repeat,
-                /* Right border of front right leg */
-                linear-gradient(to right,
-                    transparent 0%,
-                    transparent 91.5%,
-                    #3a1f0a 91.5%,
-                    #3a1f0a 92%,
-                    transparent 92%
-                ) 0 24%/100% 76% no-repeat,
-                /* Front left leg body */
-                linear-gradient(to bottom,
-                    transparent 0%,
-                    transparent 24%,
-                    #4a2f0f 24%,
-                    #8b6935 24.5%,
-                    #a88550 25%,
-                    #c9964a 26%,
-                    #8b6935 27%,
-                    #6b4f25 45%,
-                    #5a3f1f 50%,
-                    #6b4f25 55%,
-                    #8b6935 73%,
-                    #6b4f25 100%
-                ) 8% 0/15% 100% no-repeat,
-                /* Front right leg body */
-                linear-gradient(to bottom,
-                    transparent 0%,
-                    transparent 24%,
-                    #4a2f0f 24%,
-                    #8b6935 24.5%,
-                    #a88550 25%,
-                    #c9964a 26%,
-                    #8b6935 27%,
-                    #6b4f25 45%,
-                    #5a3f1f 50%,
-                    #6b4f25 55%,
-                    #8b6935 73%,
-                    #6b4f25 100%
-                ) 77% 0/15% 100% no-repeat,
-                /* Back left leg shadow */
-                linear-gradient(to bottom,
-                    transparent 0%,
-                    transparent 24%,
-                    #3a1f0a 24%,
-                    #5a3f1f 25%,
-                    #6b4f25 26%,
-                    #5a3f1f 45%,
-                    #4a2f0f 50%,
-                    #5a3f1f 55%,
-                    #6b4f25 73%,
-                    #5a3f1f 100%
-                ) 18% 0/13% 100% no-repeat,
-                /* Back right leg shadow */
-                linear-gradient(to bottom,
-                    transparent 0%,
-                    transparent 24%,
-                    #3a1f0a 24%,
-                    #5a3f1f 25%,
-                    #6b4f25 26%,
-                    #5a3f1f 45%,
-                    #4a2f0f 50%,
-                    #5a3f1f 55%,
-                    #6b4f25 73%,
-                    #5a3f1f 100%
-                ) 69% 0/13% 100% no-repeat,
-                /* Leg shadows on ground */
-                radial-gradient(ellipse at center,
-                    rgba(0,0,0,0.6) 0%,
-                    rgba(0,0,0,0.4) 40%,
-                    rgba(0,0,0,0.1) 70%,
-                    transparent 80%
-                ) 50% 96%/90% 8% no-repeat;
-        }
-
-        /* Tall Cabinet - Wood with drawer details */
-        #hotspot-cabinet {
-            background: linear-gradient(to bottom,
-                #d4a574 0%,
-                #c9964a 3%,
-                #b88644 20%,
-                #a88550 50%,
-                #b88644 80%,
-                #c9964a 97%,
-                #d4a574 100%);
-            border: 4px solid #6b4f25;
-            box-shadow:
-                inset 0 0 0 2px #e6b887,
-                inset 20px 0 30px rgba(0,0,0,0.2),
-                inset -20px 0 30px rgba(0,0,0,0.2),
-                0 15px 35px rgba(0,0,0,0.5);
-            position: relative;
-        }
-
-        #hotspot-cabinet::before {
-            content: '';
-            position: absolute;
-            top: 25%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60%;
-            height: 35%;
-            border: 3px solid #5a3f1f;
-            background: linear-gradient(135deg, #c9964a 0%, #a88550 100%);
-            box-shadow:
-                inset 0 2px 4px rgba(0,0,0,0.3),
-                inset 0 -2px 4px rgba(255,255,255,0.1);
-        }
-
-        #hotspot-cabinet::after {
-            content: '';
-            position: absolute;
-            top: 30%;
-            right: 25%;
-            width: 10px;
-            height: 10px;
-            background: radial-gradient(circle, #3a3a3a 0%, #1a1a1a 100%);
+        .gem-slot {
+            width: 40px;
+            height: 40px;
+            border: 3px dashed #fff;
             border-radius: 50%;
-            box-shadow: 0 2px 3px rgba(0,0,0,0.4);
-        }
-
-        /* Storage Cabinet - Light wood */
-        #hotspot-storage {
-            background: linear-gradient(to bottom,
-                #e6d4b8 0%,
-                #d4a574 5%,
-                #c9964a 50%,
-                #d4a574 95%,
-                #e6d4b8 100%);
-            border: 4px solid #8b6935;
-            box-shadow:
-                inset 0 0 0 2px #f0e0c8,
-                inset 0 -5px 15px rgba(0,0,0,0.2),
-                0 12px 20px rgba(0,0,0,0.3);
-            position: relative;
-        }
-
-        #hotspot-storage::before {
-            content: '';
             position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 85%;
-            height: 80%;
-            border: 3px solid #6b4f25;
-            background: linear-gradient(to right,
-                #d4a574 0%,
-                #c9964a 2%,
-                #d4a574 48%,
-                #6b4f25 50%,
-                #d4a574 52%,
-                #c9964a 98%,
-                #d4a574 100%);
-            box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
+            cursor: pointer;
+            transition: all 0.3s;
         }
 
-        /* Windows - White frame with glass effect */
-        #hotspot-window1,
-        #hotspot-window2 {
-            background: linear-gradient(135deg,
-                #ffffff 0%,
-                #f5f5f5 10%,
-                #e8e8e8 50%,
-                #f5f5f5 90%,
-                #ffffff 100%);
-            border: 5px solid #c0c0c0;
-            box-shadow:
-                inset 0 0 0 3px #ffffff,
-                inset 0 0 50px rgba(200, 220, 240, 0.4),
-                0 8px 20px rgba(0,0,0,0.3);
-            position: relative;
+        .gem-slot:hover {
+            background: rgba(255,255,255,0.2);
         }
 
-        #hotspot-window1::before,
-        #hotspot-window2::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 4px;
+        .gem {
+            width: 100%;
             height: 100%;
-            background: linear-gradient(to bottom, #999 0%, #bbb 50%, #999 100%);
-            box-shadow: 0 0 3px rgba(0,0,0,0.2);
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), transparent);
         }
 
-        #hotspot-window1::after,
-        #hotspot-window2::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            transform: translateY(-50%);
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(to right, #999 0%, #bbb 50%, #999 100%);
-            box-shadow: 0 0 3px rgba(0,0,0,0.2);
+        .gem.blue {
+            background: radial-gradient(circle at 30% 30%, #6db3f2, #1e60ab);
         }
 
-        /* Bookshelf - Realistic multi-layer design with books */
-        #hotspot-bookshelf {
-            background: linear-gradient(to bottom,
-                #8b6935 0%,
-                #6b4f25 100%);
-            border: 6px solid #3a1f0a;
-            box-shadow:
-                inset 0 0 0 3px #a88550,
-                0 15px 30px rgba(0,0,0,0.5);
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Top shelf */
-        #hotspot-bookshelf::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 28%;
-            background:
-                /* Books on top shelf */
-                repeating-linear-gradient(to right,
-                    #8b4513 0px, #8b4513 25px,
-                    #2d1810 25px, #2d1810 28px,
-                    #654321 28px, #654321 48px,
-                    #2d1810 48px, #2d1810 51px,
-                    #a0522d 51px, #a0522d 72px,
-                    #2d1810 72px, #2d1810 75px,
-                    #7b3f00 75px, #7b3f00 95px,
-                    #2d1810 95px, #2d1810 98px,
-                    transparent 98px, transparent 100%
-                );
-            box-shadow:
-                inset 0 -3px 5px rgba(0,0,0,0.5),
-                inset 0 3px 3px rgba(255,255,255,0.1);
-        }
-
-        /* Middle shelf */
-        #hotspot-bookshelf::after {
-            content: '';
-            position: absolute;
-            top: 36%;
-            left: 0;
-            right: 0;
-            height: 28%;
-            background:
-                /* Books on middle shelf */
-                repeating-linear-gradient(to right,
-                    #6b4423 0px, #6b4423 30px,
-                    #2d1810 30px, #2d1810 33px,
-                    #8b6914 33px, #8b6914 58px,
-                    #2d1810 58px, #2d1810 61px,
-                    #7b5b3f 61px, #7b5b3f 83px,
-                    #2d1810 83px, #2d1810 86px,
-                    #9b6b3f 86px, #9b6b3f 110px,
-                    #2d1810 110px, transparent 113px
-                );
-            box-shadow:
-                inset 0 -3px 5px rgba(0,0,0,0.5),
-                inset 0 3px 3px rgba(255,255,255,0.1);
-        }
-
-        /* Shelf dividers (horizontal wooden planks) */
-        #hotspot-bookshelf {
-            background-image:
-                /* Bottom shelf plank */
-                linear-gradient(to bottom,
-                    transparent 0%,
-                    transparent 70%,
-                    #a88550 70%,
-                    #c9964a 71%,
-                    #8b6935 72%,
-                    #6b4f25 73%,
-                    transparent 73%),
-                /* Middle shelf plank */
-                linear-gradient(to bottom,
-                    transparent 0%,
-                    transparent 35%,
-                    #a88550 35%,
-                    #c9964a 36%,
-                    #8b6935 37%,
-                    #6b4f25 38%,
-                    transparent 38%),
-                /* Top shelf plank */
-                linear-gradient(to bottom,
-                    transparent 0%,
-                    #a88550 0%,
-                    #c9964a 1%,
-                    #8b6935 2%,
-                    #6b4f25 3%,
-                    transparent 3%),
-                /* Background wood */
-                linear-gradient(to bottom,
-                    #8b6935 0%,
-                    #6b4f25 100%);
-            background-size: 100% 100%;
-        }
-
-        /* Add bottom shelf books using a gradient overlay */
-        #hotspot-bookshelf {
-            background-image:
-                /* Books on bottom shelf */
-                repeating-linear-gradient(to right,
-                    transparent 0%,
-                    transparent 72%,
-                    #7b3f00 72%,
-                    #7b3f00 72.5%,
-                    #2d1810 72.5%,
-                    #2d1810 73%,
-                    #654321 73%,
-                    #654321 76%,
-                    #2d1810 76%,
-                    #2d1810 76.5%,
-                    #8b4513 76.5%,
-                    #8b4513 80%,
-                    #2d1810 80%,
-                    #2d1810 80.5%,
-                    #a0522d 80.5%,
-                    #a0522d 84%,
-                    #2d1810 84%,
-                    #2d1810 84.5%,
-                    #9b6b3f 84.5%,
-                    #9b6b3f 88%,
-                    transparent 88%,
-                    transparent 100%
-                ) 0 72%/100% 28% no-repeat,
-                /* Bottom shelf plank */
-                linear-gradient(to bottom,
-                    transparent 0%,
-                    transparent 70%,
-                    #a88550 70%,
-                    #c9964a 71%,
-                    #8b6935 72%,
-                    #6b4f25 73%,
-                    transparent 73%),
-                /* Middle shelf plank */
-                linear-gradient(to bottom,
-                    transparent 0%,
-                    transparent 35%,
-                    #a88550 35%,
-                    #c9964a 36%,
-                    #8b6935 37%,
-                    #6b4f25 38%,
-                    transparent 38%),
-                /* Top shelf plank */
-                linear-gradient(to bottom,
-                    transparent 0%,
-                    #a88550 0%,
-                    #c9964a 1%,
-                    #8b6935 2%,
-                    #6b4f25 3%,
-                    transparent 3%),
-                /* Background wood */
-                linear-gradient(to bottom,
-                    #8b6935 0%,
-                    #6b4f25 100%);
+        .gem.green {
+            background: radial-gradient(circle at 30% 30%, #6df26d, #1eab1e);
         }
     </style>
 </head>
 <body>
-    <div class="game-layout">
-        <!-- Main view area -->
-        <div class="main-view">
-            <div class="wall-indicator">Wall <span id="wallNumber">1</span> of 4</div>
-
-            <div class="controls">
-                <button class="control-btn" onclick="game.saveGame()">💾 Save</button>
-                <button class="control-btn" onclick="game.loadGame()">📂 Load</button>
+    <div class="game-container">
+        <!-- Main scene area -->
+        <div class="scene-area">
+            <!-- Scene counter -->
+            <div class="scene-counter">
+                <span id="sceneNumber">1/12</span>
             </div>
 
-            <div class="wall-container">
-                <!-- Wall 1: Exit Door -->
-                <div class="wall wall-1 active" id="wall-1">
-                    <!-- Door hotspot (center) -->
-                    <div class="hotspot"
-                         style="position: absolute; top: 20%; left: 50%; transform: translateX(-50%); width: 280px; height: 380px;"
-                         onclick="game.clickHotspot('door')"
-                         id="hotspot-door">
-                    </div>
-                </div>
-
-                <!-- Wall 2: Desk and Cabinet -->
-                <div class="wall wall-2" id="wall-2">
-                    <!-- Desk hotspot (left side) -->
-                    <div class="hotspot"
-                         style="position: absolute; bottom: 18%; left: 20%; width: 320px; height: 220px;"
-                         onclick="game.clickHotspot('desk')"
-                         id="hotspot-desk">
-                    </div>
-
-                    <!-- Tall Cabinet hotspot (right side) -->
-                    <div class="hotspot"
-                         style="position: absolute; top: 22%; right: 18%; width: 190px; height: 420px;"
-                         onclick="game.clickHotspot('cabinet')"
-                         id="hotspot-cabinet">
-                    </div>
-                </div>
-
-                <!-- Wall 3: Storage Cabinet and Window -->
-                <div class="wall wall-3" id="wall-3">
-                    <!-- Storage Cabinet hotspot (center-bottom) -->
-                    <div class="hotspot"
-                         style="position: absolute; bottom: 18%; left: 32%; width: 280px; height: 230px;"
-                         onclick="game.clickHotspot('storage')"
-                         id="hotspot-storage">
-                    </div>
-
-                    <!-- Window hotspot (right-top) -->
-                    <div class="hotspot"
-                         style="position: absolute; top: 12%; right: 10%; width: 160px; height: 210px;"
-                         onclick="game.clickHotspot('window1')"
-                         id="hotspot-window1">
-                    </div>
-                </div>
-
-                <!-- Wall 4: Bookshelf and Window -->
-                <div class="wall wall-4" id="wall-4">
-                    <!-- Bookshelf hotspot (center-bottom) -->
-                    <div class="hotspot"
-                         style="position: absolute; bottom: 18%; left: 25%; width: 450px; height: 270px;"
-                         onclick="game.clickHotspot('bookshelf')"
-                         id="hotspot-bookshelf">
-                    </div>
-
-                    <!-- Window hotspot (right-top) -->
-                    <div class="hotspot"
-                         style="position: absolute; top: 12%; right: 10%; width: 160px; height: 210px;"
-                         onclick="game.clickHotspot('window2')"
-                         id="hotspot-window2">
-                    </div>
-                </div>
+            <!-- Scenes -->
+            <div class="scene active" id="scene-1" style="background-image: url('30451762908484_.pic_hd.jpg');">
+                <!-- Hotspots will be added dynamically -->
             </div>
+            <div class="scene" id="scene-2" style="background-image: url('30471762909008_.pic_hd.jpg');"></div>
+            <div class="scene" id="scene-3" style="background-image: url('30481762909291_.pic_hd.jpg');"></div>
+            <div class="scene" id="scene-4" style="background-image: url('30441762907866_.pic_hd.jpg');"></div>
 
             <!-- Navigation arrows -->
-            <div class="nav-arrows">
-                <div class="nav-btn" onclick="game.previousWall()">◀</div>
-                <div class="nav-btn" onclick="game.nextWall()">▶</div>
+            <div class="nav-container">
+                <div class="nav-arrow left" onclick="game.previousScene()"></div>
+                <div class="nav-arrow right" onclick="game.nextScene()"></div>
             </div>
+
+            <!-- Dialog box -->
+            <div class="dialog" id="dialog"></div>
         </div>
 
-        <!-- Right panel for clues -->
-        <div class="right-panel">
-            <div class="panel-header">🔍 Clues & Items</div>
-            <div class="clues-grid" id="cluesGrid">
-                <!-- 8 clue boxes -->
-                <div class="clue-box empty" id="clue-0"></div>
-                <div class="clue-box empty" id="clue-1"></div>
-                <div class="clue-box empty" id="clue-2"></div>
-                <div class="clue-box empty" id="clue-3"></div>
-                <div class="clue-box empty" id="clue-4"></div>
-                <div class="clue-box empty" id="clue-5"></div>
-                <div class="clue-box empty" id="clue-6"></div>
-                <div class="clue-box empty" id="clue-7"></div>
-            </div>
-
-            <div class="event-log">
-                <div class="log-title">📰 Event Log</div>
-                <div id="logContainer"></div>
-            </div>
+        <!-- Right toolbar (inventory) -->
+        <div class="toolbar" id="toolbar">
+            <!-- Inventory slots will be generated here -->
         </div>
     </div>
 
-    <!-- Modal for interactions -->
+    <!-- Modal for mini-games -->
     <div class="modal" id="modal">
-        <div class="modal-content">
-            <button class="modal-close" onclick="game.closeModal()">×</button>
-            <div id="modalBody"></div>
+        <div class="modal-content" id="modal-content">
+            <div class="modal-close" onclick="game.closeModal()">×</div>
+            <div id="modal-body"></div>
         </div>
     </div>
 
     <script>
         class RustyLakeGame {
             constructor() {
-                this.currentWall = 1;
-                this.selectedHotspot = null;
-                this.clues = [];
-                this.puzzleStates = {
-                    bookshelf: { examined: false },
-                    window: { examined: false, foundSymbol: false },
-                    desk: { examined: false },
-                    storage: { locked: true },
-                    cabinet: { locked: true },
+                this.currentScene = 1;
+                this.totalScenes = 12;
+                this.inventory = [];
+                this.maxInventorySlots = 8;
+                this.selectedItem = null;
+                this.gameState = {
+                    // Collected items
+                    hasRod: false,
+                    hasLine: false,
+                    hasWorm: false,
+                    hasKnife: false,
+                    hasNote: false,
+                    hasShrimp: false,
+                    hasShrimpHead: false,
+                    hasKey: false,
+                    hasMagnet: false,
+                    hasFish: false,
+                    hasCoins: false,
+                    hasBlueGem: false,
+                    hasGreenGem: false,
+
+                    // Progress flags
+                    floorChecked: false,
+                    shadowSeen: false,
+                    shrimpCut: false,
+                    cabinetOpened: false,
+                    fishCut: false,
+                    treeGrown: false,
+                    mathSolved: false,
+                    seasonsSolved: false,
+                    treePuzzleSolved: false,
                     gameWon: false
                 };
-
-                // Audio system
-                this.sounds = {
-                    bird: new Audio(),
-                    metal: new Audio(),
-                    wood: new Audio()
-                };
-
-                // Set up sounds (using data URIs for simple sine wave sounds as placeholders)
-                this.setupSounds();
 
                 this.init();
             }
 
-            setupSounds() {
-                // Create simple sound effects using Web Audio API
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                this.audioContext = new AudioContext();
-
-                // These are placeholder sounds - you can replace with real audio files
-                // Just set: this.sounds.bird.src = 'bird-sound.mp3';
-                this.sounds.bird.volume = 0.5;
-                this.sounds.metal.volume = 0.5;
-                this.sounds.wood.volume = 0.5;
-            }
-
-            playSound(soundType) {
-                try {
-                    if (soundType === 'bird') {
-                        this.playBirdSound();
-                    } else if (soundType === 'metal') {
-                        this.playMetalSound();
-                    } else if (soundType === 'wood') {
-                        this.playWoodSound();
-                    }
-                } catch (e) {
-                    console.log('Audio playback failed:', e);
-                }
-            }
-
-            playBirdSound() {
-                // Synthesize bird chirp sound
-                const ctx = this.audioContext;
-                const oscillator = ctx.createOscillator();
-                const gainNode = ctx.createGain();
-
-                oscillator.connect(gainNode);
-                gainNode.connect(ctx.destination);
-
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(2000, ctx.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(3000, ctx.currentTime + 0.1);
-                oscillator.frequency.exponentialRampToValueAtTime(2500, ctx.currentTime + 0.2);
-
-                gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-
-                oscillator.start(ctx.currentTime);
-                oscillator.stop(ctx.currentTime + 0.3);
-            }
-
-            playMetalSound() {
-                // Synthesize metal clang sound
-                const ctx = this.audioContext;
-                const oscillator = ctx.createOscillator();
-                const gainNode = ctx.createGain();
-
-                oscillator.connect(gainNode);
-                gainNode.connect(ctx.destination);
-
-                oscillator.type = 'square';
-                oscillator.frequency.setValueAtTime(200, ctx.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.5);
-
-                gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
-
-                oscillator.start(ctx.currentTime);
-                oscillator.stop(ctx.currentTime + 0.6);
-            }
-
-            playWoodSound() {
-                // Synthesize wood knock sound
-                const ctx = this.audioContext;
-                const bufferSize = ctx.sampleRate * 0.1;
-                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-                const data = buffer.getChannelData(0);
-
-                // Generate noise burst for wood sound
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1;
-                }
-
-                const source = ctx.createBufferSource();
-                const filter = ctx.createBiquadFilter();
-                const gainNode = ctx.createGain();
-
-                source.buffer = buffer;
-                filter.type = 'lowpass';
-                filter.frequency.value = 500;
-
-                source.connect(filter);
-                filter.connect(gainNode);
-                gainNode.connect(ctx.destination);
-
-                gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-
-                source.start(ctx.currentTime);
-            }
-
             init() {
-                this.addLog("Welcome to Rusty Lake Mystery...", "important");
-                this.addLog("Explore the room by clicking on objects and switching between walls.");
-                this.addLog("Hint: Start by examining the bookshelf...", "important");
+                this.setupToolbar();
+                this.setupHotspots();
+                this.updateSceneCounter();
+
+                // Show initial message
+                this.showDialog('先收集物品<br>捡起地上的一根鱼竿<br>抽屉里有一把刀<br>窗框上有一张纸条');
             }
 
-            nextWall() {
-                this.currentWall = (this.currentWall % 4) + 1;
-                this.updateWall();
-            }
+            setupToolbar() {
+                const toolbar = document.getElementById('toolbar');
+                toolbar.innerHTML = '';
 
-            previousWall() {
-                this.currentWall = this.currentWall === 1 ? 4 : this.currentWall - 1;
-                this.updateWall();
-            }
-
-            updateWall() {
-                document.querySelectorAll('.wall').forEach(w => w.classList.remove('active'));
-                document.getElementById(`wall-${this.currentWall}`).classList.add('active');
-                document.getElementById('wallNumber').textContent = this.currentWall;
-                this.clearSelection();
-            }
-
-            clickHotspot(itemKey) {
-                // Play appropriate sound effect
-                if (itemKey === 'window1' || itemKey === 'window2') {
-                    this.playSound('bird');
-                } else if (itemKey === 'door') {
-                    this.playSound('metal');
-                } else if (itemKey === 'desk' || itemKey === 'bookshelf' || itemKey === 'cabinet' || itemKey === 'storage') {
-                    this.playSound('wood');
+                // Create inventory slots
+                for (let i = 0; i < this.maxInventorySlots; i++) {
+                    const slot = document.createElement('div');
+                    slot.className = 'toolbar-icon empty';
+                    slot.id = `slot-${i}`;
+                    slot.onclick = () => this.selectItem(i);
+                    toolbar.appendChild(slot);
                 }
-
-                // Clear previous selection
-                this.clearSelection();
-
-                // Select this hotspot
-                this.selectedHotspot = itemKey;
-                const hotspot = document.getElementById(`hotspot-${itemKey}`);
-                if (hotspot) {
-                    hotspot.classList.add('selected');
-                }
-
-                this.addLog(`Selected: ${this.getItemName(itemKey)}`, "important");
-
-                // Open interaction modal
-                this.openInteractionModal(itemKey);
             }
 
-            clearSelection() {
-                document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('selected'));
-                this.selectedHotspot = null;
-            }
-
-            getItemName(key) {
-                const names = {
-                    door: "Exit Door",
-                    desk: "Wooden Desk",
-                    cabinet: "Tall Cabinet",
-                    storage: "Storage Cabinet",
-                    window1: "Window",
-                    bookshelf: "Bookshelf",
-                    window2: "Window"
-                };
-                return names[key] || key;
-            }
-
-            openInteractionModal(itemKey) {
-                const modal = document.getElementById('modal');
-                const modalBody = document.getElementById('modalBody');
-
-                let content = '';
-
-                switch(itemKey) {
-                    case 'door':
-                        content = this.getDoorModal();
-                        break;
-                    case 'desk':
-                        content = this.getDeskModal();
-                        break;
-                    case 'cabinet':
-                        content = this.getCabinetModal();
-                        break;
-                    case 'storage':
-                        content = this.getStorageModal();
-                        break;
-                    case 'window1':
-                    case 'window2':
-                        content = this.getWindowModal();
-                        break;
-                    case 'bookshelf':
-                        content = this.getBookshelfModal();
-                        break;
-                }
-
-                modalBody.innerHTML = content;
-                modal.classList.add('active');
-            }
-
-
-            getWindowModal() {
-                if (this.hasClue('note1') && !this.puzzleStates.window.foundSymbol) {
-                    this.puzzleStates.window.examined = true;
-                    return `
-                        <h2 class="modal-title">Window</h2>
-                        <div class="modal-description">
-                            You look closely at the window as the note suggested.
-                            Through the dust on the glass, you notice numbers etched into the frame!
-                        </div>
-                        <div class="furniture-view">
-                            <div style="font-size: 100px; margin: 30px 0;">🪟</div>
-                            <div style="color: #c9a56f; font-size: 32px; font-weight: bold; margin: 20px 0;">
-                                3 ... 7 ... ?
-                            </div>
-                            <div style="color: #888; font-style: italic; font-size: 14px;">
-                                Two numbers visible, but the third is worn away...
-                            </div>
-                        </div>
-                        <button class="modal-btn" onclick="game.collectWindowClue()">Remember the Numbers</button>
-                    `;
-                } else if (this.puzzleStates.window.foundSymbol) {
-                    return `
-                        <h2 class="modal-title">Window</h2>
-                        <div class="modal-description">
-                            The window frame shows the numbers: 3 ... 7 ... ?<br>
-                            The third number is still missing.
-                        </div>
-                        <div class="furniture-view">
-                            <div style="font-size: 100px; margin: 30px 0;">🪟</div>
-                        </div>
-                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
-                    `;
+            addItem(itemName, icon) {
+                if (this.inventory.length < this.maxInventorySlots) {
+                    this.inventory.push({ name: itemName, icon: icon });
+                    this.updateToolbar();
+                    this.showDialog(`获得：${itemName}`);
                 } else {
-                    return `
-                        <h2 class="modal-title">Window</h2>
-                        <div class="modal-description">
-                            Through the frosted glass, you see nothing but darkness.
-                            The window is sealed shut. Maybe you need to examine it more carefully?
-                        </div>
-                        <div class="furniture-view">
-                            <div style="font-size: 100px; margin: 30px 0;">🪟</div>
-                            <div style="color: #888; font-style: italic;">
-                                No escape this way...
-                            </div>
-                        </div>
-                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
-                    `;
+                    this.showDialog('物品栏已满！');
                 }
             }
 
-            collectWindowClue() {
-                if (!this.hasClue('numbers')) {
-                    this.puzzleStates.window.foundSymbol = true;
-                    this.addClue({ icon: '🔢', text: 'Clue 2: Numbers 3-7-?', type: 'numbers' });
-                    this.addLog("Clue 2: Found partial code on window frame!", "important");
+            removeItem(itemName) {
+                const index = this.inventory.findIndex(item => item.name === itemName);
+                if (index !== -1) {
+                    this.inventory.splice(index, 1);
+                    this.updateToolbar();
                 }
-                this.closeModal();
             }
 
-            getDeskModal() {
-                if (this.hasClue('numbers') && !this.puzzleStates.desk.examined) {
-                    this.puzzleStates.desk.examined = true;
-                    return `
-                        <h2 class="modal-title">Wooden Desk</h2>
-                        <div class="modal-description">
-                            You open the desk drawer and find a piece of paper with strange drawings.
-                            At the bottom, there's a single number circled: <strong>6</strong>
-                        </div>
-                        <div class="furniture-view">
-                            <div style="font-size: 80px; margin: 30px 0;">📝</div>
-                            <div style="color: #c9a56f; font-size: 48px; font-weight: bold; margin: 20px 0;">
-                                6
-                            </div>
-                            <div style="color: #888; font-style: italic; font-size: 14px;">
-                                This must be the missing third number!
-                            </div>
-                        </div>
-                        <button class="modal-btn" onclick="game.collectDeskClue()">Take the Paper</button>
-                    `;
-                } else if (this.puzzleStates.desk.examined) {
-                    return `
-                        <h2 class="modal-title">Wooden Desk</h2>
-                        <div class="modal-description">
-                            The drawer is empty now. You already took the paper.<br>
-                            The complete code is: <strong>3-7-6</strong>
-                        </div>
-                        <div class="furniture-view">
-                            <div style="font-size: 80px; margin: 30px 0;">📝</div>
-                        </div>
-                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
-                    `;
+            hasItem(itemName) {
+                return this.inventory.some(item => item.name === itemName);
+            }
+
+            updateToolbar() {
+                for (let i = 0; i < this.maxInventorySlots; i++) {
+                    const slot = document.getElementById(`slot-${i}`);
+                    if (i < this.inventory.length) {
+                        slot.className = 'toolbar-icon';
+                        slot.innerHTML = this.inventory[i].icon;
+                        if (this.selectedItem === i) {
+                            slot.classList.add('active');
+                        }
+                    } else {
+                        slot.className = 'toolbar-icon empty';
+                        slot.innerHTML = '';
+                    }
+                }
+            }
+
+            selectItem(index) {
+                if (index < this.inventory.length) {
+                    // Double click to use item
+                    if (this.selectedItem === index) {
+                        this.useItem(index);
+                        this.selectedItem = null;
+                    } else {
+                        this.selectedItem = index;
+                        this.showDialog(`已选择：${this.inventory[this.selectedItem].name}`);
+                    }
+                    this.updateToolbar();
+                }
+            }
+
+            useItem(index) {
+                const item = this.inventory[index];
+                if (!item) return;
+
+                switch (item.name) {
+                    case '虾':
+                        if (this.hasItem('小刀') && !this.gameState.shrimpCut) {
+                            this.showDialog('把虾切开<br>获得虾头和一把钥匙！🔑');
+                            this.gameState.shrimpCut = true;
+                            this.removeItem('虾');
+                            this.addItem('虾头', '🦐');
+                            this.addItem('钥匙', '🔑');
+                            this.gameState.hasKey = true;
+                            this.gameState.hasShrimpHead = true;
+                        } else {
+                            this.showDialog('需要用刀来切虾');
+                        }
+                        break;
+
+                    case '吸铁石':
+                        this.showDialog('用吸铁石吸地上的绳子<br>可以收获满满！');
+                        if (!this.gameState.hasMagnet) {
+                            this.gameState.hasMagnet = true;
+                            this.addItem('磁铁', '🧲');
+                            this.addItem('硬币', '🪙');
+                            this.showDialog('获得了磁铁和硬币！');
+                        }
+                        break;
+
+                    case '纸条':
+                        this.showDialog('纸条上写着：<br>"THE PAST IS NEVER DEAD<br>IT IS NOT EVEN PAST"');
+                        break;
+
+                    default:
+                        this.showDialog(`${item.name} 无法直接使用`);
+                }
+            }
+
+            setupHotspots() {
+                // Scene 1 hotspots - Desk and Cabinet wall
+                this.addHotspot(1, 15, 65, 30, 25, () => {
+                    if (!this.gameState.hasRod) {
+                        this.gameState.hasRod = true;
+                        this.addItem('鱼竿', '🎣');
+                    } else {
+                        this.showDialog('这里是地上，已经捡过鱼竿了');
+                    }
+                });
+
+                this.addHotspot(1, 30, 40, 25, 30, () => {
+                    if (!this.gameState.hasKnife) {
+                        this.gameState.hasKnife = true;
+                        this.addItem('小刀', '🔪');
+                    } else {
+                        this.clickDesk();
+                    }
+                });
+
+                this.addHotspot(1, 60, 35, 20, 40, () => {
+                    this.clickCabinet();
+                });
+
+                // Scene 2 hotspots - Window wall
+                this.addHotspot(2, 30, 30, 35, 50, () => {
+                    this.clickWindow();
+                });
+
+                // Scene 3 hotspots - Bookshelf
+                this.addHotspot(3, 35, 30, 30, 45, () => {
+                    if (!this.gameState.hasNote) {
+                        this.gameState.hasNote = true;
+                        this.addItem('纸条', '📄');
+                        this.showDialog('窗框上有一张纸条');
+                    } else {
+                        this.showDialog('这是书架，没有更多东西了');
+                    }
+                });
+
+                // Scene 3 - Add math puzzle hotspot (bookshelf area)
+                this.addHotspot(3, 10, 50, 20, 30, () => {
+                    if (!this.gameState.mathSolved) {
+                        this.startMathPuzzle();
+                    } else {
+                        this.showDialog('数学谜题已经解决了');
+                    }
+                });
+
+                // Scene 3 - Add seasons puzzle hotspot
+                this.addHotspot(3, 70, 50, 20, 30, () => {
+                    if (!this.gameState.seasonsSolved) {
+                        this.startSeasonsPuzzle();
+                    } else {
+                        this.showDialog('四季谜题已经解决了');
+                    }
+                });
+
+                // Scene 4 hotspots - Tree puzzle
+                this.addHotspot(4, 20, 25, 35, 50, () => {
+                    if (this.gameState.treeGrown && !this.gameState.treePuzzleSolved) {
+                        this.startTreePuzzle();
+                    } else if (this.gameState.treePuzzleSolved) {
+                        this.showDialog('树谜题已经完成！');
+                    } else {
+                        this.showDialog('需要先让树长出来');
+                    }
+                });
+
+                // Scene 4 - Door
+                this.addHotspot(4, 60, 35, 25, 45, () => {
+                    if (this.gameState.gameWon) {
+                        this.showDialog('恭喜通关！🎉<br>THE PAST IS NEVER DEAD<br>IT IS NOT EVEN PAST');
+                    } else {
+                        this.showDialog('门还锁着，需要完成所有谜题');
+                    }
+                });
+            }
+
+            addHotspot(sceneId, left, top, width, height, callback) {
+                const scene = document.getElementById(`scene-${sceneId}`);
+                const hotspot = document.createElement('div');
+                hotspot.className = 'hotspot';
+                hotspot.style.left = left + '%';
+                hotspot.style.top = top + '%';
+                hotspot.style.width = width + '%';
+                hotspot.style.height = height + '%';
+                hotspot.onclick = callback;
+                scene.appendChild(hotspot);
+            }
+
+            clickDesk() {
+                if (this.hasItem('鱼') && this.hasItem('小刀') && !this.gameState.fishCut) {
+                    this.showDialog('把鱼切开<br>竟然长出了一棵树！🌳');
+                    this.gameState.fishCut = true;
+                    this.gameState.treeGrown = true;
+                    this.removeItem('鱼');
+                } else if (!this.gameState.hasLine) {
+                    this.gameState.hasLine = true;
+                    this.addItem('鱼线', '🧵');
                 } else {
-                    return `
-                        <h2 class="modal-title">Wooden Desk</h2>
-                        <div class="modal-description">
-                            A simple wooden desk with a locked drawer.
-                            You can't seem to open it yet. Maybe you need more information first?
-                        </div>
-                        <div class="furniture-view">
-                            <div style="font-size: 80px; margin: 30px 0;">📝</div>
-                            <div style="color: #888; font-style: italic;">
-                                The drawer won't budge...
-                            </div>
-                        </div>
-                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
-                    `;
+                    this.showDialog('这是桌子，抽屉里有一把刀');
                 }
             }
 
-            collectDeskClue() {
-                if (!this.hasClue('complete_code')) {
-                    this.addClue({ icon: '6️⃣', text: 'Clue 3: Number 6', type: 'number6' });
-                    this.addClue({ icon: '🔐', text: 'Complete Code: 376', type: 'complete_code' });
-                    this.addLog("Clue 3: Found the missing number! Code is 3-7-6", "important");
-                }
-                this.closeModal();
-            }
-
-            getStorageModal() {
-                if (this.puzzleStates.storage.locked && this.hasClue('complete_code')) {
-                    return `
-                        <h2 class="modal-title">Storage Cabinet</h2>
-                        <div class="modal-description">
-                            A low storage cabinet with a combination lock on the doors.
-                            You need to enter a 3-digit code to open it.
-                        </div>
-                        <div class="furniture-view">
-                            <div style="font-size: 100px; margin: 30px 0;">🗄️</div>
-                            <div class="lock-icon">🔢</div>
-                        </div>
-                        <input type="text" class="modal-input" placeholder="Enter 3-digit code..."
-                               id="storageCode" maxlength="3">
-                        <button class="modal-btn" onclick="game.tryUnlockStorage()">Unlock</button>
-                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
-                    `;
-                } else if (!this.puzzleStates.storage.locked) {
-                    return `
-                        <h2 class="modal-title">Storage Cabinet</h2>
-                        <div class="modal-description">
-                            The cabinet doors swing open. Inside, resting on a velvet cushion,
-                            you find an ornate brass key!
-                        </div>
-                        <div class="furniture-view">
-                            <div style="font-size: 100px; margin: 30px 0;">🔑</div>
-                            <div style="color: #c9a56f; font-style: italic;">
-                                This key must open something important...
-                            </div>
-                        </div>
-                        <button class="modal-btn" onclick="game.collectStorageKey()">Take the Key</button>
-                    `;
+            clickCabinet() {
+                if (this.hasItem('钥匙') && !this.gameState.cabinetOpened) {
+                    this.gameState.cabinetOpened = true;
+                    this.addItem('吸铁石', '🧲');
+                    this.addItem('虫子', '🐛');
+                    this.removeItem('钥匙');
+                    this.showDialog('钥匙打开柜子<br>得到吸铁石和虫子');
+                } else if (this.gameState.cabinetOpened) {
+                    this.showDialog('柜子已经打开过了');
                 } else {
-                    return `
-                        <h2 class="modal-title">Storage Cabinet</h2>
-                        <div class="modal-description">
-                            A low storage cabinet with a combination lock.
-                            The lock looks like it needs a 3-digit code, but you don't have enough information yet.
-                        </div>
-                        <div class="furniture-view">
-                            <div style="font-size: 100px; margin: 30px 0;">🗄️</div>
-                            <div style="color: #888; font-style: italic;">
-                                Locked. Need a code...
-                            </div>
-                        </div>
-                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
-                    `;
+                    this.showDialog('这个柜子需要钥匙');
                 }
             }
 
-            tryUnlockStorage() {
-                const input = document.getElementById('storageCode');
-                const code = input ? input.value : '';
-
-                if (code === '376') {
-                    this.puzzleStates.storage.locked = false;
-                    this.addLog("Storage cabinet unlocked!", "important");
-                    this.openInteractionModal('storage');
+            clickWindow() {
+                if (!this.gameState.floorChecked) {
+                    this.showDialog('掀顶有一只虫子<br>应该是鱼饵');
+                    this.addItem('虫子', '🐛');
+                    this.gameState.floorChecked = true;
+                    this.gameState.shadowSeen = true;
+                } else if (this.canFish()) {
+                    this.startFishing();
                 } else {
-                    this.addLog("Wrong code...", "error");
+                    this.showDialog('这里是窗户，可以钓鱼<br>需要：鱼竿、鱼线、虫子');
                 }
             }
 
-            collectStorageKey() {
-                if (!this.hasClue('key')) {
-                    this.addClue({ icon: '🔑', text: 'Clue 4: Brass Key', type: 'key' });
-                    this.addLog("Clue 4: Obtained the brass key!", "important");
-                }
-                this.closeModal();
+            canFish() {
+                return this.hasItem('鱼竿') && this.hasItem('鱼线') && this.hasItem('虫子');
             }
 
-            getCabinetModal() {
-                if (this.puzzleStates.cabinet.locked && this.hasClue('key')) {
-                    return `
-                        <h2 class="modal-title">Tall Cabinet</h2>
-                        <div class="modal-description">
-                            A tall wooden cabinet with a keyhole.
-                            You have the brass key - try using it!
+            startFishing() {
+                this.showModal(`
+                    <div class="fishing-game">
+                        <h2 style="color: #fff;">钓鱼游戏</h2>
+                        <p style="color: #fff;">点击画面开始钓鱼！</p>
+                        <div class="fishing-canvas" onclick="game.catchFish()">
+                            <div class="fishing-hook" style="top: 20px;"></div>
                         </div>
-                        <div class="furniture-view">
-                            <div style="font-size: 100px; margin: 30px 0;">🚪</div>
-                            <div class="lock-icon">🔒</div>
-                            <div style="color: #c9a56f; font-style: italic;">
-                                The brass key fits perfectly...
-                            </div>
-                        </div>
-                        <button class="modal-btn" onclick="game.tryUnlockCabinet()">Use Key</button>
-                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
-                    `;
-                } else if (!this.puzzleStates.cabinet.locked) {
-                    return `
-                        <h2 class="modal-title">Tall Cabinet</h2>
-                        <div class="modal-description">
-                            The cabinet door swings open with a creak. Inside, resting on black velvet,
-                            is the mysterious Black Cube!
-                        </div>
-                        <div class="furniture-view">
-                            <div style="font-size: 120px; margin: 30px 0;">⬛</div>
-                            <div style="color: #c9a56f; font-size: 20px; margin: 20px 0;">
-                                The final piece of the puzzle...
-                            </div>
-                        </div>
-                        <button class="modal-btn" onclick="game.winGame()">Take the Black Cube</button>
-                    `;
-                } else {
-                    return `
-                        <h2 class="modal-title">Tall Cabinet</h2>
-                        <div class="modal-description">
-                            A tall wooden cabinet with a sturdy lock.
-                            You need a key to open it.
-                        </div>
-                        <div class="furniture-view">
-                            <div style="font-size: 100px; margin: 30px 0;">🚪</div>
-                            <div class="lock-icon">🔒</div>
-                            <div style="color: #888; font-style: italic;">
-                                Locked tight. Where's the key?
-                            </div>
-                        </div>
-                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
-                    `;
-                }
+                    </div>
+                `);
             }
 
-            tryUnlockCabinet() {
-                if (this.hasClue('key')) {
-                    this.puzzleStates.cabinet.locked = false;
-                    this.addLog("Cabinet unlocked with the brass key!", "important");
-                    this.openInteractionModal('cabinet');
-                } else {
-                    this.addLog("You need a key to unlock this cabinet...", "error");
-                }
-            }
-
-            winGame() {
-                this.addClue({ icon: '⬛', text: 'Black Cube', type: 'final' });
-                this.addLog("Found the Black Cube! Now find the exit door!", "important");
-                this.puzzleStates.gameWon = true;
+            catchFish() {
                 this.closeModal();
 
+                if (!this.gameState.hasShrimp) {
+                    this.gameState.hasShrimp = true;
+                    this.addItem('虾', '🦐');
+                    this.removeItem('虫子');
+                    this.showDialog('钓到了一只虾！');
+                } else if (!this.gameState.hasFish && this.hasItem('虫子')) {
+                    this.gameState.hasFish = true;
+                    this.addItem('鱼', '🐟');
+                    this.removeItem('虫子');
+                    this.showDialog('利用虫子可以钓到一只鱼');
+                } else {
+                    this.showDialog('没有鱼饵了');
+                }
+            }
+
+            startMathPuzzle() {
+                this.showModal(`
+                    <div class="puzzle-container">
+                        <h2>一道数学题</h2>
+                        <p>他说是镜像</p>
+                        <p>我们可以看出是：</p>
+                        <h3 style="color: #ff6347;">6×237=1422</h3>
+                        <p>请输入正确答案：</p>
+                        <input type="text" id="mathAnswer" class="puzzle-input" placeholder="输入答案">
+                        <br>
+                        <button class="puzzle-submit" onclick="game.checkMathAnswer()">提交</button>
+                    </div>
+                `);
+            }
+
+            checkMathAnswer() {
+                const answer = document.getElementById('mathAnswer').value;
+                if (answer === '1422') {
+                    this.gameState.mathSolved = true;
+                    this.gameState.hasBlueGem = true;
+                    this.addItem('蓝宝石', '💎');
+                    this.closeModal();
+                    this.showDialog('答对了！获得蓝宝石！');
+                } else {
+                    this.showDialog('答案不对，再想想...');
+                }
+            }
+
+            startSeasonsPuzzle() {
+                this.showModal(`
+                    <div class="puzzle-container">
+                        <h2>联系到四季了</h2>
+                        <p style="color: #e8d4a0;">Remember the Seasons</p>
+                        <p>请输入四个季节的符号（用数字1-4表示）：</p>
+                        <p>春(1) 夏(2) 秋(3) 冬(4)</p>
+                        <input type="text" id="seasonsAnswer" class="puzzle-input" placeholder="例如：1234">
+                        <br>
+                        <button class="puzzle-submit" onclick="game.checkSeasonsAnswer()">提交</button>
+                    </div>
+                `);
+            }
+
+            checkSeasonsAnswer() {
+                const answer = document.getElementById('seasonsAnswer').value;
+                // Accept various answers like "1234", "1324", etc.
+                if (answer.length === 4 && answer.includes('1') && answer.includes('2') &&
+                    answer.includes('3') && answer.includes('4')) {
+                    this.gameState.seasonsSolved = true;
+                    this.gameState.hasGreenGem = true;
+                    this.addItem('绿宝石', '💚');
+                    this.closeModal();
+                    this.showDialog('答对了！获得绿宝石！');
+                } else {
+                    this.showDialog('答案不对，想想四季的顺序...');
+                }
+            }
+
+            startTreePuzzle() {
+                if (!this.hasItem('蓝宝石') || !this.hasItem('绿宝石')) {
+                    this.showDialog('需要先获得宝石才能解开树谜题');
+                    return;
+                }
+
+                this.showModal(`
+                    <div class="tree-puzzle">
+                        <h2 style="color: #fff;">树谜题</h2>
+                        <p style="color: #e8d4a0;">根据图纸提示摆放宝石</p>
+                        <p style="color: #e8d4a0;">两种宝石会得到不同的答案</p>
+                        <div style="margin: 20px auto; max-width: 400px;">
+                            <svg width="400" height="400" viewBox="0 0 200 200" style="background: #8b7355; border: 3px solid #5a4a35;">
+                                <!-- Tree structure -->
+                                <line x1="100" y1="100" x2="50" y2="50" stroke="#e8d4a0" stroke-width="3"/>
+                                <line x1="100" y1="100" x2="150" y2="50" stroke="#e8d4a0" stroke-width="3"/>
+                                <line x1="100" y1="100" x2="100" y2="150" stroke="#e8d4a0" stroke-width="3"/>
+                                <line x1="100" y1="100" x2="50" y2="150" stroke="#e8d4a0" stroke-width="3"/>
+                                <line x1="100" y1="100" x2="150" y2="150" stroke="#e8d4a0" stroke-width="3"/>
+
+                                <!-- Clickable gem slots -->
+                                <circle cx="50" cy="50" r="15" fill="rgba(255,255,255,0.3)" stroke="#fff" stroke-width="2"
+                                    onclick="game.placeGem(0)" style="cursor: pointer;" id="slot-0"/>
+                                <circle cx="150" cy="50" r="15" fill="rgba(255,255,255,0.3)" stroke="#fff" stroke-width="2"
+                                    onclick="game.placeGem(1)" style="cursor: pointer;" id="slot-1"/>
+                                <circle cx="100" cy="100" r="15" fill="rgba(255,255,255,0.3)" stroke="#fff" stroke-width="2"
+                                    onclick="game.placeGem(2)" style="cursor: pointer;" id="slot-2"/>
+                                <circle cx="100" cy="150" r="15" fill="rgba(255,255,255,0.3)" stroke="#fff" stroke-width="2"
+                                    onclick="game.placeGem(3)" style="cursor: pointer;" id="slot-3"/>
+                                <circle cx="50" cy="150" r="15" fill="rgba(255,255,255,0.3)" stroke="#fff" stroke-width="2"
+                                    onclick="game.placeGem(4)" style="cursor: pointer;" id="slot-4"/>
+                            </svg>
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <p style="color: #fff;">选择宝石：</p>
+                            <button class="puzzle-submit" onclick="game.selectGemType('blue')"
+                                style="background: #6db3f2; margin: 10px;">蓝宝石</button>
+                            <button class="puzzle-submit" onclick="game.selectGemType('green')"
+                                style="background: #6df26d; margin: 10px;">绿宝石</button>
+                        </div>
+                        <button class="puzzle-submit" onclick="game.checkTreePuzzle()"
+                            style="margin-top: 20px; background: #ffd700;">完成摆放</button>
+                    </div>
+                `);
+
+                this.treeGems = [null, null, null, null, null];
+                this.selectedGemType = 'blue';
+            }
+
+            selectGemType(type) {
+                this.selectedGemType = type;
+                this.showDialog(`已选择${type === 'blue' ? '蓝宝石' : '绿宝石'}`);
+            }
+
+            placeGem(slotIndex) {
+                if (!this.selectedGemType) return;
+
+                this.treeGems[slotIndex] = this.selectedGemType;
+                const slot = document.getElementById(`slot-${slotIndex}`);
+                if (slot) {
+                    slot.setAttribute('fill', this.selectedGemType === 'blue' ? '#6db3f2' : '#6df26d');
+                }
+            }
+
+            checkTreePuzzle() {
+                // Check if gems are placed correctly
+                const blueCount = this.treeGems.filter(g => g === 'blue').length;
+                const greenCount = this.treeGems.filter(g => g === 'green').length;
+
+                if (blueCount > 0 || greenCount > 0) {
+                    this.gameState.treePuzzleSolved = true;
+                    this.gameState.gameWon = true;
+                    this.closeModal();
+                    this.showDialog('恭喜通关！🎉<br>根据图上提示摆放<br>两种钻石会得到不同的答案！');
+                } else {
+                    this.showDialog('请先放置宝石');
+                }
+            }
+
+            showDialog(message) {
+                const dialog = document.getElementById('dialog');
+                dialog.innerHTML = message;
+                dialog.classList.add('show');
                 setTimeout(() => {
-                    alert('🎉 You found the Black Cube!\n\nNow use it to open the exit door on Wall 1!');
-                }, 500);
+                    dialog.classList.remove('show');
+                }, 3000);
             }
 
-            getDoorModal() {
-                if (!this.puzzleStates.gameWon) {
-                    return `
-                        <h2 class="modal-title">Exit Door</h2>
-                        <div class="modal-description">
-                            A heavy wooden door. It's locked from the inside.
-                            You need something special to unlock it...
-                        </div>
-                        <div class="furniture-view">
-                            <div style="font-size: 120px; margin: 30px 0;">🚪</div>
-                            <div class="lock-icon">🔒</div>
-                            <div style="color: #ff6b6b;">
-                                The door won't budge. You need to find the Black Cube first.
-                            </div>
-                        </div>
-                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
-                    `;
-                } else {
-                    return `
-                        <h2 class="modal-title">Exit Door</h2>
-                        <div class="modal-description">
-                            You place the Black Cube into the door's lock mechanism.
-                            With a deep rumble, the door swings open!
-                            Blinding light floods in from the outside...
-                        </div>
-                        <div class="furniture-view">
-                            <div style="font-size: 120px; margin: 30px 0;">🚪✨</div>
-                            <div style="color: #90ff90; font-size: 24px; margin: 20px 0;">
-                                Freedom at last!
-                            </div>
-                            <div style="color: #c9a56f; font-style: italic; margin: 20px 0;">
-                                "Thank you for playing Rusty Lake Mystery!"
-                            </div>
-                        </div>
-                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
-                    `;
-                }
-            }
-
-            getBookshelfModal() {
-                if (!this.puzzleStates.bookshelf.examined) {
-                    this.puzzleStates.bookshelf.examined = true;
-                    return `
-                        <h2 class="modal-title">Bookshelf</h2>
-                        <div class="modal-description">
-                            An old wooden bookshelf filled with dusty volumes.
-                            You pull out a thick book with a black cover. Inside, a note falls out...
-                        </div>
-                        <div class="furniture-view">
-                            <div style="font-size: 100px; margin: 30px 0;">📚</div>
-                            <div style="color: #c9a56f; font-style: italic; margin: 20px 0; font-size: 18px;">
-                                "The windows hold secrets written in light.<br>
-                                Look closely at the glass when shadows are right."
-                            </div>
-                        </div>
-                        <button class="modal-btn" onclick="game.collectBookClue()">Take the Note</button>
-                    `;
-                } else {
-                    return `
-                        <h2 class="modal-title">Bookshelf</h2>
-                        <div class="modal-description">
-                            The bookshelf is now mostly empty. You already took the important note.
-                        </div>
-                        <div class="furniture-view">
-                            <div style="font-size: 100px; margin: 30px 0;">📚</div>
-                            <div style="color: #888; font-style: italic;">
-                                Just old books remain...
-                            </div>
-                        </div>
-                        <button class="modal-btn" onclick="game.closeModal()">Close</button>
-                    `;
-                }
-            }
-
-            collectBookClue() {
-                if (!this.hasClue('note1')) {
-                    this.addClue({ icon: '📜', text: 'Clue 1: Check windows', type: 'note1' });
-                    this.addLog("Clue 1: Found a cryptic note about windows!", "important");
-                }
-                this.closeModal();
-            }
-
-
-            addClue(clue) {
-                if (this.clues.length < 8) {
-                    this.clues.push(clue);
-                    const index = this.clues.length - 1;
-                    const clueBox = document.getElementById(`clue-${index}`);
-
-                    clueBox.classList.remove('empty');
-                    clueBox.classList.add('filled', 'new-item');
-                    clueBox.innerHTML = `
-                        <div>
-                            <div class="clue-icon">${clue.icon}</div>
-                            <div class="clue-text">${clue.text}</div>
-                        </div>
-                    `;
-
-                    setTimeout(() => clueBox.classList.remove('new-item'), 1000);
-                }
-            }
-
-            hasClue(type) {
-                return this.clues.some(c => c.text.toLowerCase().includes(type) || c.type === type);
-            }
-
-            addLog(message, type = '') {
-                const logContainer = document.getElementById('logContainer');
-                const logMsg = document.createElement('div');
-                logMsg.className = `log-message ${type}`;
-                logMsg.textContent = message;
-                logContainer.appendChild(logMsg);
-                logContainer.scrollTop = logContainer.scrollHeight;
+            showModal(content) {
+                const modal = document.getElementById('modal');
+                const modalBody = document.getElementById('modal-body');
+                modalBody.innerHTML = content;
+                modal.classList.add('show');
             }
 
             closeModal() {
-                document.getElementById('modal').classList.remove('active');
+                const modal = document.getElementById('modal');
+                modal.classList.remove('show');
             }
 
-            saveGame() {
-                const saveData = {
-                    currentWall: this.currentWall,
-                    clues: this.clues,
-                    puzzleStates: this.puzzleStates
-                };
-                localStorage.setItem('rustyLakeSave', JSON.stringify(saveData));
-                this.addLog("Game saved!", "important");
+            nextScene() {
+                this.currentScene = (this.currentScene % this.totalScenes) + 1;
+                this.updateScene();
             }
 
-            loadGame() {
-                const saveData = localStorage.getItem('rustyLakeSave');
-                if (saveData) {
-                    const data = JSON.parse(saveData);
-                    this.currentWall = data.currentWall;
-                    this.puzzleStates = data.puzzleStates;
-                    this.clues = [];
+            previousScene() {
+                this.currentScene = this.currentScene === 1 ? this.totalScenes : this.currentScene - 1;
+                this.updateScene();
+            }
 
-                    // Clear clue boxes
-                    for (let i = 0; i < 8; i++) {
-                        const box = document.getElementById(`clue-${i}`);
-                        box.classList.add('empty');
-                        box.classList.remove('filled');
-                        box.innerHTML = '';
-                    }
+            updateScene() {
+                document.querySelectorAll('.scene').forEach(scene => {
+                    scene.classList.remove('active');
+                });
 
-                    // Restore clues
-                    data.clues.forEach(clue => this.addClue(clue));
-
-                    this.updateWall();
-                    this.addLog("Game loaded!", "important");
-                } else {
-                    this.addLog("No save file found!", "error");
+                const targetScene = Math.min(this.currentScene, 4); // We only have 4 wall images
+                const scene = document.getElementById(`scene-${targetScene}`);
+                if (scene) {
+                    scene.classList.add('active');
                 }
+
+                this.updateSceneCounter();
+            }
+
+            updateSceneCounter() {
+                document.getElementById('sceneNumber').textContent = `${this.currentScene}/12`;
             }
         }
 
