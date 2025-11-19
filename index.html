@@ -35,7 +35,7 @@
             overflow: hidden;
         }
 
-        /* Vignette dark edges effect */
+        /* Vignette dark edges effect - DISABLED, images already have vignette */
         .scene-area::before {
             content: '';
             position: absolute;
@@ -43,7 +43,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            box-shadow: inset 0 0 200px 100px rgba(0,0,0,0.8);
+            /* box-shadow: inset 0 0 200px 100px rgba(0,0,0,0.8); */
             pointer-events: none;
             z-index: 1000;
         }
@@ -64,158 +64,55 @@
             display: block;
         }
 
-        /* Wall 1 - Front wall (桌子+柜子) */
+        /* Wall 1 - Front wall (窗户墙) */
         .wall-front {
-            background:
-                repeating-linear-gradient(90deg,
-                    transparent 0px,
-                    transparent 4px,
-                    rgba(0,0,0,0.05) 4px,
-                    rgba(0,0,0,0.05) 5px
-                ),
-                linear-gradient(180deg,
-                    #d4b89c 0%,
-                    #c9a982 30%,
-                    #a68968 50%,
-                    #8b7355 80%,
-                    #6b5645 100%
-                );
+            background-image: url('前.JPG');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
-        /* Wall 2 - Right wall (窗户) */
+        /* Wall 2 - Right wall (桌子+柜子墙) */
         .wall-right {
-            background:
-                repeating-linear-gradient(90deg,
-                    transparent 0px,
-                    transparent 4px,
-                    rgba(0,0,0,0.05) 4px,
-                    rgba(0,0,0,0.05) 5px
-                ),
-                linear-gradient(180deg,
-                    #d4b89c 0%,
-                    #c9a982 30%,
-                    #a68968 50%,
-                    #8b7355 80%,
-                    #6b5645 100%
-                );
+            background-image: url('右.JPG');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
-        /* Wall 3 - Back wall (书架) */
+        /* Wall 3 - Back wall (储物墙) */
         .wall-back {
-            background:
-                repeating-linear-gradient(90deg,
-                    transparent 0px,
-                    transparent 4px,
-                    rgba(0,0,0,0.05) 4px,
-                    rgba(0,0,0,0.05) 5px
-                ),
-                linear-gradient(180deg,
-                    #d4b89c 0%,
-                    #c9a982 30%,
-                    #a68968 50%,
-                    #8b7355 80%,
-                    #6b5645 100%
-                );
+            background-image: url('后.JPG');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
-        /* Wall 4 - Left wall (门) */
+        /* Wall 4 - Left wall (窗户+凳子墙) */
         .wall-left {
-            background:
-                repeating-linear-gradient(90deg,
-                    transparent 0px,
-                    transparent 4px,
-                    rgba(0,0,0,0.05) 4px,
-                    rgba(0,0,0,0.05) 5px
-                ),
-                linear-gradient(180deg,
-                    #d4b89c 0%,
-                    #c9a982 30%,
-                    #a68968 50%,
-                    #8b7355 80%,
-                    #6b5645 100%
-                );
+            background-image: url('左.JPG');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
-        /* Ceiling with perspective */
+        /* Ceiling */
         .ceiling {
-            background:
-                /* Corner shadows */
-                radial-gradient(ellipse at 0% 0%, rgba(0,0,0,0.3) 0%, transparent 40%),
-                radial-gradient(ellipse at 100% 0%, rgba(0,0,0,0.3) 0%, transparent 40%),
-                radial-gradient(ellipse at 0% 100%, rgba(0,0,0,0.3) 0%, transparent 40%),
-                radial-gradient(ellipse at 100% 100%, rgba(0,0,0,0.3) 0%, transparent 40%),
-                /* Wood planks */
-                repeating-linear-gradient(0deg,
-                    transparent 0px,
-                    transparent 39px,
-                    rgba(0,0,0,0.1) 39px,
-                    rgba(0,0,0,0.1) 40px
-                ),
-                linear-gradient(180deg,
-                    #e8d4b8 0%,
-                    #d4b89c 50%,
-                    #c9a982 100%
-                );
+            background-image: url('天花板.JPG');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
-        /* Floor with wood texture */
+        /* Floor - HIDDEN, images already have floor */
         .floor {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 20%;
-            background:
-                /* Wood planks horizontal */
-                repeating-linear-gradient(0deg,
-                    transparent 0%,
-                    transparent 18%,
-                    rgba(0,0,0,0.2) 18%,
-                    rgba(0,0,0,0.2) 20%,
-                    transparent 20%
-                ),
-                /* Shadow at wall edge */
-                linear-gradient(180deg,
-                    rgba(0,0,0,0.4) 0%,
-                    transparent 20%
-                ),
-                /* Base wood color */
-                linear-gradient(180deg,
-                    #4a3f35 0%,
-                    #3a2f25 50%,
-                    #2a1f15 100%
-                );
-            z-index: 10;
+            display: none;
         }
 
-        /* Side walls for perspective */
+        /* Side walls - HIDDEN, images already have side edges */
         .wall-left-edge,
         .wall-right-edge {
-            position: absolute;
-            top: 0;
-            bottom: 20%;
-            width: 8%;
-            background: linear-gradient(90deg,
-                rgba(0,0,0,0.5),
-                rgba(0,0,0,0.2)
-            );
-            z-index: 5;
-        }
-
-        .wall-left-edge {
-            left: 0;
-            background: linear-gradient(90deg,
-                rgba(0,0,0,0.5),
-                transparent
-            );
-        }
-
-        .wall-right-edge {
-            right: 120px;
-            background: linear-gradient(-90deg,
-                rgba(0,0,0,0.5),
-                transparent
-            );
+            display: none;
         }
 
         /* Navigation arrows */
@@ -501,14 +398,8 @@
                 // Show current wall
                 if (this.currentWall === 5) {
                     document.getElementById('ceiling').classList.add('active');
-                    // Hide side edges when viewing ceiling
-                    document.getElementById('left-edge').style.display = 'none';
-                    document.getElementById('right-edge').style.display = 'none';
                 } else {
                     document.getElementById(`wall-${this.currentWall}`).classList.add('active');
-                    // Show side edges when viewing walls
-                    document.getElementById('left-edge').style.display = 'block';
-                    document.getElementById('right-edge').style.display = 'block';
                 }
 
                 this.updateWallIndicator();
