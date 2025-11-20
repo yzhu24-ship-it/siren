@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Palette</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .palette-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 60px;
+        }
+
+        .emotion-canvas {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: #2a2a3e;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+                        inset 0 0 30px rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .emotion-canvas:active {
+            transform: scale(0.95);
+        }
+
+        .canvas-overlay {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2), transparent 60%);
+            pointer-events: none;
+        }
+
+        .canvas-content {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        .color-droplet {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            cursor: grab;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3),
+                        inset 0 0 20px rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        box-shadow 0.3s ease;
+            touch-action: none;
+            user-select: none;
+        }
+
+        .color-droplet:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4),
+                        inset 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .color-droplet:active,
+        .color-droplet.dragging {
+            cursor: grabbing;
+            transform: scale(1.2);
+            z-index: 1000;
+        }
+
+        .droplet-red {
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #c92a2a);
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .droplet-blue {
+            background: radial-gradient(circle at 30% 30%, #4dabf7, #1864ab);
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .droplet-yellow {
+            background: radial-gradient(circle at 30% 30%, #ffd43b, #f59f00);
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+        }
+
+        .droplet-gray {
+            background: radial-gradient(circle at 30% 30%, #adb5bd, #495057);
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+        }
+
+        .timeline {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            min-height: 120px;
+            position: relative;
+        }
+
+        .timeline-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 14px;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .timeline.has-items .timeline-hint {
+            opacity: 0;
+        }
+
+        .emotion-cards {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 10px 0;
+            scroll-behavior: smooth;
+        }
+
+        .emotion-cards::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .emotion-cards::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .emotion-cards::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .emotion-card {
+            flex-shrink: 0;
+            width: 80px;
+            height: 80px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            animation: cardAppear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .emotion-card:hover {
+            transform: translateY(-5px) scale(1.05);
+        }
+
+        @keyframes cardAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.5) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .long-press-indicator {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            pointer-events: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .long-press-indicator.active {
+            border-color: rgba(255, 255, 255, 0.5);
+            animation: progressRing 1.5s linear;
+        }
+
+        @keyframes progressRing {
+            from {
+                border-color: rgba(255, 255, 255, 0.2);
+                transform: scale(1);
+            }
+            to {
+                border-color: rgba(255, 255, 255, 0.8);
+                transform: scale(0.95);
+            }
+        }
+
+        .save-feedback {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .save-feedback.active {
+            transform: translate(-50%, -50%) scale(1.5);
+            opacity: 1;
+        }
+
+        /* Motion patterns */
+        .pulsate {
+            animation: pulsate 0.5s ease-in-out infinite alternate;
+        }
+
+        .pulsate-slow {
+            animation: pulsate 2s ease-in-out infinite alternate;
+        }
+
+        .wave {
+            animation: wave 3s ease-in-out infinite;
+        }
+
+        @keyframes pulsate {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        @keyframes wave {
+            0%, 100% {
+                border-radius: 50%;
+            }
+            25% {
+                border-radius: 45% 55% 52% 48%;
+            }
+            50% {
+                border-radius: 48% 52% 55% 45%;
+            }
+            75% {
+                border-radius: 55% 45% 48% 52%;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .palette-container {
+                max-width: 350px;
+            }
+
+            .emotion-canvas {
+                width: 150px;
+                height: 150px;
+            }
+
+            .color-droplet {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="palette-container">
+        <!-- Color Droplets -->
+        <div class="color-droplet droplet-red" data-color="255,107,107"></div>
+        <div class="color-droplet droplet-blue" data-color="77,171,247"></div>
+        <div class="color-droplet droplet-yellow" data-color="255,212,59"></div>
+        <div class="color-droplet droplet-gray" data-color="173,181,189"></div>
+
+        <!-- Emotion Canvas -->
+        <div class="emotion-canvas">
+            <canvas id="particleCanvas"></canvas>
+            <div class="canvas-content"></div>
+            <div class="canvas-overlay"></div>
+            <div class="long-press-indicator"></div>
+        </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline">
+        <div class="timeline-hint">⬆ Long press to save emotion ⬆</div>
+        <div class="emotion-cards"></div>
+    </div>
+
+    <div class="save-feedback"></div>
+
+    <script>
+        // State management
+        const state = {
+            currentColors: [],
+            colorWeights: [],
+            isLongPressing: false,
+            longPressTimer: null,
+            draggedElement: null,
+            savedEmotions: [],
+            lastPlayedColor: null,
+            lastPlayTime: 0
+        };
+
+        // Audio system using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Color to frequency mapping (musical notes)
+        const colorSounds = {
+            '255,107,107': 261.63,   // Red - C4 (warm, passionate)
+            '77,171,247': 329.63,    // Blue - E4 (calm, cool)
+            '255,212,59': 392.00,    // Yellow - G4 (bright, happy)
+            '173,181,189': 220.00    // Gray - A3 (neutral, mellow)
+        };
+
+        function playSound(frequency, duration = 0.15, type = 'sine') {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function playColorMixSound(color) {
+            const frequency = colorSounds[color];
+            if (frequency) {
+                playSound(frequency, 0.12, 'sine');
+            }
+        }
+
+        function playPickupSound() {
+            playSound(440, 0.08, 'square');
+        }
+
+        function playSaveSound() {
+            // Play a chord (three notes)
+            const now = audioContext.currentTime;
+
+            // Create a beautiful chord progression
+            [261.63, 329.63, 392.00].forEach((freq, i) => {
+                setTimeout(() => {
+                    playSound(freq, 0.3, 'sine');
+                }, i * 80);
+            });
+        }
+
+        function playLoadSound() {
+            playSound(523.25, 0.2, 'triangle'); // C5 - higher gentle chime
+        }
+
+        // Elements
+        const emotionCanvas = document.querySelector('.emotion-canvas');
+        const canvasContent = document.querySelector('.canvas-content');
+        const longPressIndicator = document.querySelector('.long-press-indicator');
+        const timeline = document.querySelector('.timeline');
+        const emotionCards = document.querySelector('.emotion-cards');
+        const saveFeedback = document.querySelector('.save-feedback');
+        const droplets = document.querySelectorAll('.color-droplet');
+        const particleCanvas = document.getElementById('particleCanvas');
+        const ctx = particleCanvas.getContext('2d');
+
+        // Particle system
+        let particles = [];
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.life = 1;
+                this.decay = 0.01 + Math.random() * 0.02;
+                this.size = 2 + Math.random() * 3;
+                this.color = color;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+                this.size *= 0.98;
+            }
+
+            draw() {
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Initialize canvas
+        function resizeCanvas() {
+            const rect = emotionCanvas.getBoundingClientRect();
+            particleCanvas.width = rect.width;
+            particleCanvas.height = rect.height;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Color mixing
+        function mixColors(colors, weights) {
+            if (colors.length === 0) {
+                return [42, 42, 62]; // Default background color
+            }
+
+            const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+            let r = 0, g = 0, b = 0;
+
+            colors.forEach((color, i) => {
+                const weight = weights[i] / totalWeight;
+                const [cr, cg, cb] = color.split(',').map(Number);
+                r += cr * weight;
+                g += cg * weight;
+                b += cb * weight;
+            });
+
+            return [Math.round(r), Math.round(g), Math.round(b)];
+        }
+
+        function rgbToHex(r, g, b) {
+            return '#' + [r, g, b].map(x => {
+                const hex = x.toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }).join('');
+        }
+
+        function updateEmotionCanvas() {
+            const [r, g, b] = mixColors(state.currentColors, state.colorWeights);
+            const color = rgbToHex(r, g, b);
+
+            emotionCanvas.style.background = `radial-gradient(circle at 40% 40%, ${color}, ${rgbToHex(
+                Math.max(0, r - 40),
+                Math.max(0, g - 40),
+                Math.max(0, b - 40)
+            )})`;
+
+            // Determine motion pattern based on color characteristics
+            const intensity = (r + g + b) / 3;
+            const colorCount = state.currentColors.length;
+
+            emotionCanvas.classList.remove('pulsate', 'pulsate-slow', 'wave');
+
+            if (colorCount === 0) {
+                // No colors, calm state
+            } else if (intensity > 180) {
+                // High intensity - fast pulsation
+                emotionCanvas.classList.add('pulsate');
+                createParticles(r, g, b, 5);
+            } else if (intensity < 100) {
+                // Low intensity - slow waves
+                emotionCanvas.classList.add('wave');
+            } else if (colorCount >= 3) {
+                // Complex emotion - particle effects
+                emotionCanvas.classList.add('pulsate-slow');
+                createParticles(r, g, b, 3);
+            } else {
+                // Medium intensity - slow pulsation
+                emotionCanvas.classList.add('pulsate-slow');
+            }
+        }
+
+        function createParticles(r, g, b, count) {
+            const rect = particleCanvas.getBoundingClientRect();
+            const centerX = particleCanvas.width / 2;
+            const centerY = particleCanvas.height / 2;
+            const color = `rgb(${r}, ${g}, ${b})`;
+
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(
+                    centerX + (Math.random() - 0.5) * 50,
+                    centerY + (Math.random() - 0.5) * 50,
+                    color
+                ));
+            }
+        }
+
+        // Animation loop
+        function animate() {
+            ctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // Drag and drop
+        let dragOffset = { x: 0, y: 0 };
+        let originalPosition = { x: 0, y: 0 };
+
+        function handleStart(e, droplet) {
+            e.preventDefault();
+            const touch = e.touches ? e.touches[0] : e;
+
+            state.draggedElement = droplet;
+            droplet.classList.add('dragging');
+
+            const rect = droplet.getBoundingClientRect();
+            dragOffset.x = touch.clientX - rect.left - rect.width / 2;
+            dragOffset.y = touch.clientY - rect.top - rect.height / 2;
+
+            originalPosition.x = rect.left;
+            originalPosition.y = rect.top;
+
+            // Play pickup sound
+            playPickupSound();
+        }
+
+        function handleMove(e) {
+            if (!state.draggedElement) return;
+            e.preventDefault();
+
+            const touch = e.touches ? e.touches[0] : e;
+            const x = touch.clientX - dragOffset.x;
+            const y = touch.clientY - dragOffset.y;
+
+            state.draggedElement.style.position = 'fixed';
+            state.draggedElement.style.left = x + 'px';
+            state.draggedElement.style.top = y + 'px';
+            state.draggedElement.style.transform = 'none';
+
+            // Check if over emotion canvas
+            const canvasRect = emotionCanvas.getBoundingClientRect();
+            const dropletRect = state.draggedElement.getBoundingClientRect();
+
+            const isOverCanvas = !(
+                dropletRect.right < canvasRect.left ||
+                dropletRect.left > canvasRect.right ||
+                dropletRect.bottom < canvasRect.top ||
+                dropletRect.top > canvasRect.bottom
+            );
+
+            if (isOverCanvas) {
+                const color = state.draggedElement.dataset.color;
+                const now = Date.now();
+
+                if (!state.currentColors.includes(color)) {
+                    state.currentColors.push(color);
+                    state.colorWeights.push(1);
+                    playColorMixSound(color);
+                    state.lastPlayedColor = color;
+                    state.lastPlayTime = now;
+                } else {
+                    const index = state.currentColors.indexOf(color);
+                    state.colorWeights[index] = Math.min(5, state.colorWeights[index] + 0.1);
+
+                    // Play sound periodically while dragging (throttled to every 200ms)
+                    if (now - state.lastPlayTime > 200 || state.lastPlayedColor !== color) {
+                        playColorMixSound(color);
+                        state.lastPlayedColor = color;
+                        state.lastPlayTime = now;
+                    }
+                }
+                updateEmotionCanvas();
+            }
+        }
+
+        function handleEnd(e) {
+            if (!state.draggedElement) return;
+
+            state.draggedElement.classList.remove('dragging');
+            state.draggedElement.style.position = '';
+            state.draggedElement.style.left = '';
+            state.draggedElement.style.top = '';
+            state.draggedElement.style.transform = '';
+
+            state.draggedElement = null;
+        }
+
+        // Long press to save
+        function startLongPress(e) {
+            if (state.currentColors.length === 0) return;
+
+            longPressIndicator.classList.add('active');
+
+            state.longPressTimer = setTimeout(() => {
+                saveEmotion();
+            }, 1500);
+        }
+
+        function cancelLongPress() {
+            longPressIndicator.classList.remove('active');
+            if (state.longPressTimer) {
+                clearTimeout(state.longPressTimer);
+                state.longPressTimer = null;
+            }
+        }
+
+        function saveEmotion() {
+            const [r, g, b] = mixColors(state.currentColors, state.colorWeights);
+            const color = rgbToHex(r, g, b);
+
+            state.savedEmotions.push({
+                color,
+                timestamp: Date.now(),
+                colors: [...state.currentColors],
+                weights: [...state.colorWeights]
+            });
+
+            // Save to localStorage
+            localStorage.setItem('emotionPalette', JSON.stringify(state.savedEmotions));
+
+            // Play save sound
+            playSaveSound();
+
+            // Visual feedback
+            saveFeedback.style.background = `radial-gradient(circle, ${color}, transparent)`;
+            saveFeedback.classList.add('active');
+            setTimeout(() => saveFeedback.classList.remove('active'), 500);
+
+            // Add to timeline
+            const card = document.createElement('div');
+            card.className = 'emotion-card';
+            card.style.background = `radial-gradient(circle at 40% 40%, ${color}, ${rgbToHex(
+                Math.max(0, r - 40),
+                Math.max(0, g - 40),
+                Math.max(0, b - 40)
+            )})`;
+            card.addEventListener('click', () => loadEmotion(state.savedEmotions.length - 1));
+            emotionCards.appendChild(card);
+
+            timeline.classList.add('has-items');
+            emotionCards.scrollLeft = emotionCards.scrollWidth;
+
+            cancelLongPress();
+        }
+
+        function loadEmotion(index) {
+            const emotion = state.savedEmotions[index];
+            state.currentColors = [...emotion.colors];
+            state.colorWeights = [...emotion.weights];
+            updateEmotionCanvas();
+
+            // Play load sound
+            playLoadSound();
+        }
+
+        // Event listeners
+        droplets.forEach(droplet => {
+            droplet.addEventListener('mousedown', (e) => handleStart(e, droplet));
+            droplet.addEventListener('touchstart', (e) => handleStart(e, droplet));
+        });
+
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('touchmove', handleMove, { passive: false });
+        document.addEventListener('mouseup', handleEnd);
+        document.addEventListener('touchend', handleEnd);
+
+        emotionCanvas.addEventListener('mousedown', startLongPress);
+        emotionCanvas.addEventListener('touchstart', startLongPress);
+        emotionCanvas.addEventListener('mouseup', cancelLongPress);
+        emotionCanvas.addEventListener('touchend', cancelLongPress);
+        emotionCanvas.addEventListener('mouseleave', cancelLongPress);
+
+        // Load saved emotions
+        const saved = localStorage.getItem('emotionPalette');
+        if (saved) {
+            state.savedEmotions = JSON.parse(saved);
+            state.savedEmotions.forEach((emotion, index) => {
+                const [r, g, b] = mixColors(emotion.colors, emotion.weights);
+                const card = document.createElement('div');
+                card.className = 'emotion-card';
+                card.style.background = `radial-gradient(circle at 40% 40%, ${emotion.color}, ${rgbToHex(
+                    Math.max(0, r - 40),
+                    Math.max(0, g - 40),
+                    Math.max(0, b - 40)
+                )})`;
+                card.addEventListener('click', () => loadEmotion(index));
+                emotionCards.appendChild(card);
+            });
+            if (state.savedEmotions.length > 0) {
+                timeline.classList.add('has-items');
+            }
+        }
+
+        // Initialize
+        updateEmotionCanvas();
+    </script>
+</body>
+</html>
