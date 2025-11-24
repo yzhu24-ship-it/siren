@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social Persona Mask Switcher</title>
+    <title>Rusty Lake Mystery Room</title>
     <style>
         * {
             margin: 0;
@@ -12,591 +12,1140 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            min-height: 100vh;
+            font-family: 'Georgia', serif;
+            background: #000;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Main game container */
+        .game-container {
             display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 40px;
-            background: linear-gradient(135deg, #ffa07a 0%, #ff6b6b 100%);
-            transition: background 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
             position: relative;
         }
 
-        /* 背景动画装饰 */
-        body::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: backgroundMove 20s linear infinite;
-            pointer-events: none;
-        }
-
-        @keyframes backgroundMove {
-            0% {
-                transform: translate(0, 0);
-            }
-            100% {
-                transform: translate(50px, 50px);
-            }
-        }
-
-        .container {
+        /* Main scene area - with vignette effect */
+        .scene-area {
+            flex: 1;
             position: relative;
-            z-index: 1;
-            text-align: center;
-            max-width: 600px;
-            width: 100%;
-        }
-
-        h1 {
-            color: white;
-            font-size: 2.5rem;
-            margin-bottom: 60px;
-            text-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
-            font-weight: 300;
-            letter-spacing: 2px;
-        }
-
-        .avatar-container {
-            margin: 0 auto 60px;
-            width: 300px;
-            height: 300px;
-            position: relative;
-        }
-
-        .avatar {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
-                        0 0 0 10px rgba(255, 255, 255, 0.1),
-                        0 0 0 20px rgba(255, 255, 255, 0.05);
-            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-                        box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            background: white;
-            animation: avatarPulse 3s ease-in-out infinite;
-        }
-
-        @keyframes avatarPulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.02);
-            }
-        }
-
-        .avatar:hover {
-            transform: scale(1.05);
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4),
-                        0 0 0 10px rgba(255, 255, 255, 0.15),
-                        0 0 0 20px rgba(255, 255, 255, 0.08);
-        }
-
-        /* 切换动画效果 */
-        .avatar.switching {
-            animation: switchAnimation 0.6s ease-in-out;
-        }
-
-        @keyframes switchAnimation {
-            0% {
-                transform: scale(1) rotateY(0deg);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(0.8) rotateY(90deg);
-                opacity: 0.3;
-            }
-            100% {
-                transform: scale(1) rotateY(0deg);
-                opacity: 1;
-            }
-        }
-
-        .button-group {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        .persona-button {
-            padding: 20px 30px;
-            font-size: 1.1rem;
-            font-weight: 500;
-            border: none;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            position: relative;
+            background: #2a1f1a;
             overflow: hidden;
         }
 
-        .persona-button::before {
+        /* Vignette dark edges effect - DISABLED, images already have vignette */
+        .scene-area::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
+            right: 0;
+            bottom: 0;
+            /* box-shadow: inset 0 0 200px 100px rgba(0,0,0,0.8); */
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Room walls */
+        .room-wall {
             width: 100%;
             height: 100%;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transform: translateX(-100%);
-            transition: transform 0.6s;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+            background-size: cover;
+            background-position: center;
         }
 
-        .persona-button:hover::before {
-            transform: translateX(100%);
+        .room-wall.active {
+            display: block;
         }
 
-        .persona-button:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        /* Wall 1 - Front wall (窗户墙) - Initial state: only window + painting */
+        .wall-front {
+            background:
+                /* Wood texture */
+                repeating-linear-gradient(0deg,
+                    transparent 0px,
+                    transparent 39px,
+                    rgba(139, 115, 85, 0.3) 39px,
+                    rgba(139, 115, 85, 0.3) 40px
+                ),
+                linear-gradient(180deg,
+                    #c9a982 0%,
+                    #b89872 30%,
+                    #a68968 60%,
+                    #8b7355 100%
+                );
         }
 
-        .persona-button:active {
-            transform: translateY(0);
+        /* Window frame */
+        .window {
+            position: absolute;
+            left: 50%;
+            top: 25%;
+            transform: translateX(-50%);
+            width: 45%;
+            height: 50%;
+            background: linear-gradient(135deg, #d4a574 0%, #c9a982 100%);
+            border: 8px solid #5a4a35;
+            box-shadow:
+                inset 0 0 20px rgba(0,0,0,0.3),
+                0 10px 30px rgba(0,0,0,0.5);
         }
 
-        .persona-button.active {
-            background: rgba(255, 255, 255, 0.4);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2),
-                        inset 0 2px 10px rgba(255, 255, 255, 0.2);
-            transform: scale(0.98);
+        /* Window inner frame */
+        .window::before {
+            content: '';
+            position: absolute;
+            top: 5%;
+            left: 5%;
+            right: 5%;
+            bottom: 5%;
+            border: 3px solid #8b7355;
+            background: linear-gradient(180deg, #e8d4c0 0%, #d4c4a0 100%);
         }
 
-        /* 状态指示器 */
-        .status-indicator {
-            margin-top: 40px;
-            color: white;
-            font-size: 1.2rem;
-            opacity: 0.9;
-            text-shadow: 1px 2px 4px rgba(0, 0, 0, 0.2);
+        /* Lake painting inside window */
+        .lake-painting {
+            position: absolute;
+            top: 8%;
+            left: 8%;
+            right: 8%;
+            bottom: 8%;
+            background:
+                /* Mountain */
+                linear-gradient(135deg,
+                    transparent 0%,
+                    transparent 30%,
+                    #5a4a5a 30%,
+                    #6a5a6a 35%,
+                    #4a3a4a 40%,
+                    transparent 40%
+                ),
+                /* Trees */
+                radial-gradient(ellipse at 20% 55%, #2d4a3a 0%, transparent 15%),
+                radial-gradient(ellipse at 35% 58%, #1d3a2a 0%, transparent 12%),
+                radial-gradient(ellipse at 50% 60%, #2d4a3a 0%, transparent 10%),
+                /* Lake reflection */
+                radial-gradient(ellipse at 50% 75%, #e8d4a0 0%, transparent 15%),
+                /* Water */
+                linear-gradient(180deg,
+                    transparent 0%,
+                    transparent 50%,
+                    #4a7a8a 50%,
+                    #3a6a7a 60%,
+                    #2a5a6a 80%,
+                    #1a4a5a 100%
+                ),
+                /* Sky */
+                linear-gradient(180deg,
+                    #e8c4a0 0%,
+                    #ffd4a0 20%,
+                    #d4b490 40%,
+                    #b4a480 50%
+                );
         }
 
-        /* 响应式设计 */
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 2rem;
-                margin-bottom: 40px;
-            }
-
-            .avatar-container {
-                width: 250px;
-                height: 250px;
-                margin-bottom: 40px;
-            }
-
-            .button-group {
-                grid-template-columns: 1fr;
-                max-width: 300px;
-            }
-
-            .persona-button {
-                font-size: 1rem;
-                padding: 18px 25px;
-            }
+        /* Wall 2 - Right wall (桌子+柜子墙) */
+        .wall-right {
+            background:
+                /* Wood texture */
+                repeating-linear-gradient(0deg,
+                    transparent 0px,
+                    transparent 39px,
+                    rgba(139, 115, 85, 0.3) 39px,
+                    rgba(139, 115, 85, 0.3) 40px
+                ),
+                linear-gradient(180deg,
+                    #c9a982 0%,
+                    #b89872 30%,
+                    #a68968 60%,
+                    #8b7355 100%
+                );
         }
 
-        /* 不同状态的背景色 */
-        body.family {
-            background: linear-gradient(135deg, #ffa07a 0%, #ff6b6b 100%);
+        /* Desk on right wall */
+        .desk {
+            position: absolute;
+            left: 20%;
+            bottom: 22%;
+            width: 30%;
+            height: 32%;
+            background: linear-gradient(180deg, #8b9a6a 0%, #7a8a5a 50%, #6a7a4a 100%);
+            border: 3px solid #5a6a3a;
+            perspective: 600px;
         }
 
-        body.friend {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        /* Desk drawer */
+        .desk::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 10%;
+            right: 10%;
+            height: 25%;
+            background: linear-gradient(135deg, #6a7a4a 0%, #5a6a3a 100%);
+            border: 2px solid #4a5a2a;
+            border-radius: 3px;
+            transition: transform 0.4s ease;
         }
 
-        body.colleague {
-            background: linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%);
+        /* Desk drawer handle */
+        .desk::after {
+            content: '';
+            position: absolute;
+            top: 27%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20%;
+            height: 6%;
+            background: linear-gradient(90deg, #d4a050 0%, #c49040 50%, #a47830 100%);
+            border-radius: 8px;
+            transition: transform 0.4s ease;
+            z-index: 2;
         }
 
-        body.stranger {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        /* Tall cabinet on right wall */
+        .tall-cabinet {
+            position: absolute;
+            right: 22%;
+            bottom: 22%;
+            width: 22%;
+            height: 45%;
+            background: linear-gradient(180deg, #7a9a6a 0%, #6a8a5a 100%);
+            border: 4px solid #5a7a4a;
+            perspective: 800px;
+        }
+
+        /* Cabinet top door */
+        .tall-cabinet::before {
+            content: '';
+            position: absolute;
+            top: 5%;
+            left: 10%;
+            right: 10%;
+            height: 42%;
+            background: linear-gradient(135deg, #6a8a5a 0%, #5a7a4a 100%);
+            border: 3px solid #4a6a3a;
+            border-radius: 4px;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.5s ease;
+            transform-style: preserve-3d;
+        }
+
+        /* Cabinet top door handle */
+        .tall-cabinet::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #2a2a2a;
+            border-radius: 50%;
+            right: 15%;
+            top: 25%;
+            transform: translateY(-50%);
+            transition: transform 0.5s ease;
+            transform-style: preserve-3d;
+            z-index: 1;
+        }
+
+        /* Cabinet bottom door */
+        .cabinet-bottom-door {
+            position: absolute;
+            top: 52%;
+            left: 10%;
+            right: 10%;
+            height: 42%;
+            background: linear-gradient(135deg, #6a8a5a 0%, #5a7a4a 100%);
+            border: 3px solid #4a6a3a;
+            border-radius: 4px;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.5s ease;
+            transform-style: preserve-3d;
+        }
+
+        /* Cabinet bottom door handle */
+        .cabinet-bottom-door::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #2a2a2a;
+            border-radius: 50%;
+            right: 15%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* Fishing rod leaning on wall */
+        .fishing-rod-right {
+            position: absolute;
+            right: 17%;
+            bottom: 22%;
+            width: 8px;
+            height: 40%;
+            background: linear-gradient(180deg, #8b6535 0%, #6a4a25 100%);
+            transform: rotate(-10deg);
+            transform-origin: bottom right;
+            border-radius: 4px;
+        }
+
+        /* Wall 3 - Back wall (储物墙) */
+        .wall-back {
+            background:
+                /* Wood texture */
+                repeating-linear-gradient(0deg,
+                    transparent 0px,
+                    transparent 39px,
+                    rgba(139, 115, 85, 0.3) 39px,
+                    rgba(139, 115, 85, 0.3) 40px
+                ),
+                linear-gradient(180deg,
+                    #c9a982 0%,
+                    #b89872 30%,
+                    #a68968 60%,
+                    #8b7355 100%
+                );
+        }
+
+        /* Wall cabinet on back wall */
+        .wall-cabinet {
+            position: absolute;
+            right: 25%;
+            top: 18%;
+            width: 18%;
+            height: 22%;
+            background: linear-gradient(180deg, #8a9a7a 0%, #7a8a6a 100%);
+            border: 3px solid #5a6a4a;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            perspective: 600px;
+        }
+
+        /* Wall cabinet shelves (3 layers) */
+        .wall-cabinet::before {
+            content: '';
+            position: absolute;
+            top: 33%;
+            left: 8%;
+            right: 8%;
+            height: 2px;
+            background: #4a5a3a;
+            box-shadow: 0 34% 0 #4a5a3a;
+            z-index: 1;
+        }
+
+        /* Wall cabinet door */
+        .wall-cabinet-door {
+            position: absolute;
+            top: 5%;
+            left: 5%;
+            right: 5%;
+            bottom: 5%;
+            background: linear-gradient(135deg, #7a8a6a 0%, #6a7a5a 100%);
+            border: 2px solid #5a6a4a;
+            border-radius: 3px;
+            box-shadow: inset 1px 1px 3px rgba(0,0,0,0.3);
+            transition: transform 0.5s ease;
+            transform-style: preserve-3d;
+            z-index: 3;
+        }
+
+        /* Wall cabinet door handle */
+        .wall-cabinet-door::after {
+            content: '';
+            position: absolute;
+            left: 10%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background: #2a2a2a;
+            border-radius: 50%;
+        }
+
+        /* Floor cabinet on back wall */
+        .floor-cabinet {
+            position: absolute;
+            left: 28%;
+            bottom: 22%;
+            width: 28%;
+            height: 28%;
+            background: linear-gradient(180deg, #7a9a6a 0%, #6a8a5a 100%);
+            border: 4px solid #5a7a4a;
+            perspective: 800px;
+        }
+
+        /* Floor cabinet left door */
+        .floor-cabinet::before {
+            content: '';
+            position: absolute;
+            top: 8%;
+            left: 8%;
+            width: 42%;
+            height: 84%;
+            background: linear-gradient(135deg, #6a8a5a 0%, #5a7a4a 100%);
+            border: 3px solid #4a6a3a;
+            border-radius: 4px;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.5s ease;
+            transform-style: preserve-3d;
+        }
+
+        /* Floor cabinet left door handle */
+        .floor-cabinet::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #2a2a2a;
+            border-radius: 50%;
+            left: 30%;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: transform 0.5s ease;
+            transform-style: preserve-3d;
+            z-index: 1;
+        }
+
+        /* Floor cabinet right door */
+        .floor-cabinet-right-door {
+            position: absolute;
+            top: 8%;
+            right: 8%;
+            width: 42%;
+            height: 84%;
+            background: linear-gradient(135deg, #6a8a5a 0%, #5a7a4a 100%);
+            border: 3px solid #4a6a3a;
+            border-radius: 4px;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.5s ease;
+            transform-style: preserve-3d;
+        }
+
+        /* Floor cabinet right door handle */
+        .floor-cabinet-right-door::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #2a2a2a;
+            border-radius: 50%;
+            left: 15%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* Wall 4 - Left wall (窗户+凳子墙) */
+        .wall-left {
+            background:
+                /* Wood texture */
+                repeating-linear-gradient(0deg,
+                    transparent 0px,
+                    transparent 39px,
+                    rgba(139, 115, 85, 0.3) 39px,
+                    rgba(139, 115, 85, 0.3) 40px
+                ),
+                linear-gradient(180deg,
+                    #c9a982 0%,
+                    #b89872 30%,
+                    #a68968 60%,
+                    #8b7355 100%
+                );
+        }
+
+        /* Window on left wall (same as front wall) */
+        .window-left {
+            position: absolute;
+            left: 28%;
+            top: 18%;
+            width: 35%;
+            height: 38%;
+            background: linear-gradient(135deg, #d4a574 0%, #c9a982 100%);
+            border: 8px solid #5a4a35;
+            box-shadow:
+                inset 0 0 20px rgba(0,0,0,0.3),
+                0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Window left inner frame */
+        .window-left::before {
+            content: '';
+            position: absolute;
+            top: 5%;
+            left: 5%;
+            right: 5%;
+            bottom: 5%;
+            border: 3px solid #8b7355;
+            background: linear-gradient(180deg, #e8d4c0 0%, #d4c4a0 100%);
+        }
+
+        /* Lake painting in left window */
+        .lake-painting-left {
+            position: absolute;
+            top: 8%;
+            left: 8%;
+            right: 8%;
+            bottom: 8%;
+            background:
+                /* Mountain */
+                linear-gradient(135deg,
+                    transparent 0%,
+                    transparent 30%,
+                    #5a4a5a 30%,
+                    #6a5a6a 35%,
+                    #4a3a4a 40%,
+                    transparent 40%
+                ),
+                /* Trees */
+                radial-gradient(ellipse at 20% 55%, #2d4a3a 0%, transparent 15%),
+                radial-gradient(ellipse at 35% 58%, #1d3a2a 0%, transparent 12%),
+                radial-gradient(ellipse at 50% 60%, #2d4a3a 0%, transparent 10%),
+                /* Water */
+                linear-gradient(180deg,
+                    transparent 0%,
+                    transparent 50%,
+                    #4a7a8a 50%,
+                    #3a6a7a 70%,
+                    #2a5a6a 100%
+                ),
+                /* Sky */
+                linear-gradient(180deg,
+                    #e8c4a0 0%,
+                    #ffd4a0 20%,
+                    #d4b490 50%
+                );
+        }
+
+        /* Blue stool on left wall */
+        .stool {
+            position: absolute;
+            left: 50%;
+            bottom: 24%;
+            transform: translateX(-50%);
+            width: 12%;
+            height: 16%;
+        }
+
+        /* Stool seat */
+        .stool::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 35%;
+            background: linear-gradient(180deg, #6a8aaa 0%, #5a7a9a 100%);
+            border: 3px solid #4a6a8a;
+            border-radius: 50% 50% 45% 45%;
+        }
+
+        /* Stool legs */
+        .stool::after {
+            content: '';
+            position: absolute;
+            top: 35%;
+            left: 15%;
+            right: 15%;
+            bottom: 0;
+            background: linear-gradient(180deg, #3a4a5a 0%, #2a3a4a 100%);
+            border-left: 3px solid #2a3a4a;
+            border-right: 3px solid #2a3a4a;
+        }
+
+        /* Ceiling */
+        .ceiling {
+            background:
+                /* Wood texture */
+                repeating-linear-gradient(0deg,
+                    transparent 0px,
+                    transparent 39px,
+                    rgba(139, 115, 85, 0.3) 39px,
+                    rgba(139, 115, 85, 0.3) 40px
+                ),
+                linear-gradient(180deg,
+                    #c9a982 0%,
+                    #b89872 30%,
+                    #a68968 60%,
+                    #8b7355 100%
+                );
+        }
+
+        /* Small object on ceiling */
+        .ceiling-object {
+            position: absolute;
+            left: 50%;
+            top: 35%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 25px;
+            background: linear-gradient(135deg, #8a6a4a 0%, #6a4a3a 100%);
+            border: 2px solid #4a3a2a;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+
+        /* Floor with wood planks */
+        .floor {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 120px; /* Account for toolbar */
+            height: 20%;
+            background:
+                /* Wood planks horizontal */
+                repeating-linear-gradient(0deg,
+                    transparent 0%,
+                    transparent 18%,
+                    rgba(0,0,0,0.2) 18%,
+                    rgba(0,0,0,0.2) 20%,
+                    transparent 20%
+                ),
+                /* Shadow at wall edge */
+                linear-gradient(180deg,
+                    rgba(0,0,0,0.4) 0%,
+                    transparent 20%
+                ),
+                /* Base wood color */
+                linear-gradient(180deg,
+                    #5a4a35 0%,
+                    #4a3a25 50%,
+                    #3a2a15 100%
+                );
+            z-index: 10;
+        }
+
+        /* Left side wall edge for perspective */
+        .wall-left-edge {
+            position: absolute;
+            top: 0;
+            bottom: 20%;
+            left: 0;
+            width: 8%;
+            background: linear-gradient(90deg,
+                rgba(0,0,0,0.6) 0%,
+                rgba(0,0,0,0.3) 50%,
+                transparent 100%
+            );
+            z-index: 5;
+        }
+
+        /* Right side wall edge for perspective */
+        .wall-right-edge {
+            position: absolute;
+            top: 0;
+            bottom: 20%;
+            right: 120px; /* Account for toolbar */
+            width: 8%;
+            background: linear-gradient(-90deg,
+                rgba(0,0,0,0.6) 0%,
+                rgba(0,0,0,0.3) 50%,
+                transparent 100%
+            );
+            z-index: 5;
+        }
+
+        /* Navigation arrows */
+        .nav-container {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 200px;
+            z-index: 1001;
+        }
+
+        .nav-arrow {
+            width: 0;
+            height: 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-arrow.left {
+            border-top: 20px solid transparent;
+            border-bottom: 20px solid transparent;
+            border-right: 30px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .nav-arrow.right {
+            border-top: 20px solid transparent;
+            border-bottom: 20px solid transparent;
+            border-left: 30px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .nav-arrow:hover {
+            transform: scale(1.2);
+        }
+
+        .nav-arrow.left:hover {
+            border-right-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .nav-arrow.right:hover {
+            border-left-color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Up arrow for ceiling */
+        .nav-up {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 30px solid rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 1001;
+        }
+
+        .nav-up:hover {
+            transform: translateX(-50%) scale(1.2);
+            border-bottom-color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Right toolbar */
+        .toolbar {
+            width: 120px;
+            background: linear-gradient(180deg, #2a2520 0%, #1a1510 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 10px;
+            gap: 15px;
+            position: relative;
+            z-index: 1002;
+        }
+
+        /* Toolbar icons (inventory slots) */
+        .toolbar-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #e8d4a0 0%, #c9b888 100%);
+            border: 3px solid #8b7355;
+            border-radius: 8px;
+            box-shadow:
+                inset 0 2px 5px rgba(255,255,255,0.3),
+                inset 0 -2px 5px rgba(0,0,0,0.3),
+                0 4px 8px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        .toolbar-icon:hover {
+            transform: scale(1.05);
+            box-shadow:
+                inset 0 2px 5px rgba(255,255,255,0.3),
+                inset 0 -2px 5px rgba(0,0,0,0.3),
+                0 6px 12px rgba(0,0,0,0.7);
+        }
+
+        .toolbar-icon.active {
+            background: linear-gradient(135deg, #ffd700 0%, #e8b800 100%);
+            box-shadow:
+                inset 0 2px 5px rgba(255,255,255,0.5),
+                inset 0 -2px 5px rgba(0,0,0,0.2),
+                0 0 20px rgba(255,215,0,0.6);
+        }
+
+        .toolbar-icon.empty {
+            background: linear-gradient(135deg, #d4c4a0 0%, #b9a888 100%);
+            cursor: default;
+        }
+
+        .toolbar-icon.empty:hover {
+            transform: none;
+        }
+
+        /* Wall indicator */
+        .wall-indicator {
+            position: absolute;
+            top: 20px;
+            right: 140px;
+            color: #fff;
+            font-size: 18px;
+            z-index: 1001;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+
+        /* Dialog box */
+        .dialog {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 20px 30px;
+            border-radius: 10px;
+            border: 2px solid #8b7355;
+            max-width: 500px;
+            display: none;
+            z-index: 1003;
+            font-size: 16px;
+            text-align: center;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.8);
+        }
+
+        .dialog.show {
+            display: block;
+        }
+
+        .dialog::after {
+            content: '▼';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(0, 0, 0, 0.9);
+            font-size: 20px;
+        }
+
+        /* Interactive elements */
+        .interactive {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .interactive:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Desk drawer - opened state */
+        .desk.opened::before {
+            transform: rotateX(85deg);
+            transform-origin: bottom center;
+        }
+
+        /* Desk drawer handle - opened state */
+        .desk.opened::after {
+            transform: translateX(-50%) rotateX(85deg);
+            transform-origin: bottom center;
+        }
+
+        /* Desk interior shadow when opened */
+        .desk.opened {
+            box-shadow: inset 0 10px 30px rgba(0,0,0,0.6);
+        }
+
+        /* Tall cabinet top door - opened state */
+        .tall-cabinet.opened::before {
+            transform: rotateY(-110deg);
+            transform-origin: left center;
+        }
+
+        /* Tall cabinet top door handle - opened state */
+        .tall-cabinet.opened::after {
+            transform: translateY(-50%) rotateY(-110deg);
+            transform-origin: left center;
+        }
+
+        /* Tall cabinet interior shadow when opened */
+        .tall-cabinet.opened {
+            box-shadow: inset 0 20px 40px rgba(0,0,0,0.7);
+        }
+
+        /* Tall cabinet bottom door - opened state */
+        .cabinet-bottom-door.opened {
+            transform: rotateY(-110deg);
+            transform-origin: left center;
+        }
+
+        /* Wall cabinet - opened state */
+        .wall-cabinet.opened {
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        /* Wall cabinet door - opened state */
+        .wall-cabinet-door.opened {
+            transform: rotateY(-110deg);
+            transform-origin: left center;
+        }
+
+        /* Floor cabinet left door - opened state */
+        .floor-cabinet.opened::before {
+            transform: rotateY(-110deg);
+            transform-origin: left center;
+        }
+
+        /* Floor cabinet left door handle - opened state */
+        .floor-cabinet.opened::after {
+            transform: translateY(-50%) rotateY(-110deg);
+            transform-origin: left center;
+        }
+
+        /* Floor cabinet interior shadow when opened */
+        .floor-cabinet.opened {
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.7);
+        }
+
+        /* Floor cabinet right door - opened state */
+        .floor-cabinet-right-door.opened {
+            transform: rotateY(110deg);
+            transform-origin: right center;
         }
     </style>
 </head>
-<body class="family">
-    <div class="container">
-        <h1>Social Persona Mask Switcher</h1>
+<body>
+    <div class="game-container">
+        <!-- Main scene area -->
+        <div class="scene-area">
+            <!-- Wall indicator -->
+            <div class="wall-indicator">
+                <span id="wallName">前墙</span>
+            </div>
 
-        <div class="avatar-container">
-            <canvas id="avatar" class="avatar"></canvas>
+            <!-- Up arrow for ceiling view -->
+            <div class="nav-up" onclick="game.viewCeiling()"></div>
+
+            <!-- Room walls -->
+            <div class="room-wall wall-front active" id="wall-1">
+                <!-- Initial state: only window + painting (no fishing rod, no shadow) -->
+                <div class="window">
+                    <div class="lake-painting"></div>
+                </div>
+            </div>
+            <div class="room-wall wall-right" id="wall-2">
+                <!-- Desk with drawer -->
+                <div class="desk interactive" id="desk"></div>
+                <!-- Tall cabinet with 2 doors -->
+                <div class="tall-cabinet interactive" id="tall-cabinet">
+                    <div class="cabinet-bottom-door interactive" id="cabinet-bottom-door"></div>
+                </div>
+                <!-- Fishing rod leaning on wall -->
+                <div class="fishing-rod-right"></div>
+            </div>
+            <div class="room-wall wall-back" id="wall-3">
+                <!-- Wall cabinet (3 shelves) -->
+                <div class="wall-cabinet interactive" id="wall-cabinet">
+                    <div class="wall-cabinet-door interactive" id="wall-cabinet-door"></div>
+                </div>
+                <!-- Floor cabinet with 2 doors -->
+                <div class="floor-cabinet interactive" id="floor-cabinet">
+                    <div class="floor-cabinet-right-door interactive" id="floor-cabinet-right-door"></div>
+                </div>
+            </div>
+            <div class="room-wall wall-left" id="wall-4">
+                <!-- Window with lake painting -->
+                <div class="window-left">
+                    <div class="lake-painting-left"></div>
+                </div>
+                <!-- Blue stool -->
+                <div class="stool"></div>
+            </div>
+            <div class="room-wall ceiling" id="ceiling">
+                <!-- Small object on ceiling -->
+                <div class="ceiling-object"></div>
+            </div>
+
+            <!-- Side edges for perspective (not visible on ceiling view) -->
+            <div class="wall-left-edge" id="left-edge"></div>
+            <div class="wall-right-edge" id="right-edge"></div>
+
+            <!-- Floor (always visible) -->
+            <div class="floor"></div>
+
+            <!-- Navigation arrows -->
+            <div class="nav-container">
+                <div class="nav-arrow left" onclick="game.previousWall()"></div>
+                <div class="nav-arrow right" onclick="game.nextWall()"></div>
+            </div>
+
+            <!-- Dialog box -->
+            <div class="dialog" id="dialog"></div>
         </div>
 
-        <div class="button-group">
-            <button class="persona-button active" data-persona="family">👨‍👩‍👧‍👦 Family</button>
-            <button class="persona-button" data-persona="friend">🎉 Friends</button>
-            <button class="persona-button" data-persona="colleague">💼 Colleagues</button>
-            <button class="persona-button" data-persona="stranger">🎭 Strangers</button>
-        </div>
-
-        <div class="status-indicator">
-            Current Mode: <span id="currentStatus">Family Mode</span>
+        <!-- Right toolbar (inventory) -->
+        <div class="toolbar" id="toolbar">
+            <!-- Inventory slots will be generated here -->
         </div>
     </div>
 
     <script>
-        // Drawing function for cute avatars with different expressions
-        function drawAvatar(ctx, expression, bgColor) {
-            const width = 300;
-            const height = 300;
+        class RustyLakeRoom {
+            constructor() {
+                this.currentWall = 1;
+                this.wallNames = ['前墙', '右墙', '后墙', '左墙', '天花板'];
+                this.inventory = [];
+                this.maxInventorySlots = 8;
+                this.selectedItem = null;
 
-            // Clear canvas
-            ctx.clearRect(0, 0, width, height);
-
-            // Background with gradient
-            const bgGradient = ctx.createRadialGradient(150, 150, 0, 150, 150, 150);
-            bgGradient.addColorStop(0, bgColor);
-            bgGradient.addColorStop(1, adjustBrightness(bgColor, -20));
-            ctx.fillStyle = bgGradient;
-            ctx.fillRect(0, 0, width, height);
-
-            // Face shadow (for depth)
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.beginPath();
-            ctx.arc(150, 140, 78, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Face
-            const faceGradient = ctx.createRadialGradient(150, 130, 0, 150, 140, 75);
-            faceGradient.addColorStop(0, '#ffd4b3');
-            faceGradient.addColorStop(1, '#f4c7a5');
-            ctx.fillStyle = faceGradient;
-            ctx.beginPath();
-            ctx.arc(150, 135, 75, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Hair (long wavy hair)
-            ctx.fillStyle = '#6b3410';
-            ctx.beginPath();
-            // Top bun/volume
-            ctx.ellipse(150, 85, 80, 50, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Hair highlights
-            ctx.fillStyle = '#8b4513';
-            ctx.beginPath();
-            ctx.ellipse(150, 85, 70, 43, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Left hair flow
-            ctx.fillStyle = '#6b3410';
-            ctx.beginPath();
-            ctx.moveTo(70, 90);
-            ctx.quadraticCurveTo(60, 120, 70, 180);
-            ctx.quadraticCurveTo(75, 200, 85, 215);
-            ctx.lineTo(95, 210);
-            ctx.quadraticCurveTo(85, 190, 80, 160);
-            ctx.quadraticCurveTo(75, 120, 85, 90);
-            ctx.fill();
-
-            // Right hair flow
-            ctx.beginPath();
-            ctx.moveTo(230, 90);
-            ctx.quadraticCurveTo(240, 120, 230, 180);
-            ctx.quadraticCurveTo(225, 200, 215, 215);
-            ctx.lineTo(205, 210);
-            ctx.quadraticCurveTo(215, 190, 220, 160);
-            ctx.quadraticCurveTo(225, 120, 215, 90);
-            ctx.fill();
-
-            // Blush
-            if (expression === 'family' || expression === 'friend') {
-                ctx.fillStyle = 'rgba(255, 150, 150, 0.3)';
-                ctx.beginPath();
-                ctx.ellipse(110, 145, 15, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(190, 145, 15, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
+                this.init();
             }
 
-            // Eyes
-            if (expression === 'stranger') {
-                // Cold, looking away
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.ellipse(115, 125, 12, 15, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(185, 125, 12, 15, 0, 0, Math.PI * 2);
-                ctx.fill();
+            init() {
+                this.setupToolbar();
+                this.updateWallIndicator();
+                this.setupInteractions();
+                this.showDialog('欢迎来到神秘房间');
+            }
 
-                ctx.fillStyle = '#4a3728';
-                ctx.beginPath();
-                ctx.arc(112, 125, 8, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(188, 125, 8, 0, Math.PI * 2);
-                ctx.fill();
+            setupInteractions() {
+                // Desk drawer
+                const desk = document.getElementById('desk');
+                if (desk) {
+                    desk.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        desk.classList.toggle('opened');
+                        const state = desk.classList.contains('opened') ? '打开' : '关闭';
+                        this.showDialog(`书桌抽屉已${state}`);
+                    });
+                }
 
-                // Flat eyebrows
-                ctx.strokeStyle = '#4a3728';
-                ctx.lineWidth = 2.5;
-                ctx.beginPath();
-                ctx.moveTo(100, 108);
-                ctx.lineTo(130, 108);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(170, 108);
-                ctx.lineTo(200, 108);
-                ctx.stroke();
-            } else if (expression === 'friend') {
-                // Super happy squinted eyes
-                ctx.fillStyle = '#4a3728';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(125, 122, 3, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(175, 122, 3, 0, Math.PI * 2);
-                ctx.fill();
+                // Tall cabinet top door
+                const tallCabinet = document.getElementById('tall-cabinet');
+                if (tallCabinet) {
+                    tallCabinet.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        tallCabinet.classList.toggle('opened');
+                        const state = tallCabinet.classList.contains('opened') ? '打开' : '关闭';
+                        this.showDialog(`高柜上门已${state}`);
+                    });
+                }
 
-                // Happy curved eyebrows
-                ctx.strokeStyle = '#4a3728';
-                ctx.lineWidth = 2.5;
-                ctx.beginPath();
-                ctx.moveTo(105, 108);
-                ctx.quadraticCurveTo(125, 102, 145, 108);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(155, 108);
-                ctx.quadraticCurveTo(175, 102, 195, 108);
-                ctx.stroke();
-            } else {
-                // Big cute eyes
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.ellipse(125, 125, 13, 16, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(175, 125, 13, 16, 0, 0, Math.PI * 2);
-                ctx.fill();
+                // Tall cabinet bottom door
+                const cabinetBottomDoor = document.getElementById('cabinet-bottom-door');
+                if (cabinetBottomDoor) {
+                    cabinetBottomDoor.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        cabinetBottomDoor.classList.toggle('opened');
+                        const state = cabinetBottomDoor.classList.contains('opened') ? '打开' : '关闭';
+                        this.showDialog(`高柜下门已${state}`);
+                    });
+                }
 
-                // Iris
-                ctx.fillStyle = '#4a3728';
-                ctx.beginPath();
-                ctx.arc(125, 128, 10, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(175, 128, 10, 0, Math.PI * 2);
-                ctx.fill();
+                // Wall cabinet door
+                const wallCabinetDoor = document.getElementById('wall-cabinet-door');
+                if (wallCabinetDoor) {
+                    wallCabinetDoor.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const wallCabinet = document.getElementById('wall-cabinet');
+                        wallCabinetDoor.classList.toggle('opened');
+                        if (wallCabinet) {
+                            wallCabinet.classList.toggle('opened');
+                        }
+                        const state = wallCabinetDoor.classList.contains('opened') ? '打开' : '关闭';
+                        this.showDialog(`壁柜已${state}`);
+                    });
+                }
 
-                // Pupils with sparkle
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(125, 128, 6, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(175, 128, 6, 0, Math.PI * 2);
-                ctx.fill();
+                // Floor cabinet left door
+                const floorCabinet = document.getElementById('floor-cabinet');
+                if (floorCabinet) {
+                    floorCabinet.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        floorCabinet.classList.toggle('opened');
+                        const state = floorCabinet.classList.contains('opened') ? '打开' : '关闭';
+                        this.showDialog(`地柜左门已${state}`);
+                    });
+                }
 
-                // Eye sparkles
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.arc(122, 124, 2.5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(172, 124, 2.5, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Eyebrows
-                ctx.strokeStyle = '#4a3728';
-                ctx.lineWidth = 2.5;
-                if (expression === 'family') {
-                    ctx.beginPath();
-                    ctx.moveTo(105, 105);
-                    ctx.quadraticCurveTo(125, 103, 145, 106);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(155, 106);
-                    ctx.quadraticCurveTo(175, 103, 195, 105);
-                    ctx.stroke();
-                } else {
-                    ctx.beginPath();
-                    ctx.moveTo(105, 108);
-                    ctx.lineTo(145, 108);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(155, 108);
-                    ctx.lineTo(195, 108);
-                    ctx.stroke();
+                // Floor cabinet right door
+                const floorCabinetRightDoor = document.getElementById('floor-cabinet-right-door');
+                if (floorCabinetRightDoor) {
+                    floorCabinetRightDoor.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        floorCabinetRightDoor.classList.toggle('opened');
+                        const state = floorCabinetRightDoor.classList.contains('opened') ? '打开' : '关闭';
+                        this.showDialog(`地柜右门已${state}`);
+                    });
                 }
             }
 
-            // Mouth
-            ctx.strokeStyle = '#4a3728';
-            ctx.fillStyle = '#ff6b9d';
-            ctx.lineWidth = 2.5;
+            setupToolbar() {
+                const toolbar = document.getElementById('toolbar');
+                toolbar.innerHTML = '';
 
-            if (expression === 'family') {
-                // Big happy smile
-                ctx.beginPath();
-                ctx.moveTo(115, 155);
-                ctx.quadraticCurveTo(150, 180, 185, 155);
-                ctx.stroke();
-
-                // Open mouth smile
-                ctx.fillStyle = 'rgba(255, 107, 157, 0.6)';
-                ctx.beginPath();
-                ctx.moveTo(115, 155);
-                ctx.quadraticCurveTo(150, 175, 185, 155);
-                ctx.quadraticCurveTo(150, 165, 115, 155);
-                ctx.fill();
-            } else if (expression === 'friend') {
-                // Super wide laugh
-                ctx.beginPath();
-                ctx.arc(150, 145, 30, 0.2, Math.PI - 0.2);
-                ctx.stroke();
-
-                // Open laughing mouth
-                ctx.fillStyle = 'rgba(255, 107, 157, 0.7)';
-                ctx.beginPath();
-                ctx.arc(150, 145, 28, 0.2, Math.PI - 0.2);
-                ctx.lineTo(150, 160);
-                ctx.fill();
-            } else if (expression === 'colleague') {
-                // Polite small smile
-                ctx.beginPath();
-                ctx.moveTo(130, 162);
-                ctx.quadraticCurveTo(150, 168, 170, 162);
-                ctx.stroke();
-            } else if (expression === 'stranger') {
-                // Flat line - indifferent
-                ctx.beginPath();
-                ctx.moveTo(130, 162);
-                ctx.lineTo(170, 162);
-                ctx.stroke();
-            }
-
-            // Cute nose
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.beginPath();
-            ctx.arc(150, 142, 2, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // Helper function to adjust color brightness
-        function adjustBrightness(color, amount) {
-            const hex = color.replace('#', '');
-            const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
-            const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
-            const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
-            return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
-        }
-
-        // Persona configurations
-        const personas = {
-            family: {
-                name: 'Family Mode',
-                expression: 'family',
-                bgColor: '#ffdfbf',
-                emoji: '👨‍👩‍👧‍👦'
-            },
-            friend: {
-                name: 'Friends Mode',
-                expression: 'friend',
-                bgColor: '#b6e3f4',
-                emoji: '🎉'
-            },
-            colleague: {
-                name: 'Colleagues Mode',
-                expression: 'colleague',
-                bgColor: '#d1d4f9',
-                emoji: '💼'
-            },
-            stranger: {
-                name: 'Strangers Mode',
-                expression: 'stranger',
-                bgColor: '#c0aede',
-                emoji: '🎭'
-            }
-        };
-
-        // Get DOM elements
-        const canvas = document.getElementById('avatar');
-        const ctx = canvas.getContext('2d');
-        const statusElement = document.getElementById('currentStatus');
-        const buttons = document.querySelectorAll('.persona-button');
-        const body = document.body;
-
-        // Set canvas size
-        canvas.width = 300;
-        canvas.height = 300;
-
-        // Switch persona function
-        function switchPersona(personaKey) {
-            const persona = personas[personaKey];
-
-            // Add switching animation
-            canvas.classList.add('switching');
-
-            // Draw new avatar after animation delay
-            setTimeout(() => {
-                drawAvatar(ctx, persona.expression, persona.bgColor);
-            }, 300);
-
-            // Remove animation class
-            setTimeout(() => {
-                canvas.classList.remove('switching');
-            }, 600);
-
-            // Update background color
-            body.className = personaKey;
-
-            // Update status text
-            statusElement.textContent = persona.name;
-
-            // Update button states
-            buttons.forEach(btn => {
-                if (btn.dataset.persona === personaKey) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
+                // Create inventory slots
+                for (let i = 0; i < this.maxInventorySlots; i++) {
+                    const slot = document.createElement('div');
+                    slot.className = 'toolbar-icon empty';
+                    slot.id = `slot-${i}`;
+                    toolbar.appendChild(slot);
                 }
-            });
+            }
+
+            nextWall() {
+                if (this.currentWall === 5) {
+                    this.currentWall = 1;
+                } else {
+                    this.currentWall = this.currentWall === 4 ? 1 : this.currentWall + 1;
+                }
+                this.updateWall();
+            }
+
+            previousWall() {
+                if (this.currentWall === 5) {
+                    this.currentWall = 1;
+                } else {
+                    this.currentWall = this.currentWall === 1 ? 4 : this.currentWall - 1;
+                }
+                this.updateWall();
+            }
+
+            viewCeiling() {
+                this.currentWall = 5;
+                this.updateWall();
+            }
+
+            updateWall() {
+                // Hide all walls
+                document.querySelectorAll('.room-wall').forEach(wall => {
+                    wall.classList.remove('active');
+                });
+
+                const floor = document.querySelector('.floor');
+                const leftEdge = document.getElementById('left-edge');
+                const rightEdge = document.getElementById('right-edge');
+
+                // Show current wall
+                if (this.currentWall === 5) {
+                    // Ceiling view - hide floor and edges
+                    document.getElementById('ceiling').classList.add('active');
+                    if (floor) floor.style.display = 'none';
+                    if (leftEdge) leftEdge.style.display = 'none';
+                    if (rightEdge) rightEdge.style.display = 'none';
+                } else {
+                    // Wall view - show floor and edges
+                    document.getElementById(`wall-${this.currentWall}`).classList.add('active');
+                    if (floor) floor.style.display = 'block';
+                    if (leftEdge) leftEdge.style.display = 'block';
+                    if (rightEdge) rightEdge.style.display = 'block';
+                }
+
+                this.updateWallIndicator();
+            }
+
+            updateWallIndicator() {
+                document.getElementById('wallName').textContent = this.wallNames[this.currentWall - 1];
+            }
+
+            showDialog(message) {
+                const dialog = document.getElementById('dialog');
+                dialog.innerHTML = message;
+                dialog.classList.add('show');
+                setTimeout(() => {
+                    dialog.classList.remove('show');
+                }, 3000);
+            }
         }
 
-        // Add click events to buttons
-        buttons.forEach(button => {
-            button.addEventListener('click', () => {
-                const personaKey = button.dataset.persona;
-                switchPersona(personaKey);
-            });
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            const keyMap = {
-                '1': 'family',
-                '2': 'friend',
-                '3': 'colleague',
-                '4': 'stranger'
-            };
-
-            if (keyMap[e.key]) {
-                switchPersona(keyMap[e.key]);
-            }
-        });
-
-        // Draw initial avatar (family mode)
-        drawAvatar(ctx, 'family', '#ffdfbf');
+        // Initialize game
+        const game = new RustyLakeRoom();
     </script>
 </body>
 </html>
