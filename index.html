@@ -964,7 +964,7 @@
             <!-- Room walls -->
             <div class="room-wall wall-front active" id="wall-1">
                 <!-- Initial state: only window + painting (no fishing rod, no shadow) -->
-                <div class="window">
+                <div class="window interactive" id="window">
                     <div class="lake-painting interactive" id="painting">
                         <div class="click-counter" id="painting-counter">0</div>
                     </div>
@@ -983,7 +983,7 @@
                     </div>
                 </div>
                 <!-- Fishing rod leaning on wall -->
-                <div class="fishing-rod-right"></div>
+                <div class="fishing-rod-right interactive" id="fishing-rod"></div>
             </div>
             <div class="room-wall wall-back" id="wall-3">
                 <!-- Wall cabinet (3 shelves) -->
@@ -1002,15 +1002,15 @@
             </div>
             <div class="room-wall wall-left" id="wall-4">
                 <!-- Window with lake painting -->
-                <div class="window-left">
-                    <div class="lake-painting-left"></div>
+                <div class="window-left interactive" id="window-left">
+                    <div class="lake-painting-left interactive" id="painting-left"></div>
                 </div>
                 <!-- Blue stool -->
-                <div class="stool"></div>
+                <div class="stool interactive" id="stool"></div>
             </div>
             <div class="room-wall ceiling" id="ceiling">
                 <!-- Small object on ceiling -->
-                <div class="ceiling-object"></div>
+                <div class="ceiling-object interactive" id="ceiling-object"></div>
             </div>
 
             <!-- Side edges for perspective (not visible on ceiling view) -->
@@ -1142,6 +1142,69 @@
                     painting.addEventListener('click', (e) => {
                         e.stopPropagation();
                         this.cyclePaintingState();
+                    });
+                }
+
+                // Window on front wall
+                const window = document.getElementById('window');
+                if (window) {
+                    window.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.showDialog('窗户紧紧关着，透过玻璃可以看到湖景');
+                    });
+                }
+
+                // Tall cabinet (parent container)
+                const tallCabinet = document.getElementById('tall-cabinet');
+                if (tallCabinet) {
+                    tallCabinet.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.showDialog('这是一个高柜，有两个门');
+                    });
+                }
+
+                // Fishing rod - can be picked up
+                const fishingRod = document.getElementById('fishing-rod');
+                if (fishingRod) {
+                    fishingRod.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.pickupItem('fishing-rod', '🎣', '钓鱼竿');
+                    });
+                }
+
+                // Window on left wall
+                const windowLeft = document.getElementById('window-left');
+                if (windowLeft) {
+                    windowLeft.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.showDialog('左边的窗户里也有一幅湖景画');
+                    });
+                }
+
+                // Lake painting on left wall
+                const paintingLeft = document.getElementById('painting-left');
+                if (paintingLeft) {
+                    paintingLeft.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.showDialog('这是一幅用CSS绘制的湖景画');
+                    });
+                }
+
+                // Blue stool
+                const stool = document.getElementById('stool');
+                if (stool) {
+                    stool.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.showDialog('一把蓝色的凳子，看起来很结实');
+                    });
+                }
+
+                // Ceiling object
+                const ceilingObject = document.getElementById('ceiling-object');
+                if (ceilingObject) {
+                    ceilingObject.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.showDialog('天花板上有一个小盒子，里面可能藏着什么');
                     });
                 }
             }
@@ -1316,6 +1379,105 @@
                 setTimeout(() => {
                     overlay.remove();
                 }, 3000);
+            }
+
+            // Add item to inventory
+            addItemToInventory(item) {
+                if (this.inventory.length >= this.maxInventorySlots) {
+                    this.showDialog('物品栏已满！');
+                    return false;
+                }
+
+                this.inventory.push(item);
+                this.updateToolbarDisplay();
+                return true;
+            }
+
+            // Update toolbar display
+            updateToolbarDisplay() {
+                const toolbar = document.getElementById('toolbar');
+                if (!toolbar) return;
+
+                // Clear and rebuild all slots
+                toolbar.innerHTML = '';
+
+                // Create slots with items
+                for (let i = 0; i < this.maxInventorySlots; i++) {
+                    const slot = document.createElement('div');
+                    slot.id = `slot-${i}`;
+
+                    if (i < this.inventory.length) {
+                        // Slot has an item
+                        const item = this.inventory[i];
+                        slot.className = 'toolbar-icon';
+                        slot.textContent = item.icon;
+                        slot.title = item.name;
+
+                        // Add click event to select/use item
+                        slot.addEventListener('click', () => {
+                            this.selectItem(i);
+                        });
+                    } else {
+                        // Empty slot
+                        slot.className = 'toolbar-icon empty';
+                    }
+
+                    toolbar.appendChild(slot);
+                }
+            }
+
+            // Select an item in inventory
+            selectItem(index) {
+                if (index >= this.inventory.length) return;
+
+                const item = this.inventory[index];
+                this.selectedItem = index;
+
+                // Update visual selection
+                document.querySelectorAll('.toolbar-icon').forEach((slot, i) => {
+                    if (i === index) {
+                        slot.classList.add('active');
+                    } else {
+                        slot.classList.remove('active');
+                    }
+                });
+
+                this.showDialog(`已选中：${item.name}`);
+            }
+
+            // Pickup item from scene
+            pickupItem(elementId, icon, name) {
+                const element = document.getElementById(elementId);
+                if (!element) {
+                    this.showDialog('找不到该物品');
+                    return;
+                }
+
+                // Check if already picked up
+                if (this.inventory.find(item => item.id === elementId)) {
+                    this.showDialog('你已经拾取过这个物品了');
+                    return;
+                }
+
+                // Add to inventory
+                const success = this.addItemToInventory({
+                    id: elementId,
+                    icon: icon,
+                    name: name
+                });
+
+                if (success) {
+                    // Remove from scene with animation
+                    element.style.transition = 'all 0.5s ease';
+                    element.style.transform = 'scale(0) translateY(-50px)';
+                    element.style.opacity = '0';
+
+                    setTimeout(() => {
+                        element.style.display = 'none';
+                    }, 500);
+
+                    this.showDialog(`获得了：${name}`);
+                }
             }
         }
 
