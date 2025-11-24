@@ -1204,7 +1204,7 @@
                 if (ceilingObject) {
                     ceilingObject.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        this.showDialog('天花板上有一个小盒子，里面可能藏着什么');
+                        this.handleCeilingObject();
                     });
                 }
             }
@@ -1478,6 +1478,200 @@
 
                     this.showDialog(`获得了：${name}`);
                 }
+            }
+
+            // Handle ceiling object interaction
+            handleCeilingObject() {
+                const ceilingObject = document.getElementById('ceiling-object');
+                if (!ceilingObject || ceilingObject.style.display === 'none') {
+                    return;
+                }
+
+                // Check if fishing rod is selected
+                const hasFishingRod = this.inventory.find(item => item.id === 'fishing-rod');
+                const fishingRodSelected = hasFishingRod && this.selectedItem !== null &&
+                                          this.inventory[this.selectedItem].id === 'fishing-rod';
+
+                if (!fishingRodSelected) {
+                    this.showDialog('太高了，无法触碰到...');
+                    return;
+                }
+
+                // Use fishing rod to knock down the box
+                this.showDialog('你用钓鱼竿戳了一下，盒子掉了下来！');
+
+                // Animate the box falling
+                ceilingObject.style.transition = 'all 1s cubic-bezier(0.5, 0, 0.5, 1)';
+                ceilingObject.style.transform = 'translate(-50%, 300px) rotate(180deg)';
+                ceilingObject.style.opacity = '0';
+
+                setTimeout(() => {
+                    ceilingObject.style.display = 'none';
+                    // Show password box puzzle
+                    this.showPasswordBox();
+                }, 1000);
+            }
+
+            // Show password box puzzle
+            showPasswordBox() {
+                // Create password box overlay
+                const overlay = document.createElement('div');
+                overlay.id = 'password-box-overlay';
+                overlay.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 120px;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.9);
+                    z-index: 2000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+
+                const passwordBox = document.createElement('div');
+                passwordBox.style.cssText = `
+                    width: 400px;
+                    height: 300px;
+                    background: linear-gradient(135deg, #8a6a4a 0%, #6a4a3a 100%);
+                    border: 4px solid #4a3a2a;
+                    border-radius: 15px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+                    padding: 30px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 20px;
+                `;
+
+                const title = document.createElement('div');
+                title.textContent = '密码盒';
+                title.style.cssText = `
+                    font-size: 28px;
+                    font-weight: bold;
+                    color: #ffd700;
+                    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                `;
+
+                const inputContainer = document.createElement('div');
+                inputContainer.style.cssText = `
+                    display: flex;
+                    gap: 10px;
+                    margin: 20px 0;
+                `;
+
+                // Create 4 digit input boxes
+                const inputs = [];
+                for (let i = 0; i < 4; i++) {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.maxLength = 1;
+                    input.style.cssText = `
+                        width: 60px;
+                        height: 60px;
+                        font-size: 32px;
+                        text-align: center;
+                        border: 3px solid #2a2a2a;
+                        border-radius: 8px;
+                        background: #fff;
+                        font-weight: bold;
+                    `;
+                    input.addEventListener('input', (e) => {
+                        if (e.target.value && i < 3) {
+                            inputs[i + 1].focus();
+                        }
+                    });
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Backspace' && !e.target.value && i > 0) {
+                            inputs[i - 1].focus();
+                        }
+                    });
+                    inputs.push(input);
+                    inputContainer.appendChild(input);
+                }
+
+                const buttonContainer = document.createElement('div');
+                buttonContainer.style.cssText = `
+                    display: flex;
+                    gap: 15px;
+                    margin-top: 10px;
+                `;
+
+                const confirmButton = document.createElement('button');
+                confirmButton.textContent = '确认';
+                confirmButton.style.cssText = `
+                    padding: 12px 30px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    background: linear-gradient(135deg, #4a9a6a 0%, #3a8a5a 100%);
+                    color: #fff;
+                    border: 3px solid #2a6a4a;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                `;
+                confirmButton.addEventListener('mouseover', () => {
+                    confirmButton.style.transform = 'scale(1.05)';
+                });
+                confirmButton.addEventListener('mouseout', () => {
+                    confirmButton.style.transform = 'scale(1)';
+                });
+                confirmButton.addEventListener('click', () => {
+                    const password = inputs.map(input => input.value).join('');
+                    if (password === '2487') {
+                        this.showDialog('密码正确！盒子打开了！');
+                        overlay.remove();
+                        // TODO: Add reward item when box opens
+                    } else {
+                        this.showDialog('密码错误...');
+                        inputs.forEach(input => {
+                            input.value = '';
+                            input.style.borderColor = '#ff0000';
+                            setTimeout(() => {
+                                input.style.borderColor = '#2a2a2a';
+                            }, 500);
+                        });
+                        inputs[0].focus();
+                    }
+                });
+
+                const closeButton = document.createElement('button');
+                closeButton.textContent = '关闭';
+                closeButton.style.cssText = `
+                    padding: 12px 30px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    background: linear-gradient(135deg, #9a6a4a 0%, #8a5a3a 100%);
+                    color: #fff;
+                    border: 3px solid #6a4a2a;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                `;
+                closeButton.addEventListener('mouseover', () => {
+                    closeButton.style.transform = 'scale(1.05)';
+                });
+                closeButton.addEventListener('mouseout', () => {
+                    closeButton.style.transform = 'scale(1)';
+                });
+                closeButton.addEventListener('click', () => {
+                    overlay.remove();
+                });
+
+                buttonContainer.appendChild(confirmButton);
+                buttonContainer.appendChild(closeButton);
+
+                passwordBox.appendChild(title);
+                passwordBox.appendChild(inputContainer);
+                passwordBox.appendChild(buttonContainer);
+                overlay.appendChild(passwordBox);
+
+                document.querySelector('.scene-area').appendChild(overlay);
+
+                // Auto-focus first input
+                inputs[0].focus();
             }
         }
 
