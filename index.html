@@ -848,10 +848,9 @@
             transform-origin: left center;
         }
 
-        /* Tall cabinet top door handle - opened state */
+        /* Tall cabinet top door handle - opened state (follows door rotation) */
         .tall-cabinet.opened::after {
-            transform: translateY(-50%) rotateY(-110deg);
-            transform-origin: left center;
+            transform: translateY(-50%);
         }
 
         /* Tall cabinet interior shadow when opened */
@@ -882,10 +881,9 @@
             transform-origin: left center;
         }
 
-        /* Floor cabinet left door handle - opened state */
+        /* Floor cabinet left door handle - opened state (follows door rotation) */
         .floor-cabinet.opened::after {
-            transform: translateY(-50%) rotateY(-110deg);
-            transform-origin: left center;
+            transform: translateY(-50%);
         }
 
         /* Floor cabinet interior shadow when opened */
