@@ -1391,6 +1391,13 @@
                 if (index >= this.inventory.length) return;
 
                 const item = this.inventory[index];
+
+                // Special handling for usable items like password box
+                if (item.usable && item.id === 'password-box') {
+                    this.showPasswordBox();
+                    return;
+                }
+
                 this.selectedItem = index;
 
                 // Update visual selection
@@ -1467,8 +1474,16 @@
 
                 setTimeout(() => {
                     ceilingObject.style.display = 'none';
-                    // Show password box puzzle
-                    this.showPasswordBox();
+                    // Add password box to inventory
+                    const success = this.addItemToInventory({
+                        id: 'password-box',
+                        icon: '📦',
+                        name: '密码盒',
+                        usable: true
+                    });
+                    if (success) {
+                        this.showDialog('获得了：密码盒');
+                    }
                 }, 1000);
             }
 
@@ -1581,9 +1596,23 @@
                 confirmButton.addEventListener('click', () => {
                     const password = inputs.map(input => input.value).join('');
                     if (password === '2487') {
-                        this.showDialog('密码正确！盒子打开了！');
                         overlay.remove();
-                        // TODO: Add reward item when box opens
+
+                        // Remove password box from inventory
+                        const boxIndex = this.inventory.findIndex(item => item.id === 'password-box');
+                        if (boxIndex !== -1) {
+                            this.inventory.splice(boxIndex, 1);
+                            this.updateToolbarDisplay();
+                        }
+
+                        // Add reward (golden key)
+                        this.addItemToInventory({
+                            id: 'golden-key',
+                            icon: '🗝️',
+                            name: '金钥匙'
+                        });
+
+                        this.showDialog('密码正确！盒子打开了！获得了：金钥匙');
                     } else {
                         this.showDialog('密码错误...');
                         inputs.forEach(input => {
