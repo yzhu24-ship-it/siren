@@ -517,6 +517,95 @@
                 );
         }
 
+        /* Locked door on left wall */
+        .locked-door {
+            position: absolute;
+            right: 18%;
+            bottom: 22%;
+            width: 18%;
+            height: 35%;
+            background: linear-gradient(180deg, #6a5a4a 0%, #5a4a3a 100%);
+            border: 4px solid #3a2a1a;
+            border-radius: 8px 8px 0 0;
+            box-shadow:
+                inset 2px 2px 5px rgba(0,0,0,0.3),
+                0 8px 16px rgba(0,0,0,0.5);
+            transition: all 0.5s ease;
+        }
+
+        /* Door panels decoration */
+        .locked-door::before {
+            content: '';
+            position: absolute;
+            top: 8%;
+            left: 8%;
+            right: 8%;
+            bottom: 50%;
+            border: 3px solid #4a3a2a;
+            border-radius: 4px;
+        }
+
+        .locked-door::after {
+            content: '';
+            position: absolute;
+            top: 52%;
+            left: 8%;
+            right: 8%;
+            bottom: 8%;
+            border: 3px solid #4a3a2a;
+            border-radius: 4px;
+        }
+
+        /* Door keyhole */
+        .door-keyhole {
+            position: absolute;
+            right: 15%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 20px;
+            background: #1a1a1a;
+            border-radius: 50% 50% 0 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .door-keyhole::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 8px;
+            background: #1a1a1a;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+
+        /* Door opened state */
+        .locked-door.opened {
+            transform: perspective(800px) rotateY(-90deg);
+            transform-origin: left center;
+        }
+
+        /* Clue paper behind the door */
+        .clue-paper {
+            position: absolute;
+            right: 18%;
+            bottom: 35%;
+            font-size: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 4;
+            display: none;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+            animation: paperFloat 2s ease-in-out infinite;
+        }
+
+        .clue-paper:hover {
+            transform: scale(1.2);
+            filter: drop-shadow(0 8px 16px rgba(255,215,0,0.8));
+        }
+
         /* Blue stool on left wall */
         .stool {
             position: absolute;
@@ -966,6 +1055,12 @@
                 <div class="window-left interactive" id="window-left">
                     <div class="lake-painting-left interactive" id="painting-left"></div>
                 </div>
+                <!-- Locked door with keyhole -->
+                <div class="locked-door interactive" id="locked-door">
+                    <div class="door-keyhole"></div>
+                </div>
+                <!-- Clue paper behind the door -->
+                <div class="clue-paper interactive" id="clue-paper">📋</div>
                 <!-- Blue stool -->
                 <div class="stool interactive" id="stool"></div>
             </div>
@@ -1111,6 +1206,35 @@
                 this.checkGridPuzzleSolution();
             }
 
+            // Check if there are three consecutive same values
+            hasThreeConsecutive(grid) {
+                // Check rows
+                for (let row = 0; row < 6; row++) {
+                    for (let col = 0; col < 4; col++) {
+                        const val1 = grid[row][col];
+                        const val2 = grid[row][col + 1];
+                        const val3 = grid[row][col + 2];
+                        if (val1 !== null && val1 === val2 && val2 === val3) {
+                            return true;
+                        }
+                    }
+                }
+
+                // Check columns
+                for (let col = 0; col < 6; col++) {
+                    for (let row = 0; row < 4; row++) {
+                        const val1 = grid[row][col];
+                        const val2 = grid[row + 1][col];
+                        const val3 = grid[row + 2][col];
+                        if (val1 !== null && val1 === val2 && val2 === val3) {
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
+            }
+
             checkGridPuzzleSolution() {
                 // Check if all cells are filled
                 let allFilled = true;
@@ -1125,6 +1249,12 @@
                 }
 
                 if (!allFilled) return;
+
+                // Check for three consecutive rule violation
+                if (this.hasThreeConsecutive(this.gridState)) {
+                    this.showDialog('违反规则！每行每列都不能有三个连续相同的数字');
+                    return;
+                }
 
                 // Check if solution matches
                 let isCorrect = true;
@@ -1329,6 +1459,24 @@
                         this.pickupPaper();
                     });
                 }
+
+                // Locked door on left wall
+                const lockedDoor = document.getElementById('locked-door');
+                if (lockedDoor) {
+                    lockedDoor.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.handleLockedDoor();
+                    });
+                }
+
+                // Clue paper behind the door
+                const cluePaper = document.getElementById('clue-paper');
+                if (cluePaper) {
+                    cluePaper.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.pickupCluePaper();
+                    });
+                }
             }
 
             setupToolbar() {
@@ -1468,6 +1616,12 @@
                 // Special handling for encrypted paper
                 if (item.usable && item.id === 'encrypted-paper') {
                     this.showEncryptedPaper();
+                    return;
+                }
+
+                // Special handling for clue paper
+                if (item.usable && item.id === 'clue-paper') {
+                    this.showCluePaper();
                     return;
                 }
 
@@ -1928,6 +2082,190 @@
 
                 // Auto-focus first input
                 inputs[0].focus();
+            }
+
+            // Handle locked door interaction
+            handleLockedDoor() {
+                const door = document.getElementById('locked-door');
+                if (!door) return;
+
+                // Check if door is already opened
+                if (door.classList.contains('opened')) {
+                    this.showDialog('门已经打开了');
+                    return;
+                }
+
+                // Check if player has golden key
+                const hasGoldenKey = this.inventory.find(item => item.id === 'golden-key');
+
+                if (!hasGoldenKey) {
+                    this.showDialog('这扇门被锁住了，需要钥匙才能打开...');
+                    return;
+                }
+
+                // Open the door
+                door.classList.add('opened');
+                this.showDialog('用金钥匙打开了门！里面有一张纸条！');
+
+                // Show clue paper
+                const cluePaper = document.getElementById('clue-paper');
+                if (cluePaper) {
+                    setTimeout(() => {
+                        cluePaper.style.display = 'block';
+                    }, 500);
+                }
+            }
+
+            // Pickup clue paper
+            pickupCluePaper() {
+                const cluePaperElement = document.getElementById('clue-paper');
+                if (!cluePaperElement || cluePaperElement.style.display === 'none') {
+                    return;
+                }
+
+                // Check if already picked up
+                if (this.inventory.find(item => item.id === 'clue-paper')) {
+                    this.showDialog('你已经拾取过这张线索了');
+                    return;
+                }
+
+                // Add to inventory
+                const success = this.addItemToInventory({
+                    id: 'clue-paper',
+                    icon: '📋',
+                    name: '线索纸条',
+                    usable: true
+                });
+
+                if (success) {
+                    // Remove from scene with animation
+                    cluePaperElement.style.transition = 'all 0.5s ease';
+                    cluePaperElement.style.transform = 'scale(0) translateY(-50px)';
+                    cluePaperElement.style.opacity = '0';
+
+                    setTimeout(() => {
+                        cluePaperElement.style.display = 'none';
+                    }, 500);
+
+                    this.showDialog('获得了：线索纸条');
+                }
+            }
+
+            // Show clue paper content
+            showCluePaper() {
+                // Create clue paper overlay
+                const overlay = document.createElement('div');
+                overlay.id = 'clue-paper-overlay';
+                overlay.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 120px;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.9);
+                    z-index: 2000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+
+                const paperContainer = document.createElement('div');
+                paperContainer.style.cssText = `
+                    width: 600px;
+                    height: 500px;
+                    background: linear-gradient(135deg, #f4e4c1 0%, #e8d4a8 100%);
+                    border: 3px solid #8b7355;
+                    border-radius: 10px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+                    padding: 40px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 20px;
+                    position: relative;
+                `;
+
+                const title = document.createElement('div');
+                title.textContent = '🔍 线索：壁画谜题的秘密';
+                title.style.cssText = `
+                    font-size: 28px;
+                    font-weight: bold;
+                    color: #4a3a2a;
+                    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+                    text-decoration: underline;
+                    margin-bottom: 10px;
+                `;
+
+                const content = document.createElement('div');
+                content.style.cssText = `
+                    font-size: 20px;
+                    color: #2a2a2a;
+                    line-height: 1.8;
+                    text-align: left;
+                    background: rgba(255, 255, 255, 0.6);
+                    padding: 30px;
+                    border-radius: 8px;
+                    border: 2px solid #8b7355;
+                    width: 100%;
+                `;
+
+                content.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <div style="font-size: 24px; color: #8b4513; font-weight: bold;">
+                            ⚠️ 前墙壁画谜题规则 ⚠️
+                        </div>
+                    </div>
+                    <div style="margin: 15px 0; padding: 15px; background: rgba(255, 255, 200, 0.5); border-left: 4px solid #8b4513; border-radius: 4px;">
+                        <strong style="color: #d2691e;">规则一：</strong>
+                        每一行和每一列都不能有<strong style="color: #c00;">三个连续相同</strong>的数字
+                    </div>
+                    <div style="margin: 15px 0; padding: 10px; background: rgba(255, 230, 230, 0.6); border-radius: 4px;">
+                        <div style="text-align: center; margin: 10px 0;">
+                            ❌ <span style="font-family: monospace; font-size: 22px; color: #c00; font-weight: bold;">1 1 1</span> 或 <span style="font-family: monospace; font-size: 22px; color: #c00; font-weight: bold;">0 0 0</span> ← 不允许！
+                        </div>
+                        <div style="text-align: center; margin: 10px 0;">
+                            ✓ <span style="font-family: monospace; font-size: 22px; color: #0a0; font-weight: bold;">1 1 0</span> 或 <span style="font-family: monospace; font-size: 22px; color: #0a0; font-weight: bold;">0 1 0</span> ← 允许
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(200, 230, 255, 0.5); border-left: 4px solid #4169e1; border-radius: 4px;">
+                        <strong style="color: #4169e1;">规则二：</strong>
+                        每一行和每一列的0和1的数量<strong style="color: #00c;">必须相等</strong>（各3个）
+                    </div>
+                    <div style="margin-top: 25px; text-align: center; font-size: 18px; color: #666; font-style: italic;">
+                        提示：仔细观察已有的数字，它们是解谜的关键！
+                    </div>
+                `;
+
+                const closeButton = document.createElement('button');
+                closeButton.textContent = '关闭';
+                closeButton.style.cssText = `
+                    padding: 15px 40px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    background: linear-gradient(135deg, #8b7355 0%, #6a5a45 100%);
+                    color: #fff;
+                    border: 3px solid #4a3a25;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    margin-top: 10px;
+                `;
+                closeButton.addEventListener('mouseover', () => {
+                    closeButton.style.transform = 'scale(1.05)';
+                });
+                closeButton.addEventListener('mouseout', () => {
+                    closeButton.style.transform = 'scale(1)';
+                });
+                closeButton.addEventListener('click', () => {
+                    overlay.remove();
+                });
+
+                paperContainer.appendChild(title);
+                paperContainer.appendChild(content);
+                paperContainer.appendChild(closeButton);
+                overlay.appendChild(paperContainer);
+
+                document.querySelector('.scene-area').appendChild(overlay);
             }
         }
 
