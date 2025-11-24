@@ -907,6 +907,33 @@
         .floor-cabinet.opened {
             box-shadow: inset 0 0 30px rgba(0,0,0,0.7);
         }
+
+        /* Encrypted paper inside floor cabinet */
+        .encrypted-paper {
+            position: absolute;
+            left: 20%;
+            top: 40%;
+            font-size: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 5;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+            animation: paperFloat 2s ease-in-out infinite;
+        }
+
+        @keyframes paperFloat {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .encrypted-paper:hover {
+            transform: scale(1.2);
+            filter: drop-shadow(0 8px 16px rgba(255,215,0,0.8));
+        }
     </style>
 </head>
 <body>
@@ -958,6 +985,8 @@
                     <div class="floor-cabinet-right-door interactive" id="floor-cabinet-right-door">
                         <div class="floor-cabinet-handle"></div>
                     </div>
+                    <!-- Encrypted paper inside left door -->
+                    <div class="encrypted-paper interactive" id="encrypted-paper" style="display: none;">📄</div>
                 </div>
             </div>
             <div class="room-wall wall-left" id="wall-4">
@@ -1081,7 +1110,15 @@
                             floorCabinet.classList.toggle('opened');
                         }
                         const state = floorCabinetLeftDoor.classList.contains('opened') ? '打开' : '关闭';
-                        this.showDialog(`地柜左门已${state}`);
+
+                        // Show encrypted paper when door is opened
+                        const encryptedPaper = document.getElementById('encrypted-paper');
+                        if (encryptedPaper && floorCabinetLeftDoor.classList.contains('opened')) {
+                            encryptedPaper.style.display = 'block';
+                            this.showDialog(`地柜左门已${state}，里面有一张纸！`);
+                        } else {
+                            this.showDialog(`地柜左门已${state}`);
+                        }
                     });
                 }
 
@@ -1165,6 +1202,15 @@
                     ceilingObject.addEventListener('click', (e) => {
                         e.stopPropagation();
                         this.handleCeilingObject();
+                    });
+                }
+
+                // Encrypted paper
+                const encryptedPaper = document.getElementById('encrypted-paper');
+                if (encryptedPaper) {
+                    encryptedPaper.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.pickupPaper();
                     });
                 }
             }
@@ -1297,14 +1343,14 @@
                 }
 
                 if (this.paintingClicks === 7) {
-                    this.showClueOverlay('密码：2487');
+                    this.showClueOverlay('📄 密码藏在纸张上');
                     setTimeout(() => {
-                        this.showDialog('你发现了一串数字：2487');
+                        this.showDialog('画中出现了提示：去找纸张！');
                     }, 1500);
                 }
 
                 if (this.paintingClicks === 13) {
-                    this.showClueOverlay('🗝️ 钥匙藏在柜子里');
+                    this.showClueOverlay('🗝️ 纸张藏在柜子里');
                     setTimeout(() => {
                         this.showDialog('画中出现了神秘的提示！');
                     }, 1500);
@@ -1398,6 +1444,12 @@
                     return;
                 }
 
+                // Special handling for encrypted paper
+                if (item.usable && item.id === 'encrypted-paper') {
+                    this.showEncryptedPaper();
+                    return;
+                }
+
                 this.selectedItem = index;
 
                 // Update visual selection
@@ -1410,6 +1462,146 @@
                 });
 
                 this.showDialog(`已选中：${item.name}`);
+            }
+
+            // Pickup encrypted paper
+            pickupPaper() {
+                const paperElement = document.getElementById('encrypted-paper');
+                if (!paperElement || paperElement.style.display === 'none') {
+                    return;
+                }
+
+                // Check if already picked up
+                if (this.inventory.find(item => item.id === 'encrypted-paper')) {
+                    this.showDialog('你已经拾取过这张纸了');
+                    return;
+                }
+
+                // Add to inventory
+                const success = this.addItemToInventory({
+                    id: 'encrypted-paper',
+                    icon: '📄',
+                    name: '加密纸张',
+                    usable: true
+                });
+
+                if (success) {
+                    // Remove from scene with animation
+                    paperElement.style.transition = 'all 0.5s ease';
+                    paperElement.style.transform = 'scale(0) translateY(-50px)';
+                    paperElement.style.opacity = '0';
+
+                    setTimeout(() => {
+                        paperElement.style.display = 'none';
+                    }, 500);
+
+                    this.showDialog('获得了：加密纸张');
+                }
+            }
+
+            // Show encrypted paper content
+            showEncryptedPaper() {
+                // Create paper overlay
+                const overlay = document.createElement('div');
+                overlay.id = 'paper-overlay';
+                overlay.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 120px;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.9);
+                    z-index: 2000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+
+                const paperContainer = document.createElement('div');
+                paperContainer.style.cssText = `
+                    width: 500px;
+                    height: 600px;
+                    background: linear-gradient(135deg, #f4e4c1 0%, #e8d4a8 100%);
+                    border: 3px solid #8b7355;
+                    border-radius: 10px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+                    padding: 40px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 20px;
+                    position: relative;
+                `;
+
+                const title = document.createElement('div');
+                title.textContent = '神秘纸张';
+                title.style.cssText = `
+                    font-size: 32px;
+                    font-weight: bold;
+                    color: #4a3a2a;
+                    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+                    text-decoration: underline;
+                    margin-bottom: 10px;
+                `;
+
+                const content = document.createElement('div');
+                content.style.cssText = `
+                    font-size: 20px;
+                    color: #2a2a2a;
+                    line-height: 2;
+                    text-align: center;
+                    font-family: 'Courier New', monospace;
+                    background: rgba(255, 255, 255, 0.5);
+                    padding: 30px;
+                    border-radius: 8px;
+                    border: 2px dashed #8b7355;
+                `;
+
+                content.innerHTML = `
+                    <div style="font-size: 18px; color: #8b4513; margin-bottom: 20px; font-style: italic;">
+                        "找到湖中的秘密数字..."
+                    </div>
+                    <div style="text-align: left; margin-top: 20px;">
+                        <div style="margin: 10px 0;">第一位：<strong>1 + 1 = ?</strong></div>
+                        <div style="margin: 10px 0;">第二位：<strong>2 × 2 = ?</strong></div>
+                        <div style="margin: 10px 0;">第三位：<strong>16 ÷ 2 = ?</strong></div>
+                        <div style="margin: 10px 0;">第四位：<strong>14 ÷ 2 = ?</strong></div>
+                    </div>
+                    <div style="margin-top: 30px; font-size: 16px; color: #666;">
+                        将四个答案按顺序组合，即为密码盒的密码
+                    </div>
+                `;
+
+                const closeButton = document.createElement('button');
+                closeButton.textContent = '关闭';
+                closeButton.style.cssText = `
+                    padding: 15px 40px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    background: linear-gradient(135deg, #8b7355 0%, #6a5a45 100%);
+                    color: #fff;
+                    border: 3px solid #4a3a25;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    margin-top: 20px;
+                `;
+                closeButton.addEventListener('mouseover', () => {
+                    closeButton.style.transform = 'scale(1.05)';
+                });
+                closeButton.addEventListener('mouseout', () => {
+                    closeButton.style.transform = 'scale(1)';
+                });
+                closeButton.addEventListener('click', () => {
+                    overlay.remove();
+                });
+
+                paperContainer.appendChild(title);
+                paperContainer.appendChild(content);
+                paperContainer.appendChild(closeButton);
+                overlay.appendChild(paperContainer);
+
+                document.querySelector('.scene-area').appendChild(overlay);
             }
 
             // Pickup item from scene
