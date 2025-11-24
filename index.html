@@ -222,8 +222,7 @@
         }
 
         /* Cabinet top door */
-        .tall-cabinet::before {
-            content: '';
+        .cabinet-top-door {
             position: absolute;
             top: 5%;
             left: 10%;
@@ -235,22 +234,7 @@
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
             transition: transform 0.5s ease;
             transform-style: preserve-3d;
-        }
-
-        /* Cabinet top door handle */
-        .tall-cabinet::after {
-            content: '';
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: #2a2a2a;
-            border-radius: 50%;
-            right: 15%;
-            top: 25%;
-            transform: translateY(-50%);
-            transition: transform 0.5s ease;
-            transform-style: preserve-3d;
-            z-index: 1;
+            transform-origin: left center;
         }
 
         /* Cabinet bottom door */
@@ -266,11 +250,11 @@
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
             transition: transform 0.5s ease;
             transform-style: preserve-3d;
+            transform-origin: left center;
         }
 
-        /* Cabinet bottom door handle */
-        .cabinet-bottom-door::after {
-            content: '';
+        /* Cabinet door handles */
+        .cabinet-handle {
             position: absolute;
             width: 8px;
             height: 8px;
@@ -380,8 +364,7 @@
         }
 
         /* Floor cabinet left door */
-        .floor-cabinet::before {
-            content: '';
+        .floor-cabinet-left-door {
             position: absolute;
             top: 8%;
             left: 8%;
@@ -393,22 +376,7 @@
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
             transition: transform 0.5s ease;
             transform-style: preserve-3d;
-        }
-
-        /* Floor cabinet left door handle */
-        .floor-cabinet::after {
-            content: '';
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: #2a2a2a;
-            border-radius: 50%;
-            left: 30%;
-            top: 50%;
-            transform: translateY(-50%);
-            transition: transform 0.5s ease;
-            transform-style: preserve-3d;
-            z-index: 1;
+            transform-origin: left center;
         }
 
         /* Floor cabinet right door */
@@ -424,19 +392,28 @@
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
             transition: transform 0.5s ease;
             transform-style: preserve-3d;
+            transform-origin: right center;
         }
 
-        /* Floor cabinet right door handle */
-        .floor-cabinet-right-door::after {
-            content: '';
+        /* Floor cabinet handles */
+        .floor-cabinet-handle {
             position: absolute;
             width: 8px;
             height: 8px;
             background: #2a2a2a;
             border-radius: 50%;
-            left: 15%;
             top: 50%;
             transform: translateY(-50%);
+        }
+
+        /* Floor cabinet left door handle position */
+        .floor-cabinet-left-door .floor-cabinet-handle {
+            right: 15%;
+        }
+
+        /* Floor cabinet right door handle position */
+        .floor-cabinet-right-door .floor-cabinet-handle {
+            left: 15%;
         }
 
         /* Wall 4 - Left wall (窗户+凳子墙) */
@@ -842,26 +819,19 @@
             box-shadow: inset 0 10px 30px rgba(0,0,0,0.6);
         }
 
-        /* Tall cabinet top door - opened state */
-        .tall-cabinet.opened::before {
+        /* Cabinet top door - opened state */
+        .cabinet-top-door.opened {
             transform: rotateY(-110deg);
-            transform-origin: left center;
         }
 
-        /* Tall cabinet top door handle - opened state (follows door rotation) */
-        .tall-cabinet.opened::after {
-            transform: translateY(-50%);
+        /* Cabinet bottom door - opened state */
+        .cabinet-bottom-door.opened {
+            transform: rotateY(-110deg);
         }
 
         /* Tall cabinet interior shadow when opened */
         .tall-cabinet.opened {
             box-shadow: inset 0 20px 40px rgba(0,0,0,0.7);
-        }
-
-        /* Tall cabinet bottom door - opened state */
-        .cabinet-bottom-door.opened {
-            transform: rotateY(-110deg);
-            transform-origin: left center;
         }
 
         /* Wall cabinet - opened state */
@@ -876,25 +846,18 @@
         }
 
         /* Floor cabinet left door - opened state */
-        .floor-cabinet.opened::before {
+        .floor-cabinet-left-door.opened {
             transform: rotateY(-110deg);
-            transform-origin: left center;
-        }
-
-        /* Floor cabinet left door handle - opened state (follows door rotation) */
-        .floor-cabinet.opened::after {
-            transform: translateY(-50%);
-        }
-
-        /* Floor cabinet interior shadow when opened */
-        .floor-cabinet.opened {
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.7);
         }
 
         /* Floor cabinet right door - opened state */
         .floor-cabinet-right-door.opened {
             transform: rotateY(110deg);
-            transform-origin: right center;
+        }
+
+        /* Floor cabinet interior shadow when opened */
+        .floor-cabinet.opened {
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.7);
         }
     </style>
 </head>
@@ -921,8 +884,13 @@
                 <!-- Desk with drawer -->
                 <div class="desk interactive" id="desk"></div>
                 <!-- Tall cabinet with 2 doors -->
-                <div class="tall-cabinet interactive" id="tall-cabinet">
-                    <div class="cabinet-bottom-door interactive" id="cabinet-bottom-door"></div>
+                <div class="tall-cabinet" id="tall-cabinet">
+                    <div class="cabinet-top-door interactive" id="cabinet-top-door">
+                        <div class="cabinet-handle"></div>
+                    </div>
+                    <div class="cabinet-bottom-door interactive" id="cabinet-bottom-door">
+                        <div class="cabinet-handle"></div>
+                    </div>
                 </div>
                 <!-- Fishing rod leaning on wall -->
                 <div class="fishing-rod-right"></div>
@@ -933,8 +901,13 @@
                     <div class="wall-cabinet-door interactive" id="wall-cabinet-door"></div>
                 </div>
                 <!-- Floor cabinet with 2 doors -->
-                <div class="floor-cabinet interactive" id="floor-cabinet">
-                    <div class="floor-cabinet-right-door interactive" id="floor-cabinet-right-door"></div>
+                <div class="floor-cabinet" id="floor-cabinet">
+                    <div class="floor-cabinet-left-door interactive" id="floor-cabinet-left-door">
+                        <div class="floor-cabinet-handle"></div>
+                    </div>
+                    <div class="floor-cabinet-right-door interactive" id="floor-cabinet-right-door">
+                        <div class="floor-cabinet-handle"></div>
+                    </div>
                 </div>
             </div>
             <div class="room-wall wall-left" id="wall-4">
@@ -1005,12 +978,16 @@
                 }
 
                 // Tall cabinet top door
-                const tallCabinet = document.getElementById('tall-cabinet');
-                if (tallCabinet) {
-                    tallCabinet.addEventListener('click', (e) => {
+                const cabinetTopDoor = document.getElementById('cabinet-top-door');
+                if (cabinetTopDoor) {
+                    cabinetTopDoor.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        tallCabinet.classList.toggle('opened');
-                        const state = tallCabinet.classList.contains('opened') ? '打开' : '关闭';
+                        cabinetTopDoor.classList.toggle('opened');
+                        const tallCabinet = document.getElementById('tall-cabinet');
+                        if (tallCabinet) {
+                            tallCabinet.classList.toggle('opened');
+                        }
+                        const state = cabinetTopDoor.classList.contains('opened') ? '打开' : '关闭';
                         this.showDialog(`高柜上门已${state}`);
                     });
                 }
@@ -1042,12 +1019,16 @@
                 }
 
                 // Floor cabinet left door
-                const floorCabinet = document.getElementById('floor-cabinet');
-                if (floorCabinet) {
-                    floorCabinet.addEventListener('click', (e) => {
+                const floorCabinetLeftDoor = document.getElementById('floor-cabinet-left-door');
+                if (floorCabinetLeftDoor) {
+                    floorCabinetLeftDoor.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        floorCabinet.classList.toggle('opened');
-                        const state = floorCabinet.classList.contains('opened') ? '打开' : '关闭';
+                        floorCabinetLeftDoor.classList.toggle('opened');
+                        const floorCabinet = document.getElementById('floor-cabinet');
+                        if (floorCabinet) {
+                            floorCabinet.classList.toggle('opened');
+                        }
+                        const state = floorCabinetLeftDoor.classList.contains('opened') ? '打开' : '关闭';
                         this.showDialog(`地柜左门已${state}`);
                     });
                 }
