@@ -220,6 +220,61 @@
             perspective: 600px;
         }
 
+        /* Safe box on desk */
+        .safe-box {
+            position: absolute;
+            top: -45%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40%;
+            height: 50%;
+            background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
+            border: 3px solid #1a1a1a;
+            border-radius: 5px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .safe-box:hover {
+            filter: brightness(1.2);
+        }
+
+        /* Safe box keypad */
+        .safe-box::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60%;
+            height: 60%;
+            background: #1a1a1a;
+            border: 2px solid #4a4a4a;
+            border-radius: 3px;
+        }
+
+        /* Safe box display screen */
+        .safe-box::after {
+            content: '****';
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70%;
+            height: 20%;
+            background: #0a3a0a;
+            border: 2px solid #0a0a0a;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 3px;
+        }
+
         /* Desk drawer */
         .desk::before {
             content: '';
@@ -1020,7 +1075,10 @@
             </div>
             <div class="room-wall wall-right" id="wall-2">
                 <!-- Desk with drawer -->
-                <div class="desk interactive" id="desk"></div>
+                <div class="desk interactive" id="desk">
+                    <!-- Safe box on desk -->
+                    <div class="safe-box interactive" id="safe-box"></div>
+                </div>
                 <!-- Tall cabinet with 2 doors -->
                 <div class="tall-cabinet" id="tall-cabinet">
                     <div class="cabinet-top-door interactive" id="cabinet-top-door">
@@ -1302,11 +1360,24 @@
             }
 
             setupInteractions() {
+                // Safe box on desk
+                const safeBox = document.getElementById('safe-box');
+                if (safeBox) {
+                    safeBox.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.handleSafeBox();
+                    });
+                }
+
                 // Desk drawer
                 const desk = document.getElementById('desk');
                 if (desk) {
                     desk.addEventListener('click', (e) => {
                         e.stopPropagation();
+                        // Check if click target is the safe box
+                        if (e.target.id === 'safe-box' || e.target.closest('#safe-box')) {
+                            return; // Let safe box handle its own click
+                        }
                         desk.classList.toggle('opened');
                         const state = desk.classList.contains('opened') ? '打开' : '关闭';
                         this.showDialog(`书桌抽屉已${state}`);
@@ -1420,7 +1491,7 @@
                 if (windowLeft) {
                     windowLeft.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        this.showDialog('左边的窗户里也有一幅湖景画');
+                        this.handleWindowLeft();
                     });
                 }
 
@@ -1429,7 +1500,7 @@
                 if (paintingLeft) {
                     paintingLeft.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        this.showDialog('这是一幅用CSS绘制的湖景画');
+                        this.handleWindowLeft();
                     });
                 }
 
@@ -1622,6 +1693,18 @@
                 // Special handling for clue paper
                 if (item.usable && item.id === 'clue-paper') {
                     this.showCluePaper();
+                    return;
+                }
+
+                // Special handling for diary
+                if (item.usable && item.id === 'diary') {
+                    this.showDiary();
+                    return;
+                }
+
+                // Special handling for mysterious box
+                if (item.usable && item.id === 'mysterious-box') {
+                    this.showMysteriousBox();
                     return;
                 }
 
@@ -2266,6 +2349,875 @@
                 overlay.appendChild(paperContainer);
 
                 document.querySelector('.scene-area').appendChild(overlay);
+            }
+
+            // Handle safe box interaction
+            handleSafeBox() {
+                const safeBox = document.getElementById('safe-box');
+                if (!safeBox || safeBox.style.display === 'none') {
+                    return;
+                }
+
+                // Check if safe box is already opened
+                if (safeBox.dataset.opened === 'true') {
+                    this.showDialog('保险箱已经打开了');
+                    return;
+                }
+
+                // Show safe box password interface
+                this.showSafeBoxInterface();
+            }
+
+            // Show safe box password interface
+            showSafeBoxInterface() {
+                const overlay = document.createElement('div');
+                overlay.id = 'safe-box-overlay';
+                overlay.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 120px;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.9);
+                    z-index: 2000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+
+                const safeContainer = document.createElement('div');
+                safeContainer.style.cssText = `
+                    width: 450px;
+                    height: 350px;
+                    background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
+                    border: 5px solid #1a1a1a;
+                    border-radius: 15px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+                    padding: 30px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 25px;
+                `;
+
+                const title = document.createElement('div');
+                title.textContent = '🔒 保险箱';
+                title.style.cssText = `
+                    font-size: 32px;
+                    font-weight: bold;
+                    color: #0f0;
+                    text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+                    font-family: 'Courier New', monospace;
+                `;
+
+                const hint = document.createElement('div');
+                hint.textContent = '输入四位数字密码';
+                hint.style.cssText = `
+                    font-size: 16px;
+                    color: #888;
+                    font-family: 'Courier New', monospace;
+                `;
+
+                const inputContainer = document.createElement('div');
+                inputContainer.style.cssText = `
+                    display: flex;
+                    gap: 12px;
+                    margin: 20px 0;
+                `;
+
+                const inputs = [];
+                for (let i = 0; i < 4; i++) {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.maxLength = 1;
+                    input.style.cssText = `
+                        width: 70px;
+                        height: 70px;
+                        font-size: 36px;
+                        text-align: center;
+                        border: 3px solid #0f0;
+                        border-radius: 8px;
+                        background: #0a3a0a;
+                        color: #0f0;
+                        font-weight: bold;
+                        font-family: 'Courier New', monospace;
+                    `;
+                    input.addEventListener('input', (e) => {
+                        if (e.target.value && i < 3) {
+                            inputs[i + 1].focus();
+                        }
+                    });
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Backspace' && !e.target.value && i > 0) {
+                            inputs[i - 1].focus();
+                        }
+                    });
+                    inputs.push(input);
+                    inputContainer.appendChild(input);
+                }
+
+                const buttonContainer = document.createElement('div');
+                buttonContainer.style.cssText = `
+                    display: flex;
+                    gap: 15px;
+                    margin-top: 15px;
+                `;
+
+                const confirmButton = document.createElement('button');
+                confirmButton.textContent = '确认';
+                confirmButton.style.cssText = `
+                    padding: 12px 35px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    background: linear-gradient(135deg, #0a8a0a 0%, #087a08 100%);
+                    color: #fff;
+                    border: 3px solid #0a0a0a;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                `;
+                confirmButton.addEventListener('mouseover', () => {
+                    confirmButton.style.transform = 'scale(1.05)';
+                    confirmButton.style.boxShadow = '0 0 15px rgba(0, 255, 0, 0.5)';
+                });
+                confirmButton.addEventListener('mouseout', () => {
+                    confirmButton.style.transform = 'scale(1)';
+                    confirmButton.style.boxShadow = 'none';
+                });
+                confirmButton.addEventListener('click', () => {
+                    const password = inputs.map(input => input.value).join('');
+                    if (password === '2486') {
+                        overlay.remove();
+                        this.openSafeBox();
+                    } else {
+                        this.showDialog('密码错误...');
+                        inputs.forEach(input => {
+                            input.value = '';
+                            input.style.borderColor = '#f00';
+                            input.style.background = '#3a0a0a';
+                            setTimeout(() => {
+                                input.style.borderColor = '#0f0';
+                                input.style.background = '#0a3a0a';
+                            }, 500);
+                        });
+                        inputs[0].focus();
+                    }
+                });
+
+                const closeButton = document.createElement('button');
+                closeButton.textContent = '关闭';
+                closeButton.style.cssText = `
+                    padding: 12px 35px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    background: linear-gradient(135deg, #6a6a6a 0%, #4a4a4a 100%);
+                    color: #fff;
+                    border: 3px solid #2a2a2a;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                `;
+                closeButton.addEventListener('mouseover', () => {
+                    closeButton.style.transform = 'scale(1.05)';
+                });
+                closeButton.addEventListener('mouseout', () => {
+                    closeButton.style.transform = 'scale(1)';
+                });
+                closeButton.addEventListener('click', () => {
+                    overlay.remove();
+                });
+
+                buttonContainer.appendChild(confirmButton);
+                buttonContainer.appendChild(closeButton);
+
+                safeContainer.appendChild(title);
+                safeContainer.appendChild(hint);
+                safeContainer.appendChild(inputContainer);
+                safeContainer.appendChild(buttonContainer);
+                overlay.appendChild(safeContainer);
+
+                document.querySelector('.scene-area').appendChild(overlay);
+                inputs[0].focus();
+            }
+
+            // Open safe box and reveal diary and mysterious box
+            openSafeBox() {
+                const safeBox = document.getElementById('safe-box');
+                if (safeBox) {
+                    safeBox.dataset.opened = 'true';
+                }
+
+                // Add diary to inventory
+                this.addItemToInventory({
+                    id: 'diary',
+                    icon: '📕',
+                    name: '日记本',
+                    usable: true
+                });
+
+                // Add mysterious box to inventory
+                this.addItemToInventory({
+                    id: 'mysterious-box',
+                    icon: '📮',
+                    name: '神秘匣子',
+                    usable: true
+                });
+
+                this.showDialog('保险箱打开了！获得了：日记本、神秘匣子');
+            }
+
+            // Show diary content
+            showDiary() {
+                const overlay = document.createElement('div');
+                overlay.id = 'diary-overlay';
+                overlay.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 120px;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.95);
+                    z-index: 2000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+
+                const diaryContainer = document.createElement('div');
+                diaryContainer.style.cssText = `
+                    width: 700px;
+                    height: 600px;
+                    background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
+                    border: 5px solid #3a2010;
+                    border-radius: 10px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+                    padding: 40px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 15px;
+                    position: relative;
+                    overflow-y: auto;
+                `;
+
+                const title = document.createElement('div');
+                title.textContent = '📕 艾琳的日记';
+                title.style.cssText = `
+                    font-size: 32px;
+                    font-weight: bold;
+                    color: #f4e4c1;
+                    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                    text-align: center;
+                    margin-bottom: 15px;
+                    font-family: 'Georgia', serif;
+                `;
+
+                const content = document.createElement('div');
+                content.style.cssText = `
+                    color: #f4e4c1;
+                    line-height: 1.8;
+                    font-size: 16px;
+                    font-family: 'Georgia', serif;
+                    background: rgba(0, 0, 0, 0.3);
+                    padding: 25px;
+                    border-radius: 8px;
+                    max-height: 450px;
+                    overflow-y: auto;
+                `;
+
+                content.innerHTML = `
+                    <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px dashed #8b6914;">
+                        <div style="font-size: 20px; font-weight: bold; color: #ffd700; margin-bottom: 10px;">
+                            📅 1987年10月 - 到来
+                        </div>
+                        <div style="font-style: italic; line-height: 2;">
+                            我来到了这个湖边小屋。湖水清澈如镜，映照着天空和群山。
+                            我以为这只是一份普通的看守工作，但很快我就发现，这个湖...不同寻常。
+                            夜晚的湖面会泛起微光，那不是月光的反射，而是某种...生命的气息。
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px dashed #8b6914;">
+                        <div style="font-size: 20px; font-weight: bold; color: #ffd700; margin-bottom: 10px;">
+                            📅 1988年春 - 发现
+                        </div>
+                        <div style="font-style: italic; line-height: 2;">
+                            湖水在夜晚会发光，那不是月光的反射。我在湖底看到了它们——
+                            古老的生命，比人类的历史更悠久。它们守护着记忆，连接着过去与未来。
+                            我感到恐惧，但也感到使命。我知道，我不能让任何人知道这个秘密。
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px dashed #8b6914;">
+                        <div style="font-size: 20px; font-weight: bold; color: #ffd700; margin-bottom: 10px;">
+                            📅 1989年夏 - 守护
+                        </div>
+                        <div style="font-style: italic; line-height: 2;">
+                            他们来了，那些想要利用湖水力量的人。他们不理解，一旦打破平衡，
+                            所有的记忆都会消散，湖中的生命也会消亡。我必须做出选择——
+                            让秘密永远沉睡，还是任由贪婪摧毁一切？
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 20px; font-weight: bold; color: #ff6b6b; margin-bottom: 10px;">
+                            📅 1989年10月 - 决定
+                        </div>
+                        <div style="font-style: italic; line-height: 2;">
+                            我选择了封印。将自己的灵魂与这个房间绑定，成为最后的守护者。
+                            如果有一天，有人能解开所有谜题，来到这里...请替我做出选择吧。
+                            <br><br>
+                            <span style="color: #ffd700; font-weight: bold;">是放下过去，接受命运？</span>
+                            <br>
+                            <span style="color: #ff6b6b; font-weight: bold;">还是追寻真相，打破轮回？</span>
+                            <br><br>
+                            神秘匣子中有两个选择...去窗边，做出你的决定吧。
+                        </div>
+                    </div>
+                `;
+
+                const closeButton = document.createElement('button');
+                closeButton.textContent = '合上日记';
+                closeButton.style.cssText = `
+                    padding: 15px 40px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    background: linear-gradient(135deg, #8b7355 0%, #6a5a45 100%);
+                    color: #fff;
+                    border: 3px solid #4a3a25;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    margin-top: 10px;
+                    align-self: center;
+                `;
+                closeButton.addEventListener('mouseover', () => {
+                    closeButton.style.transform = 'scale(1.05)';
+                });
+                closeButton.addEventListener('mouseout', () => {
+                    closeButton.style.transform = 'scale(1)';
+                });
+                closeButton.addEventListener('click', () => {
+                    overlay.remove();
+                });
+
+                diaryContainer.appendChild(title);
+                diaryContainer.appendChild(content);
+                diaryContainer.appendChild(closeButton);
+                overlay.appendChild(diaryContainer);
+
+                document.querySelector('.scene-area').appendChild(overlay);
+            }
+
+            // Show mysterious box interface
+            showMysteriousBox() {
+                const overlay = document.createElement('div');
+                overlay.id = 'mysterious-box-overlay';
+                overlay.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 120px;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.95);
+                    z-index: 2000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+
+                const boxContainer = document.createElement('div');
+                boxContainer.style.cssText = `
+                    width: 500px;
+                    height: 400px;
+                    background: linear-gradient(135deg, #6a4a8a 0%, #4a2a6a 100%);
+                    border: 5px solid #2a1a4a;
+                    border-radius: 15px;
+                    box-shadow: 0 0 40px rgba(138, 43, 226, 0.5);
+                    padding: 40px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 30px;
+                `;
+
+                const title = document.createElement('div');
+                title.textContent = '📮 神秘匣子';
+                title.style.cssText = `
+                    font-size: 32px;
+                    font-weight: bold;
+                    color: #e8d4ff;
+                    text-shadow: 0 0 15px rgba(138, 43, 226, 0.8);
+                `;
+
+                const description = document.createElement('div');
+                description.textContent = '匣子中有两个物品，选择其中一个...';
+                description.style.cssText = `
+                    font-size: 18px;
+                    color: #d4c4ff;
+                    text-align: center;
+                    font-style: italic;
+                `;
+
+                const itemsContainer = document.createElement('div');
+                itemsContainer.style.cssText = `
+                    display: flex;
+                    gap: 40px;
+                    margin: 20px 0;
+                `;
+
+                // White feather (Light ending)
+                const whiteFeatherBtn = document.createElement('div');
+                whiteFeatherBtn.style.cssText = `
+                    width: 150px;
+                    height: 150px;
+                    background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+                    border: 4px solid #d0d0d0;
+                    border-radius: 15px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+                `;
+                whiteFeatherBtn.innerHTML = `
+                    <div style="font-size: 60px; margin-bottom: 10px;">🕊️</div>
+                    <div style="font-size: 16px; font-weight: bold; color: #666;">白色羽毛</div>
+                    <div style="font-size: 12px; color: #999; margin-top: 5px;">放下过去</div>
+                `;
+                whiteFeatherBtn.addEventListener('mouseover', () => {
+                    whiteFeatherBtn.style.transform = 'scale(1.1)';
+                    whiteFeatherBtn.style.boxShadow = '0 0 30px rgba(255, 255, 255, 0.8)';
+                });
+                whiteFeatherBtn.addEventListener('mouseout', () => {
+                    whiteFeatherBtn.style.transform = 'scale(1)';
+                    whiteFeatherBtn.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.3)';
+                });
+                whiteFeatherBtn.addEventListener('click', () => {
+                    overlay.remove();
+                    this.takeWhiteFeather();
+                });
+
+                // Black cube (Dark ending)
+                const blackCubeBtn = document.createElement('div');
+                blackCubeBtn.style.cssText = `
+                    width: 150px;
+                    height: 150px;
+                    background: linear-gradient(135deg, #2a2a2a 0%, #0a0a0a 100%);
+                    border: 4px solid #1a1a1a;
+                    border-radius: 15px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+                `;
+                blackCubeBtn.innerHTML = `
+                    <div style="font-size: 60px; margin-bottom: 10px;">⬛</div>
+                    <div style="font-size: 16px; font-weight: bold; color: #ddd;">黑色方块</div>
+                    <div style="font-size: 12px; color: #aaa; margin-top: 5px;">追寻真相</div>
+                `;
+                blackCubeBtn.addEventListener('mouseover', () => {
+                    blackCubeBtn.style.transform = 'scale(1.1)';
+                    blackCubeBtn.style.boxShadow = '0 0 30px rgba(0, 0, 0, 0.9)';
+                });
+                blackCubeBtn.addEventListener('mouseout', () => {
+                    blackCubeBtn.style.transform = 'scale(1)';
+                    blackCubeBtn.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.6)';
+                });
+                blackCubeBtn.addEventListener('click', () => {
+                    overlay.remove();
+                    this.takeBlackCube();
+                });
+
+                itemsContainer.appendChild(whiteFeatherBtn);
+                itemsContainer.appendChild(blackCubeBtn);
+
+                const closeButton = document.createElement('button');
+                closeButton.textContent = '关闭';
+                closeButton.style.cssText = `
+                    padding: 12px 30px;
+                    font-size: 16px;
+                    background: linear-gradient(135deg, #6a6a6a 0%, #4a4a4a 100%);
+                    color: #fff;
+                    border: 3px solid #2a2a2a;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    margin-top: 10px;
+                `;
+                closeButton.addEventListener('mouseover', () => {
+                    closeButton.style.transform = 'scale(1.05)';
+                });
+                closeButton.addEventListener('mouseout', () => {
+                    closeButton.style.transform = 'scale(1)';
+                });
+                closeButton.addEventListener('click', () => {
+                    overlay.remove();
+                });
+
+                boxContainer.appendChild(title);
+                boxContainer.appendChild(description);
+                boxContainer.appendChild(itemsContainer);
+                boxContainer.appendChild(closeButton);
+                overlay.appendChild(boxContainer);
+
+                document.querySelector('.scene-area').appendChild(overlay);
+            }
+
+            // Take white feather
+            takeWhiteFeather() {
+                // Remove mysterious box from inventory
+                const boxIndex = this.inventory.findIndex(item => item.id === 'mysterious-box');
+                if (boxIndex !== -1) {
+                    this.inventory.splice(boxIndex, 1);
+                }
+
+                // Add white feather to inventory
+                this.addItemToInventory({
+                    id: 'white-feather',
+                    icon: '🕊️',
+                    name: '白色羽毛'
+                });
+
+                this.updateToolbarDisplay();
+                this.showDialog('你选择了白色羽毛...去左边的窗户使用它吧');
+            }
+
+            // Take black cube
+            takeBlackCube() {
+                // Remove mysterious box from inventory
+                const boxIndex = this.inventory.findIndex(item => item.id === 'mysterious-box');
+                if (boxIndex !== -1) {
+                    this.inventory.splice(boxIndex, 1);
+                }
+
+                // Add black cube to inventory
+                this.addItemToInventory({
+                    id: 'black-cube',
+                    icon: '⬛',
+                    name: '黑色方块'
+                });
+
+                this.updateToolbarDisplay();
+                this.showDialog('你选择了黑色方块...去左边的窗户使用它吧');
+            }
+
+            // Handle window on left wall interaction
+            handleWindowLeft() {
+                // Check if player has white feather
+                const hasWhiteFeather = this.inventory.find(item => item.id === 'white-feather');
+                const whiteFeatherSelected = hasWhiteFeather && this.selectedItem !== null &&
+                                            this.inventory[this.selectedItem].id === 'white-feather';
+
+                // Check if player has black cube
+                const hasBlackCube = this.inventory.find(item => item.id === 'black-cube');
+                const blackCubeSelected = hasBlackCube && this.selectedItem !== null &&
+                                        this.inventory[this.selectedItem].id === 'black-cube';
+
+                if (whiteFeatherSelected) {
+                    // Trigger light ending
+                    this.triggerLightEnding();
+                } else if (blackCubeSelected) {
+                    // Trigger dark ending
+                    this.triggerDarkEnding();
+                } else {
+                    this.showDialog('湖面平静如镜，映照着你的倒影...');
+                }
+            }
+
+            // Light Ending - Redemption
+            triggerLightEnding() {
+                // Create ending overlay
+                const overlay = document.createElement('div');
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(255,255,255,0.3) 100%);
+                    z-index: 3000;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    animation: fadeIn 2s ease-in;
+                `;
+
+                // Add fade in animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    @keyframes birdFly {
+                        0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+                        50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+                        100% { transform: translate(-50%, 150%) scale(0.5); opacity: 0; }
+                    }
+                    @keyframes textReveal {
+                        0% { opacity: 0; transform: translateY(30px); }
+                        100% { opacity: 1; transform: translateY(0); }
+                    }
+                `;
+                document.head.appendChild(style);
+
+                // Story text sequence
+                const storyTexts = [
+                    '你将白色羽毛放在窗前...',
+                    '湖面泛起温柔的涟漪',
+                    '艾琳的灵魂终于得到了解脱',
+                    '她化作一只白鸟',
+                    '飞向了她守护的湖面',
+                    '秘密将被永远守护',
+                    '感谢你，陌生人...'
+                ];
+
+                let textIndex = 0;
+                const textContainer = document.createElement('div');
+                textContainer.style.cssText = `
+                    font-size: 28px;
+                    color: #fff;
+                    text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+                    font-family: 'Georgia', serif;
+                    text-align: center;
+                    line-height: 2;
+                    margin: 40px;
+                    opacity: 0;
+                    animation: textReveal 1s ease-out forwards;
+                `;
+
+                const showNextText = () => {
+                    if (textIndex < storyTexts.length) {
+                        textContainer.textContent = storyTexts[textIndex];
+                        textContainer.style.animation = 'none';
+                        setTimeout(() => {
+                            textContainer.style.animation = 'textReveal 1s ease-out forwards';
+                        }, 10);
+                        textIndex++;
+                        setTimeout(showNextText, 3000);
+                    } else {
+                        // Show ending screen
+                        setTimeout(() => {
+                            this.showEndingScreen('light');
+                        }, 2000);
+                    }
+                };
+
+                // Bird animation
+                const bird = document.createElement('div');
+                bird.textContent = '🕊️';
+                bird.style.cssText = `
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    font-size: 80px;
+                    animation: birdFly 4s ease-in-out 5s forwards;
+                `;
+
+                overlay.appendChild(bird);
+                overlay.appendChild(textContainer);
+                document.body.appendChild(overlay);
+
+                showNextText();
+            }
+
+            // Dark Ending - Loop
+            triggerDarkEnding() {
+                // Create ending overlay
+                const overlay = document.createElement('div');
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(20,0,0,0.95) 100%);
+                    z-index: 3000;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    animation: fadeIn 2s ease-in;
+                `;
+
+                // Add shake animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes shake {
+                        0%, 100% { transform: translateX(0); }
+                        10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+                        20%, 40%, 60%, 80% { transform: translateX(10px); }
+                    }
+                    @keyframes darkPulse {
+                        0%, 100% { opacity: 0.3; }
+                        50% { opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(style);
+
+                // Story text sequence
+                const storyTexts = [
+                    '你将黑色方块放在窗前...',
+                    '湖面开始剧烈翻腾',
+                    '真相的代价...',
+                    '是永恒的轮回',
+                    '你无法逃离这里',
+                    '时间开始倒流...',
+                    '一切...重新开始...'
+                ];
+
+                let textIndex = 0;
+                const textContainer = document.createElement('div');
+                textContainer.style.cssText = `
+                    font-size: 28px;
+                    color: #f00;
+                    text-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+                    font-family: 'Georgia', serif;
+                    text-align: center;
+                    line-height: 2;
+                    margin: 40px;
+                    opacity: 0;
+                    animation: textReveal 1s ease-out forwards, darkPulse 2s ease-in-out infinite;
+                `;
+
+                const showNextText = () => {
+                    if (textIndex < storyTexts.length) {
+                        textContainer.textContent = storyTexts[textIndex];
+                        if (textIndex >= 3) {
+                            document.body.style.animation = 'shake 0.5s ease-in-out';
+                        }
+                        textIndex++;
+                        setTimeout(showNextText, 2500);
+                    } else {
+                        // Reset game after dark ending
+                        setTimeout(() => {
+                            this.showEndingScreen('dark');
+                        }, 2000);
+                    }
+                };
+
+                // Crow animation
+                const crow = document.createElement('div');
+                crow.textContent = '🦅';
+                crow.style.cssText = `
+                    position: absolute;
+                    top: 30%;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    font-size: 80px;
+                    opacity: 0.5;
+                    animation: darkPulse 1.5s ease-in-out infinite;
+                `;
+
+                overlay.appendChild(crow);
+                overlay.appendChild(textContainer);
+                document.body.appendChild(overlay);
+
+                showNextText();
+            }
+
+            // Show ending screen
+            showEndingScreen(endingType) {
+                // Clear all overlays
+                document.querySelectorAll('.scene-area > div').forEach(el => {
+                    if (el.id && el.id.includes('overlay')) {
+                        el.remove();
+                    }
+                });
+
+                const overlay = document.createElement('div');
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: ${endingType === 'light' ?
+                        'linear-gradient(180deg, #fff 0%, #e0e0e0 100%)' :
+                        'linear-gradient(180deg, #000 0%, #1a0000 100%)'
+                    };
+                    z-index: 4000;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 40px;
+                    animation: fadeIn 2s ease-in;
+                `;
+
+                const title = document.createElement('div');
+                if (endingType === 'light') {
+                    title.innerHTML = `
+                        <div style="font-size: 48px; font-weight: bold; color: #4a7a9a; text-shadow: 0 4px 8px rgba(0,0,0,0.3); margin-bottom: 20px;">
+                            ✨ The End ✨
+                        </div>
+                        <div style="font-size: 32px; color: #6a9aba; font-style: italic;">
+                            Redemption - 救赎
+                        </div>
+                        <div style="font-size: 20px; color: #888; margin-top: 30px; max-width: 600px; line-height: 1.8; text-align: center;">
+                            艾琳的灵魂获得了安息，湖中的秘密将被永远守护。<br>
+                            感谢你帮助她找到了平静。
+                        </div>
+                    `;
+                } else {
+                    title.innerHTML = `
+                        <div style="font-size: 48px; font-weight: bold; color: #8a2a2a; text-shadow: 0 4px 8px rgba(0,0,0,0.5); margin-bottom: 20px;">
+                            ∞ The End ∞
+                        </div>
+                        <div style="font-size: 32px; color: #aa4a4a; font-style: italic;">
+                            ??? - 轮回
+                        </div>
+                        <div style="font-size: 20px; color: #888; margin-top: 30px; max-width: 600px; line-height: 1.8; text-align: center;">
+                            有些真相，注定无法被揭露。<br>
+                            记忆将会重置，循环将会继续...
+                        </div>
+                    `;
+                }
+                title.style.cssText = `
+                    text-align: center;
+                    font-family: 'Georgia', serif;
+                `;
+
+                const restartButton = document.createElement('button');
+                restartButton.textContent = endingType === 'light' ? '再次游玩' : '重新开始循环';
+                restartButton.style.cssText = `
+                    padding: 20px 50px;
+                    font-size: 20px;
+                    font-weight: bold;
+                    background: ${endingType === 'light' ?
+                        'linear-gradient(135deg, #4a7a9a 0%, #3a6a8a 100%)' :
+                        'linear-gradient(135deg, #8a2a2a 0%, #6a1a1a 100%)'
+                    };
+                    color: #fff;
+                    border: 3px solid ${endingType === 'light' ? '#2a5a7a' : '#4a0a0a'};
+                    border-radius: 10px;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    margin-top: 20px;
+                `;
+                restartButton.addEventListener('mouseover', () => {
+                    restartButton.style.transform = 'scale(1.1)';
+                    restartButton.style.boxShadow = '0 8px 16px rgba(0,0,0,0.5)';
+                });
+                restartButton.addEventListener('mouseout', () => {
+                    restartButton.style.transform = 'scale(1)';
+                    restartButton.style.boxShadow = 'none';
+                });
+                restartButton.addEventListener('click', () => {
+                    location.reload();
+                });
+
+                overlay.appendChild(title);
+                overlay.appendChild(restartButton);
+                document.body.appendChild(overlay);
             }
         }
 
