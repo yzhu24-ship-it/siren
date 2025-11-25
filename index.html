@@ -1053,6 +1053,42 @@
             transform: scale(1.2);
             filter: drop-shadow(0 8px 16px rgba(255,215,0,0.8));
         }
+
+        /* Old photo inside tall cabinet top door */
+        .old-photo {
+            position: absolute;
+            left: 35%;
+            top: 45%;
+            font-size: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 5;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+            animation: paperFloat 2s ease-in-out infinite;
+        }
+
+        .old-photo:hover {
+            transform: scale(1.2);
+            filter: drop-shadow(0 8px 16px rgba(255,215,0,0.8));
+        }
+
+        /* Flashlight inside wall cabinet */
+        .flashlight {
+            position: absolute;
+            left: 38%;
+            top: 35%;
+            font-size: 45px;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 5;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+            animation: paperFloat 2s ease-in-out infinite;
+        }
+
+        .flashlight:hover {
+            transform: scale(1.2);
+            filter: drop-shadow(0 8px 16px rgba(255,215,0,0.8));
+        }
     </style>
 </head>
 <body>
@@ -1084,6 +1120,8 @@
                     <div class="cabinet-top-door interactive" id="cabinet-top-door">
                         <div class="cabinet-handle"></div>
                     </div>
+                    <!-- Old photo inside top door -->
+                    <div class="old-photo interactive" id="old-photo" style="display: none;">🖼️</div>
                     <div class="cabinet-bottom-door interactive" id="cabinet-bottom-door">
                         <div class="cabinet-handle"></div>
                     </div>
@@ -1097,6 +1135,8 @@
                 <!-- Wall cabinet (3 shelves) -->
                 <div class="wall-cabinet interactive" id="wall-cabinet">
                     <div class="wall-cabinet-door interactive" id="wall-cabinet-door"></div>
+                    <!-- Flashlight inside wall cabinet -->
+                    <div class="flashlight interactive" id="flashlight" style="display: none;">🔦</div>
                 </div>
                 <!-- Floor cabinet with 2 doors -->
                 <div class="floor-cabinet" id="floor-cabinet">
@@ -1393,7 +1433,15 @@
                             tallCabinet.classList.toggle('opened');
                         }
                         const state = cabinetTopDoor.classList.contains('opened') ? 'opened' : 'closed';
-                        this.showDialog(`Tall cabinet top door is ${state}`);
+
+                        // Show old photo when door is opened
+                        const oldPhoto = document.getElementById('old-photo');
+                        if (oldPhoto && cabinetTopDoor.classList.contains('opened')) {
+                            oldPhoto.style.display = 'block';
+                            this.showDialog(`Tall cabinet top door is ${state}, there's an old photo inside!`);
+                        } else {
+                            this.showDialog(`Tall cabinet top door is ${state}`);
+                        }
                     });
                 }
 
@@ -1427,7 +1475,15 @@
                             wallCabinet.classList.toggle('opened');
                         }
                         const state = wallCabinetDoor.classList.contains('opened') ? 'opened' : 'closed';
-                        this.showDialog(`Wall cabinet is ${state}`);
+
+                        // Show flashlight when door is opened
+                        const flashlight = document.getElementById('flashlight');
+                        if (flashlight && wallCabinetDoor.classList.contains('opened')) {
+                            flashlight.style.display = 'block';
+                            this.showDialog(`Wall cabinet is ${state}, there's a flashlight inside!`);
+                        } else {
+                            this.showDialog(`Wall cabinet is ${state}`);
+                        }
                     });
                 }
 
@@ -1534,6 +1590,24 @@
                     encryptedPaper.addEventListener('click', (e) => {
                         e.stopPropagation();
                         this.pickupPaper();
+                    });
+                }
+
+                // Old photo in tall cabinet top door
+                const oldPhoto = document.getElementById('old-photo');
+                if (oldPhoto) {
+                    oldPhoto.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.pickupOldPhoto();
+                    });
+                }
+
+                // Flashlight in wall cabinet
+                const flashlight = document.getElementById('flashlight');
+                if (flashlight) {
+                    flashlight.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.pickupFlashlight();
                     });
                 }
 
@@ -1711,6 +1785,18 @@
                 // Special handling for mysterious box
                 if (item.usable && item.id === 'mysterious-box') {
                     this.showMysteriousBox();
+                    return;
+                }
+
+                // Special handling for old photo
+                if (item.usable && item.id === 'old-photo') {
+                    this.showOldPhoto();
+                    return;
+                }
+
+                // Special handling for flashlight
+                if (item.usable && item.id === 'flashlight') {
+                    this.showFlashlight();
                     return;
                 }
 
@@ -2238,6 +2324,250 @@
 
                     this.showDialog('Obtained: Clue Note');
                 }
+            }
+
+            // Pickup old photo
+            pickupOldPhoto() {
+                const oldPhotoElement = document.getElementById('old-photo');
+                if (!oldPhotoElement || oldPhotoElement.style.display === 'none') {
+                    return;
+                }
+
+                // Check if already picked up
+                if (this.inventory.find(item => item.id === 'old-photo')) {
+                    this.showDialog('You\'ve already picked up this photo');
+                    return;
+                }
+
+                // Add to inventory
+                const success = this.addItemToInventory({
+                    id: 'old-photo',
+                    icon: '🖼️',
+                    name: 'Old Photo',
+                    usable: true
+                });
+
+                if (success) {
+                    // Remove from scene with animation
+                    oldPhotoElement.style.transition = 'all 0.5s ease';
+                    oldPhotoElement.style.transform = 'scale(0) translateY(-50px)';
+                    oldPhotoElement.style.opacity = '0';
+
+                    setTimeout(() => {
+                        oldPhotoElement.style.display = 'none';
+                    }, 500);
+
+                    this.showDialog('Obtained: Old Photo');
+                }
+            }
+
+            // Pickup flashlight
+            pickupFlashlight() {
+                const flashlightElement = document.getElementById('flashlight');
+                if (!flashlightElement || flashlightElement.style.display === 'none') {
+                    return;
+                }
+
+                // Check if already picked up
+                if (this.inventory.find(item => item.id === 'flashlight')) {
+                    this.showDialog('You\'ve already picked up this flashlight');
+                    return;
+                }
+
+                // Add to inventory
+                const success = this.addItemToInventory({
+                    id: 'flashlight',
+                    icon: '🔦',
+                    name: 'Flashlight',
+                    usable: true
+                });
+
+                if (success) {
+                    // Remove from scene with animation
+                    flashlightElement.style.transition = 'all 0.5s ease';
+                    flashlightElement.style.transform = 'scale(0) translateY(-50px)';
+                    flashlightElement.style.opacity = '0';
+
+                    setTimeout(() => {
+                        flashlightElement.style.display = 'none';
+                    }, 500);
+
+                    this.showDialog('Obtained: Flashlight');
+                }
+            }
+
+            // Show old photo content
+            showOldPhoto() {
+                const overlay = document.createElement('div');
+                overlay.id = 'old-photo-overlay';
+                overlay.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 120px;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.9);
+                    z-index: 2000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+
+                const photoContainer = document.createElement('div');
+                photoContainer.style.cssText = `
+                    width: 500px;
+                    height: 600px;
+                    background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+                    border: 5px solid #8b7355;
+                    border-radius: 10px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+                    padding: 40px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 20px;
+                    position: relative;
+                `;
+
+                const title = document.createElement('div');
+                title.textContent = 'Old Photo';
+                title.style.cssText = `
+                    font-size: 32px;
+                    font-weight: bold;
+                    color: #d4af37;
+                    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                    margin-bottom: 10px;
+                `;
+
+                const content = document.createElement('div');
+                content.innerHTML = `
+                    <div style="font-size: 100px; margin: 40px 0;">🖼️</div>
+                    <div style="font-size: 18px; color: #ccc; line-height: 1.8; text-align: center;">
+                        A faded photograph showing a beautiful lake surrounded by mountains.<br><br>
+                        On the back is written: "Rusty Lake - A place where memories never fade."<br><br>
+                        The photo seems to capture a moment frozen in time...
+                    </div>
+                `;
+                content.style.cssText = `
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
+                `;
+
+                const closeButton = document.createElement('button');
+                closeButton.textContent = 'Close';
+                closeButton.style.cssText = `
+                    padding: 12px 30px;
+                    font-size: 18px;
+                    background: linear-gradient(135deg, #8b7355 0%, #6a5a45 100%);
+                    color: white;
+                    border: 2px solid #4a3a2a;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+                    transition: all 0.3s;
+                `;
+
+                closeButton.addEventListener('click', () => {
+                    overlay.remove();
+                });
+
+                photoContainer.appendChild(title);
+                photoContainer.appendChild(content);
+                photoContainer.appendChild(closeButton);
+                overlay.appendChild(photoContainer);
+                document.querySelector('.game-container').appendChild(overlay);
+            }
+
+            // Show flashlight content
+            showFlashlight() {
+                const overlay = document.createElement('div');
+                overlay.id = 'flashlight-overlay';
+                overlay.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 120px;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.9);
+                    z-index: 2000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+
+                const flashlightContainer = document.createElement('div');
+                flashlightContainer.style.cssText = `
+                    width: 500px;
+                    height: 600px;
+                    background: linear-gradient(135deg, #3a3a3a 0%, #2a2a2a 100%);
+                    border: 5px solid #555;
+                    border-radius: 10px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+                    padding: 40px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 20px;
+                    position: relative;
+                `;
+
+                const title = document.createElement('div');
+                title.textContent = 'Flashlight';
+                title.style.cssText = `
+                    font-size: 32px;
+                    font-weight: bold;
+                    color: #ffd700;
+                    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                    margin-bottom: 10px;
+                `;
+
+                const content = document.createElement('div');
+                content.innerHTML = `
+                    <div style="font-size: 100px; margin: 40px 0;">🔦</div>
+                    <div style="font-size: 18px; color: #ccc; line-height: 1.8; text-align: center;">
+                        A sturdy flashlight that still works.<br><br>
+                        It might come in handy if things get dark...<br><br>
+                        The batteries seem to be in good condition.
+                    </div>
+                `;
+                content.style.cssText = `
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
+                `;
+
+                const closeButton = document.createElement('button');
+                closeButton.textContent = 'Close';
+                closeButton.style.cssText = `
+                    padding: 12px 30px;
+                    font-size: 18px;
+                    background: linear-gradient(135deg, #555 0%, #444 100%);
+                    color: white;
+                    border: 2px solid #333;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+                    transition: all 0.3s;
+                `;
+
+                closeButton.addEventListener('click', () => {
+                    overlay.remove();
+                });
+
+                flashlightContainer.appendChild(title);
+                flashlightContainer.appendChild(content);
+                flashlightContainer.appendChild(closeButton);
+                overlay.appendChild(flashlightContainer);
+                document.querySelector('.game-container').appendChild(overlay);
             }
 
             // Show clue paper content
