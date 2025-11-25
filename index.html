@@ -220,35 +220,38 @@
             perspective: 600px;
         }
 
-        /* Safe box on desk */
+        /* Safe box in tall cabinet bottom door */
         .safe-box {
             position: absolute;
-            top: -45%;
+            top: 62%;
             left: 50%;
             transform: translateX(-50%);
-            width: 40%;
-            height: 50%;
+            width: 50px;
+            height: 60px;
             background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
             border: 3px solid #1a1a1a;
             border-radius: 5px;
             box-shadow: 0 8px 16px rgba(0,0,0,0.6);
             cursor: pointer;
             transition: all 0.3s;
+            display: none;
+            z-index: 10;
         }
 
         .safe-box:hover {
             filter: brightness(1.2);
+            transform: translateX(-50%) scale(1.1);
         }
 
         /* Safe box keypad */
         .safe-box::before {
             content: '';
             position: absolute;
-            top: 50%;
+            top: 55%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 60%;
-            height: 60%;
+            width: 70%;
+            height: 50%;
             background: #1a1a1a;
             border: 2px solid #4a4a4a;
             border-radius: 3px;
@@ -258,21 +261,21 @@
         .safe-box::after {
             content: '****';
             position: absolute;
-            top: 25%;
+            top: 20%;
             left: 50%;
             transform: translateX(-50%);
-            width: 70%;
-            height: 20%;
+            width: 80%;
+            height: 25%;
             background: #0a3a0a;
             border: 2px solid #0a0a0a;
-            border-radius: 3px;
+            border-radius: 2px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 8px;
             color: #0f0;
             font-family: 'Courier New', monospace;
-            letter-spacing: 3px;
+            letter-spacing: 1px;
         }
 
         /* Desk drawer */
@@ -1075,10 +1078,7 @@
             </div>
             <div class="room-wall wall-right" id="wall-2">
                 <!-- Desk with drawer -->
-                <div class="desk interactive" id="desk">
-                    <!-- Safe box on desk -->
-                    <div class="safe-box interactive" id="safe-box"></div>
-                </div>
+                <div class="desk interactive" id="desk"></div>
                 <!-- Tall cabinet with 2 doors -->
                 <div class="tall-cabinet" id="tall-cabinet">
                     <div class="cabinet-top-door interactive" id="cabinet-top-door">
@@ -1087,6 +1087,8 @@
                     <div class="cabinet-bottom-door interactive" id="cabinet-bottom-door">
                         <div class="cabinet-handle"></div>
                     </div>
+                    <!-- Safe box in bottom cabinet -->
+                    <div class="safe-box interactive" id="safe-box"></div>
                 </div>
                 <!-- Fishing rod leaning on wall -->
                 <div class="fishing-rod-right interactive" id="fishing-rod"></div>
@@ -1360,7 +1362,7 @@
             }
 
             setupInteractions() {
-                // Safe box on desk
+                // Safe box in tall cabinet
                 const safeBox = document.getElementById('safe-box');
                 if (safeBox) {
                     safeBox.addEventListener('click', (e) => {
@@ -1374,10 +1376,6 @@
                 if (desk) {
                     desk.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        // Check if click target is the safe box
-                        if (e.target.id === 'safe-box' || e.target.closest('#safe-box')) {
-                            return; // Let safe box handle its own click
-                        }
                         desk.classList.toggle('opened');
                         const state = desk.classList.contains('opened') ? '打开' : '关闭';
                         this.showDialog(`书桌抽屉已${state}`);
@@ -1406,7 +1404,15 @@
                         e.stopPropagation();
                         cabinetBottomDoor.classList.toggle('opened');
                         const state = cabinetBottomDoor.classList.contains('opened') ? '打开' : '关闭';
-                        this.showDialog(`高柜下门已${state}`);
+
+                        // Show safe box when door is opened
+                        const safeBox = document.getElementById('safe-box');
+                        if (safeBox && cabinetBottomDoor.classList.contains('opened')) {
+                            safeBox.style.display = 'block';
+                            this.showDialog(`高柜下门已${state}，里面有一个保险箱！`);
+                        } else {
+                            this.showDialog(`高柜下门已${state}`);
+                        }
                     });
                 }
 
