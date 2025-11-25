@@ -716,6 +716,24 @@
                     #a68968 60%,
                     #8b7355 100%
                 );
+            position: relative;
+        }
+
+        /* Dark overlay for ceiling when flashlight is off */
+        .ceiling-dark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            z-index: 1;
+        }
+
+        .ceiling-dark.lit {
+            opacity: 0;
         }
 
         /* Small object on ceiling */
@@ -1167,6 +1185,8 @@
             <div class="room-wall ceiling" id="ceiling">
                 <!-- Small object on ceiling -->
                 <div class="ceiling-object interactive" id="ceiling-object"></div>
+                <!-- Dark overlay (visible until flashlight is used) -->
+                <div class="ceiling-dark" id="ceiling-dark"></div>
             </div>
 
             <!-- Side edges for perspective (not visible on ceiling view) -->
@@ -1200,6 +1220,7 @@
                 this.inventory = [];
                 this.maxInventorySlots = 8;
                 this.selectedItem = null;
+                this.flashlightActive = false; // Track if flashlight is turned on
 
                 // Grid puzzle data - 6x6 grid
                 // 0 = preset 0, 1 = preset 1, null = empty (player can fill)
@@ -2527,12 +2548,14 @@
                 `;
 
                 const content = document.createElement('div');
+                const statusText = this.flashlightActive ?
+                    'The flashlight is ON and illuminating the darkness!' :
+                    'A sturdy flashlight that still works.<br><br>It might come in handy if things get dark...<br><br>The batteries seem to be in good condition.';
+
                 content.innerHTML = `
-                    <div style="font-size: 100px; margin: 40px 0;">🔦</div>
+                    <div style="font-size: 100px; margin: 40px 0;">${this.flashlightActive ? '💡' : '🔦'}</div>
                     <div style="font-size: 18px; color: #ccc; line-height: 1.8; text-align: center;">
-                        A sturdy flashlight that still works.<br><br>
-                        It might come in handy if things get dark...<br><br>
-                        The batteries seem to be in good condition.
+                        ${statusText}
                     </div>
                 `;
                 content.style.cssText = `
@@ -2543,6 +2566,39 @@
                     justify-content: center;
                     text-align: center;
                 `;
+
+                // Button container for multiple buttons
+                const buttonContainer = document.createElement('div');
+                buttonContainer.style.cssText = `
+                    display: flex;
+                    gap: 15px;
+                    justify-content: center;
+                `;
+
+                // Turn On/Off button
+                if (!this.flashlightActive) {
+                    const turnOnButton = document.createElement('button');
+                    turnOnButton.textContent = 'Turn On';
+                    turnOnButton.style.cssText = `
+                        padding: 12px 30px;
+                        font-size: 18px;
+                        background: linear-gradient(135deg, #ffd700 0%, #ffb700 100%);
+                        color: #333;
+                        border: 2px solid #ffaa00;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        box-shadow: 0 4px 8px rgba(255, 215, 0, 0.4);
+                        transition: all 0.3s;
+                    `;
+
+                    turnOnButton.addEventListener('click', () => {
+                        this.activateFlashlight();
+                        overlay.remove();
+                    });
+
+                    buttonContainer.appendChild(turnOnButton);
+                }
 
                 const closeButton = document.createElement('button');
                 closeButton.textContent = 'Close';
@@ -2563,11 +2619,23 @@
                     overlay.remove();
                 });
 
+                buttonContainer.appendChild(closeButton);
+
                 flashlightContainer.appendChild(title);
                 flashlightContainer.appendChild(content);
-                flashlightContainer.appendChild(closeButton);
+                flashlightContainer.appendChild(buttonContainer);
                 overlay.appendChild(flashlightContainer);
                 document.querySelector('.game-container').appendChild(overlay);
+            }
+
+            // Activate flashlight to illuminate ceiling
+            activateFlashlight() {
+                this.flashlightActive = true;
+                const ceilingDark = document.getElementById('ceiling-dark');
+                if (ceilingDark) {
+                    ceilingDark.classList.add('lit');
+                }
+                this.showDialog('The flashlight is now on! You can see the ceiling clearly.');
             }
 
             // Show clue paper content
