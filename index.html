@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -64,7 +64,7 @@
             display: block;
         }
 
-        /* Wall 1 - Front wall (窗户墙) - Initial state: only window + painting */
+        /* Wall 1 - Front wall (window wall) - Initial state: only window + painting */
         .wall-front {
             background-image: url('public/images/scene-door.jpg');
             background-size: cover;
@@ -200,7 +200,7 @@
             }
         }
 
-        /* Wall 2 - Right wall (桌子+柜子墙) */
+        /* Wall 2 - Right wall (desk + cabinet wall) */
         .wall-right {
             background-image: url('public/images/scene-desk.jpg');
             background-size: cover;
@@ -376,7 +376,7 @@
             border-radius: 4px;
         }
 
-        /* Wall 3 - Back wall (储物墙) */
+        /* Wall 3 - Back wall (storage wall) */
         .wall-back {
             background-image: url('public/images/scene-cabinet.jpg');
             background-size: cover;
@@ -504,7 +504,7 @@
             left: 15%;
         }
 
-        /* Wall 4 - Left wall (窗户+凳子墙) */
+        /* Wall 4 - Left wall (window + stool wall) */
         .wall-left {
             background-image: url('public/images/scene-window.jpg');
             background-size: cover;
@@ -1061,7 +1061,7 @@
         <div class="scene-area">
             <!-- Wall indicator -->
             <div class="wall-indicator">
-                <span id="wallName">前墙</span>
+                <span id="wallName">Front Wall</span>
             </div>
 
             <!-- Up arrow for ceiling view -->
@@ -1156,7 +1156,7 @@
         class RustyLakeRoom {
             constructor() {
                 this.currentWall = 1;
-                this.wallNames = ['前墙', '右墙', '后墙', '左墙', '天花板'];
+                this.wallNames = ['Front Wall', 'Right Wall', 'Back Wall', 'Left Wall', 'Ceiling'];
                 this.inventory = [];
                 this.maxInventorySlots = 8;
                 this.selectedItem = null;
@@ -1194,7 +1194,7 @@
                 this.setupGridPuzzle();
                 this.updateWallIndicator();
                 this.setupInteractions();
-                this.showDialog('欢迎来到神秘房间');
+                this.showDialog('Welcome to the Mysterious Room');
             }
 
             setupGridPuzzle() {
@@ -1312,7 +1312,7 @@
 
                 // Check for three consecutive rule violation
                 if (this.hasThreeConsecutive(this.gridState)) {
-                    this.showDialog('违反规则！每行每列都不能有三个连续相同的数字');
+                    this.showDialog('Rule violation! No three consecutive identical numbers allowed in any row or column');
                     return;
                 }
 
@@ -1332,10 +1332,10 @@
                     this.gridSolved = true;
                     this.showSuccessOverlay();
                     setTimeout(() => {
-                        this.showDialog('壁画谜题已解开！密码是：2486');
+                        this.showDialog('Wall painting puzzle solved! The password is: 2486');
                     }, 1500);
                 } else {
-                    this.showDialog('还不对，再想想...');
+                    this.showDialog('Not quite right, think again...');
                 }
             }
 
@@ -1352,7 +1352,7 @@
                 // Create new overlay
                 const overlay = document.createElement('div');
                 overlay.className = 'success-overlay';
-                overlay.innerHTML = '✓ 成功！';
+                overlay.innerHTML = '✓ Success!';
                 gridPuzzle.appendChild(overlay);
 
                 // Remove after animation
@@ -1377,8 +1377,8 @@
                     desk.addEventListener('click', (e) => {
                         e.stopPropagation();
                         desk.classList.toggle('opened');
-                        const state = desk.classList.contains('opened') ? '打开' : '关闭';
-                        this.showDialog(`书桌抽屉已${state}`);
+                        const state = desk.classList.contains('opened') ? 'opened' : 'closed';
+                        this.showDialog(`Desk drawer is ${state}`);
                     });
                 }
 
@@ -1392,8 +1392,8 @@
                         if (tallCabinet) {
                             tallCabinet.classList.toggle('opened');
                         }
-                        const state = cabinetTopDoor.classList.contains('opened') ? '打开' : '关闭';
-                        this.showDialog(`高柜上门已${state}`);
+                        const state = cabinetTopDoor.classList.contains('opened') ? 'opened' : 'closed';
+                        this.showDialog(`Tall cabinet top door is ${state}`);
                     });
                 }
 
@@ -1403,15 +1403,15 @@
                     cabinetBottomDoor.addEventListener('click', (e) => {
                         e.stopPropagation();
                         cabinetBottomDoor.classList.toggle('opened');
-                        const state = cabinetBottomDoor.classList.contains('opened') ? '打开' : '关闭';
+                        const state = cabinetBottomDoor.classList.contains('opened') ? 'opened' : 'closed';
 
                         // Show safe box when door is opened
                         const safeBox = document.getElementById('safe-box');
                         if (safeBox && cabinetBottomDoor.classList.contains('opened')) {
                             safeBox.style.display = 'block';
-                            this.showDialog(`高柜下门已${state}，里面有一个保险箱！`);
+                            this.showDialog(`Tall cabinet bottom door is ${state}, there's a safe inside!`);
                         } else {
-                            this.showDialog(`高柜下门已${state}`);
+                            this.showDialog(`Tall cabinet bottom door is ${state}`);
                         }
                     });
                 }
@@ -1426,8 +1426,8 @@
                         if (wallCabinet) {
                             wallCabinet.classList.toggle('opened');
                         }
-                        const state = wallCabinetDoor.classList.contains('opened') ? '打开' : '关闭';
-                        this.showDialog(`壁柜已${state}`);
+                        const state = wallCabinetDoor.classList.contains('opened') ? 'opened' : 'closed';
+                        this.showDialog(`Wall cabinet is ${state}`);
                     });
                 }
 
@@ -1441,15 +1441,15 @@
                         if (floorCabinet) {
                             floorCabinet.classList.toggle('opened');
                         }
-                        const state = floorCabinetLeftDoor.classList.contains('opened') ? '打开' : '关闭';
+                        const state = floorCabinetLeftDoor.classList.contains('opened') ? 'opened' : 'closed';
 
                         // Show encrypted paper when door is opened
                         const encryptedPaper = document.getElementById('encrypted-paper');
                         if (encryptedPaper && floorCabinetLeftDoor.classList.contains('opened')) {
                             encryptedPaper.style.display = 'block';
-                            this.showDialog(`地柜左门已${state}，里面有一张纸！`);
+                            this.showDialog(`Floor cabinet left door is ${state}, there's a paper inside!`);
                         } else {
-                            this.showDialog(`地柜左门已${state}`);
+                            this.showDialog(`Floor cabinet left door is ${state}`);
                         }
                     });
                 }
@@ -1460,8 +1460,8 @@
                     floorCabinetRightDoor.addEventListener('click', (e) => {
                         e.stopPropagation();
                         floorCabinetRightDoor.classList.toggle('opened');
-                        const state = floorCabinetRightDoor.classList.contains('opened') ? '打开' : '关闭';
-                        this.showDialog(`地柜右门已${state}`);
+                        const state = floorCabinetRightDoor.classList.contains('opened') ? 'opened' : 'closed';
+                        this.showDialog(`Floor cabinet right door is ${state}`);
                     });
                 }
 
@@ -1470,7 +1470,7 @@
                 if (window) {
                     window.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        this.showDialog('窗框里有一个神秘的格子谜题...');
+                        this.showDialog('There\'s a mysterious grid puzzle in the window frame...');
                     });
                 }
 
@@ -1479,7 +1479,7 @@
                 if (tallCabinet) {
                     tallCabinet.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        this.showDialog('这是一个高柜，有两个门');
+                        this.showDialog('This is a tall cabinet with two doors');
                     });
                 }
 
@@ -1488,7 +1488,7 @@
                 if (fishingRod) {
                     fishingRod.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        this.pickupItem('fishing-rod', '🎣', '钓鱼竿');
+                        this.pickupItem('fishing-rod', '🎣', 'Fishing Rod');
                     });
                 }
 
@@ -1515,7 +1515,7 @@
                 if (stool) {
                     stool.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        this.showDialog('一把蓝色的凳子，看起来很结实');
+                        this.showDialog('A blue stool, looks quite sturdy');
                     });
                 }
 
@@ -1636,7 +1636,7 @@
             // Add item to inventory
             addItemToInventory(item) {
                 if (this.inventory.length >= this.maxInventorySlots) {
-                    this.showDialog('物品栏已满！');
+                    this.showDialog('Inventory is full!');
                     return false;
                 }
 
@@ -1725,7 +1725,7 @@
                     }
                 });
 
-                this.showDialog(`已选中：${item.name}`);
+                this.showDialog(`Selected: ${item.name}`);
             }
 
             // Pickup encrypted paper
@@ -1737,7 +1737,7 @@
 
                 // Check if already picked up
                 if (this.inventory.find(item => item.id === 'encrypted-paper')) {
-                    this.showDialog('你已经拾取过这张纸了');
+                    this.showDialog('You\'ve already picked up this paper');
                     return;
                 }
 
@@ -1745,7 +1745,7 @@
                 const success = this.addItemToInventory({
                     id: 'encrypted-paper',
                     icon: '📄',
-                    name: '加密纸张',
+                    name: 'Encrypted Paper',
                     usable: true
                 });
 
@@ -1759,7 +1759,7 @@
                         paperElement.style.display = 'none';
                     }, 500);
 
-                    this.showDialog('获得了：加密纸张');
+                    this.showDialog('Obtained: Encrypted Paper');
                 }
             }
 
@@ -1798,7 +1798,7 @@
                 `;
 
                 const title = document.createElement('div');
-                title.textContent = '神秘纸张';
+                title.textContent = 'Mysterious Paper';
                 title.style.cssText = `
                     font-size: 32px;
                     font-weight: bold;
@@ -1823,7 +1823,7 @@
 
                 content.innerHTML = `
                     <div style="font-size: 18px; color: #8b4513; margin-bottom: 20px; font-style: italic;">
-                        "解开图形之谜..."
+                        "Solve the mystery of shapes..."
                     </div>
                     <div style="text-align: center; margin-top: 20px; font-size: 24px;">
                         <div style="margin: 15px 0; display: flex; align-items: center; justify-content: center; gap: 10px;">
@@ -1856,12 +1856,12 @@
                         </div>
                     </div>
                     <div style="margin-top: 30px; font-size: 16px; color: #666;">
-                        求出每个图形的值，然后按照密码盒上的图形顺序输入数字
+                        Find the value of each shape, then input the numbers in the order of shapes on the password box
                     </div>
                 `;
 
                 const closeButton = document.createElement('button');
-                closeButton.textContent = '关闭';
+                closeButton.textContent = 'Close';
                 closeButton.style.cssText = `
                     padding: 15px 40px;
                     font-size: 18px;
@@ -1896,13 +1896,13 @@
             pickupItem(elementId, icon, name) {
                 const element = document.getElementById(elementId);
                 if (!element) {
-                    this.showDialog('找不到该物品');
+                    this.showDialog('Item not found');
                     return;
                 }
 
                 // Check if already picked up
                 if (this.inventory.find(item => item.id === elementId)) {
-                    this.showDialog('你已经拾取过这个物品了');
+                    this.showDialog('You\'ve already picked up this item');
                     return;
                 }
 
@@ -1923,7 +1923,7 @@
                         element.style.display = 'none';
                     }, 500);
 
-                    this.showDialog(`获得了：${name}`);
+                    this.showDialog(`Obtained: ${name}`);
                 }
             }
 
@@ -1940,12 +1940,12 @@
                                           this.inventory[this.selectedItem].id === 'fishing-rod';
 
                 if (!fishingRodSelected) {
-                    this.showDialog('太高了，无法触碰到...');
+                    this.showDialog('Too high, can\'t reach...');
                     return;
                 }
 
                 // Use fishing rod to knock down the box
-                this.showDialog('你用钓鱼竿戳了一下，盒子掉了下来！');
+                this.showDialog('You poked with the fishing rod, the box fell down!');
 
                 // Animate the box falling
                 ceilingObject.style.transition = 'all 1s cubic-bezier(0.5, 0, 0.5, 1)';
@@ -1958,11 +1958,11 @@
                     const success = this.addItemToInventory({
                         id: 'password-box',
                         icon: '📦',
-                        name: '密码盒',
+                        name: 'Password Box',
                         usable: true
                     });
                     if (success) {
-                        this.showDialog('获得了：密码盒');
+                        this.showDialog('Obtained: Password Box');
                     }
                 }, 1000);
             }
@@ -2002,7 +2002,7 @@
                 `;
 
                 const title = document.createElement('div');
-                title.textContent = '密码盒';
+                title.textContent = 'Password Box';
                 title.style.cssText = `
                     font-size: 28px;
                     font-weight: bold;
@@ -2118,12 +2118,12 @@
                         this.addItemToInventory({
                             id: 'golden-key',
                             icon: '🗝️',
-                            name: '金钥匙'
+                            name: 'Golden Key'
                         });
 
-                        this.showDialog('密码正确！盒子打开了！获得了：金钥匙');
+                        this.showDialog('Password correct! The box opened! Obtained: Golden Key');
                     } else {
-                        this.showDialog('密码错误...');
+                        this.showDialog('Password incorrect...');
                         inputs.forEach(input => {
                             input.value = '';
                             input.style.borderColor = '#ff0000';
@@ -2136,7 +2136,7 @@
                 });
 
                 const closeButton = document.createElement('button');
-                closeButton.textContent = '关闭';
+                closeButton.textContent = 'Close';
                 closeButton.style.cssText = `
                     padding: 12px 30px;
                     font-size: 18px;
@@ -2180,7 +2180,7 @@
 
                 // Check if door is already opened
                 if (door.classList.contains('opened')) {
-                    this.showDialog('门已经打开了');
+                    this.showDialog('Door is already open');
                     return;
                 }
 
@@ -2188,13 +2188,13 @@
                 const hasGoldenKey = this.inventory.find(item => item.id === 'golden-key');
 
                 if (!hasGoldenKey) {
-                    this.showDialog('这扇门被锁住了，需要钥匙才能打开...');
+                    this.showDialog('This door is locked, needs a key to open...');
                     return;
                 }
 
                 // Open the door
                 door.classList.add('opened');
-                this.showDialog('用金钥匙打开了门！里面有一张纸条！');
+                this.showDialog('Opened the door with the golden key! There\'s a note inside!');
 
                 // Show clue paper
                 const cluePaper = document.getElementById('clue-paper');
@@ -2214,7 +2214,7 @@
 
                 // Check if already picked up
                 if (this.inventory.find(item => item.id === 'clue-paper')) {
-                    this.showDialog('你已经拾取过这张线索了');
+                    this.showDialog('You\'ve already picked up this clue');
                     return;
                 }
 
@@ -2222,7 +2222,7 @@
                 const success = this.addItemToInventory({
                     id: 'clue-paper',
                     icon: '📋',
-                    name: '线索纸条',
+                    name: 'Clue Note',
                     usable: true
                 });
 
@@ -2236,7 +2236,7 @@
                         cluePaperElement.style.display = 'none';
                     }, 500);
 
-                    this.showDialog('获得了：线索纸条');
+                    this.showDialog('Obtained: Clue Note');
                 }
             }
 
@@ -2275,7 +2275,7 @@
                 `;
 
                 const title = document.createElement('div');
-                title.textContent = '🔍 线索：壁画谜题的秘密';
+                title.textContent = '🔍 Clue: The Secret of the Wall Painting Puzzle';
                 title.style.cssText = `
                     font-size: 28px;
                     font-weight: bold;
@@ -2301,32 +2301,32 @@
                 content.innerHTML = `
                     <div style="text-align: center; margin-bottom: 25px;">
                         <div style="font-size: 24px; color: #8b4513; font-weight: bold;">
-                            ⚠️ 前墙壁画谜题规则 ⚠️
+                            ⚠️ Front Wall Painting Puzzle Rules ⚠️
                         </div>
                     </div>
                     <div style="margin: 15px 0; padding: 15px; background: rgba(255, 255, 200, 0.5); border-left: 4px solid #8b4513; border-radius: 4px;">
-                        <strong style="color: #d2691e;">规则一：</strong>
-                        每一行和每一列都不能有<strong style="color: #c00;">三个连续相同</strong>的数字
+                        <strong style="color: #d2691e;">Rule 1:</strong>
+                        No row or column can have <strong style="color: #c00;">three consecutive identical</strong> numbers
                     </div>
                     <div style="margin: 15px 0; padding: 10px; background: rgba(255, 230, 230, 0.6); border-radius: 4px;">
                         <div style="text-align: center; margin: 10px 0;">
-                            ❌ <span style="font-family: monospace; font-size: 22px; color: #c00; font-weight: bold;">1 1 1</span> 或 <span style="font-family: monospace; font-size: 22px; color: #c00; font-weight: bold;">0 0 0</span> ← 不允许！
+                            ❌ <span style="font-family: monospace; font-size: 22px; color: #c00; font-weight: bold;">1 1 1</span> or <span style="font-family: monospace; font-size: 22px; color: #c00; font-weight: bold;">0 0 0</span> ← Not allowed!
                         </div>
                         <div style="text-align: center; margin: 10px 0;">
-                            ✓ <span style="font-family: monospace; font-size: 22px; color: #0a0; font-weight: bold;">1 1 0</span> 或 <span style="font-family: monospace; font-size: 22px; color: #0a0; font-weight: bold;">0 1 0</span> ← 允许
+                            ✓ <span style="font-family: monospace; font-size: 22px; color: #0a0; font-weight: bold;">1 1 0</span> or <span style="font-family: monospace; font-size: 22px; color: #0a0; font-weight: bold;">0 1 0</span> ← Allowed
                         </div>
                     </div>
                     <div style="margin-top: 20px; padding: 15px; background: rgba(200, 230, 255, 0.5); border-left: 4px solid #4169e1; border-radius: 4px;">
-                        <strong style="color: #4169e1;">规则二：</strong>
-                        每一行和每一列的0和1的数量<strong style="color: #00c;">必须相等</strong>（各3个）
+                        <strong style="color: #4169e1;">Rule 2:</strong>
+                        Each row and column must have <strong style="color: #00c;">equal numbers</strong> of 0s and 1s (3 each)
                     </div>
                     <div style="margin-top: 25px; text-align: center; font-size: 18px; color: #666; font-style: italic;">
-                        提示：仔细观察已有的数字，它们是解谜的关键！
+                        Hint: Carefully observe the existing numbers, they are the key to solving the puzzle!
                     </div>
                 `;
 
                 const closeButton = document.createElement('button');
-                closeButton.textContent = '关闭';
+                closeButton.textContent = 'Close';
                 closeButton.style.cssText = `
                     padding: 15px 40px;
                     font-size: 18px;
@@ -2366,7 +2366,7 @@
 
                 // Check if safe box is already opened
                 if (safeBox.dataset.opened === 'true') {
-                    this.showDialog('保险箱已经打开了');
+                    this.showDialog('Safe is already open');
                     return;
                 }
 
@@ -2408,7 +2408,7 @@
                 `;
 
                 const title = document.createElement('div');
-                title.textContent = '🔒 保险箱';
+                title.textContent = '🔒 Safe';
                 title.style.cssText = `
                     font-size: 32px;
                     font-weight: bold;
@@ -2418,7 +2418,7 @@
                 `;
 
                 const hint = document.createElement('div');
-                hint.textContent = '输入四位数字密码';
+                hint.textContent = 'Enter a four-digit password';
                 hint.style.cssText = `
                     font-size: 16px;
                     color: #888;
@@ -2512,7 +2512,7 @@
                 });
 
                 const closeButton = document.createElement('button');
-                closeButton.textContent = '关闭';
+                closeButton.textContent = 'Close';
                 closeButton.style.cssText = `
                     padding: 12px 35px;
                     font-size: 18px;
@@ -2558,7 +2558,7 @@
                 this.addItemToInventory({
                     id: 'diary',
                     icon: '📕',
-                    name: '日记本',
+                    name: 'Diary',
                     usable: true
                 });
 
@@ -2566,11 +2566,11 @@
                 this.addItemToInventory({
                     id: 'mysterious-box',
                     icon: '📮',
-                    name: '神秘匣子',
+                    name: 'Mysterious Box',
                     usable: true
                 });
 
-                this.showDialog('保险箱打开了！获得了：日记本、神秘匣子');
+                this.showDialog('Safe opened! Obtained: Diary, Mysterious Box');
             }
 
             // Show diary content
@@ -2607,7 +2607,7 @@
                 `;
 
                 const title = document.createElement('div');
-                title.textContent = '📕 艾琳的日记';
+                title.textContent = '📕 Erin\'s Diary';
                 title.style.cssText = `
                     font-size: 32px;
                     font-weight: bold;
@@ -2634,56 +2634,56 @@
                 content.innerHTML = `
                     <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px dashed #8b6914;">
                         <div style="font-size: 20px; font-weight: bold; color: #ffd700; margin-bottom: 10px;">
-                            📅 1987年10月 - 到来
+                            📅 October 1987 - Arrival
                         </div>
                         <div style="font-style: italic; line-height: 2;">
-                            我来到了这个湖边小屋。湖水清澈如镜，映照着天空和群山。
-                            我以为这只是一份普通的看守工作，但很快我就发现，这个湖...不同寻常。
-                            夜晚的湖面会泛起微光，那不是月光的反射，而是某种...生命的气息。
+                            I arrived at this lakeside cabin. The lake water is clear as a mirror, reflecting the sky and mountains.
+                            I thought this was just an ordinary caretaking job, but soon I discovered that this lake... is extraordinary.
+                            The lake surface glows at night, not from reflected moonlight, but from something... the breath of life.
                         </div>
                     </div>
 
                     <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px dashed #8b6914;">
                         <div style="font-size: 20px; font-weight: bold; color: #ffd700; margin-bottom: 10px;">
-                            📅 1988年春 - 发现
+                            📅 Spring 1988 - Discovery
                         </div>
                         <div style="font-style: italic; line-height: 2;">
-                            湖水在夜晚会发光，那不是月光的反射。我在湖底看到了它们——
-                            古老的生命，比人类的历史更悠久。它们守护着记忆，连接着过去与未来。
-                            我感到恐惧，但也感到使命。我知道，我不能让任何人知道这个秘密。
+                            The lake glows at night, it's not reflected moonlight. I saw them at the bottom of the lake—
+                            Ancient life, older than human history. They guard memories, connecting the past and future.
+                            I feel fear, but also a sense of mission. I know I cannot let anyone discover this secret.
                         </div>
                     </div>
 
                     <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px dashed #8b6914;">
                         <div style="font-size: 20px; font-weight: bold; color: #ffd700; margin-bottom: 10px;">
-                            📅 1989年夏 - 守护
+                            📅 Summer 1989 - Guardianship
                         </div>
                         <div style="font-style: italic; line-height: 2;">
-                            他们来了，那些想要利用湖水力量的人。他们不理解，一旦打破平衡，
-                            所有的记忆都会消散，湖中的生命也会消亡。我必须做出选择——
-                            让秘密永远沉睡，还是任由贪婪摧毁一切？
+                            They came, those who want to exploit the power of the lake. They don't understand that once the balance is broken,
+                            all memories will dissipate, and the life in the lake will perish. I must make a choice—
+                            Let the secret sleep forever, or allow greed to destroy everything?
                         </div>
                     </div>
 
                     <div style="margin-bottom: 20px;">
                         <div style="font-size: 20px; font-weight: bold; color: #ff6b6b; margin-bottom: 10px;">
-                            📅 1989年10月 - 决定
+                            📅 October 1989 - Decision
                         </div>
                         <div style="font-style: italic; line-height: 2;">
-                            我选择了封印。将自己的灵魂与这个房间绑定，成为最后的守护者。
-                            如果有一天，有人能解开所有谜题，来到这里...请替我做出选择吧。
+                            I chose to seal it. Binding my soul to this room, becoming the final guardian.
+                            If one day, someone can solve all the puzzles and come here... please make the choice for me.
                             <br><br>
-                            <span style="color: #ffd700; font-weight: bold;">是放下过去，接受命运？</span>
+                            <span style="color: #ffd700; font-weight: bold;">Should you let go of the past and accept fate?</span>
                             <br>
-                            <span style="color: #ff6b6b; font-weight: bold;">还是追寻真相，打破轮回？</span>
+                            <span style="color: #ff6b6b; font-weight: bold;">Or seek the truth and break the cycle?</span>
                             <br><br>
-                            神秘匣子中有两个选择...去窗边，做出你的决定吧。
+                            There are two choices in the mysterious box... go to the window and make your decision.
                         </div>
                     </div>
                 `;
 
                 const closeButton = document.createElement('button');
-                closeButton.textContent = '合上日记';
+                closeButton.textContent = 'Close Diary';
                 closeButton.style.cssText = `
                     padding: 15px 40px;
                     font-size: 18px;
@@ -2749,7 +2749,7 @@
                 `;
 
                 const title = document.createElement('div');
-                title.textContent = '📮 神秘匣子';
+                title.textContent = '📮 Mysterious Box';
                 title.style.cssText = `
                     font-size: 32px;
                     font-weight: bold;
@@ -2758,7 +2758,7 @@
                 `;
 
                 const description = document.createElement('div');
-                description.textContent = '匣子中有两个物品，选择其中一个...';
+                description.textContent = 'There are two items in the box, choose one...';
                 description.style.cssText = `
                     font-size: 18px;
                     color: #d4c4ff;
@@ -2791,8 +2791,8 @@
                 `;
                 whiteFeatherBtn.innerHTML = `
                     <div style="font-size: 60px; margin-bottom: 10px;">🕊️</div>
-                    <div style="font-size: 16px; font-weight: bold; color: #666;">白色羽毛</div>
-                    <div style="font-size: 12px; color: #999; margin-top: 5px;">放下过去</div>
+                    <div style="font-size: 16px; font-weight: bold; color: #666;">White Feather</div>
+                    <div style="font-size: 12px; color: #999; margin-top: 5px;">Let go of the past</div>
                 `;
                 whiteFeatherBtn.addEventListener('mouseover', () => {
                     whiteFeatherBtn.style.transform = 'scale(1.1)';
@@ -2825,8 +2825,8 @@
                 `;
                 blackCubeBtn.innerHTML = `
                     <div style="font-size: 60px; margin-bottom: 10px;">⬛</div>
-                    <div style="font-size: 16px; font-weight: bold; color: #ddd;">黑色方块</div>
-                    <div style="font-size: 12px; color: #aaa; margin-top: 5px;">追寻真相</div>
+                    <div style="font-size: 16px; font-weight: bold; color: #ddd;">Black Cube</div>
+                    <div style="font-size: 12px; color: #aaa; margin-top: 5px;">Seek the truth</div>
                 `;
                 blackCubeBtn.addEventListener('mouseover', () => {
                     blackCubeBtn.style.transform = 'scale(1.1)';
@@ -2845,7 +2845,7 @@
                 itemsContainer.appendChild(blackCubeBtn);
 
                 const closeButton = document.createElement('button');
-                closeButton.textContent = '关闭';
+                closeButton.textContent = 'Close';
                 closeButton.style.cssText = `
                     padding: 12px 30px;
                     font-size: 16px;
@@ -2888,11 +2888,11 @@
                 this.addItemToInventory({
                     id: 'white-feather',
                     icon: '🕊️',
-                    name: '白色羽毛'
+                    name: 'White Feather'
                 });
 
                 this.updateToolbarDisplay();
-                this.showDialog('你选择了白色羽毛...去左边的窗户使用它吧');
+                this.showDialog('You chose the white feather... go to the left window to use it');
             }
 
             // Take black cube
@@ -2907,11 +2907,11 @@
                 this.addItemToInventory({
                     id: 'black-cube',
                     icon: '⬛',
-                    name: '黑色方块'
+                    name: 'Black Cube'
                 });
 
                 this.updateToolbarDisplay();
-                this.showDialog('你选择了黑色方块...去左边的窗户使用它吧');
+                this.showDialog('You chose the black cube... go to the left window to use it');
             }
 
             // Handle window on left wall interaction
@@ -2933,7 +2933,7 @@
                     // Trigger dark ending
                     this.triggerDarkEnding();
                 } else {
-                    this.showDialog('湖面平静如镜，映照着你的倒影...');
+                    this.showDialog('The lake surface is calm as a mirror, reflecting your image...');
                 }
             }
 
@@ -2977,13 +2977,13 @@
 
                 // Story text sequence
                 const storyTexts = [
-                    '你将白色羽毛放在窗前...',
-                    '湖面泛起温柔的涟漪',
-                    '艾琳的灵魂终于得到了解脱',
-                    '她化作一只白鸟',
-                    '飞向了她守护的湖面',
-                    '秘密将被永远守护',
-                    '感谢你，陌生人...'
+                    'You place the white feather by the window...',
+                    'The lake surface ripples gently',
+                    'Erin\'s soul is finally freed',
+                    'She transforms into a white bird',
+                    'Flying towards the lake she protected',
+                    'The secret will be forever guarded',
+                    'Thank you, stranger...'
                 ];
 
                 let textIndex = 0;
@@ -3071,13 +3071,13 @@
 
                 // Story text sequence
                 const storyTexts = [
-                    '你将黑色方块放在窗前...',
-                    '湖面开始剧烈翻腾',
-                    '真相的代价...',
-                    '是永恒的轮回',
-                    '你无法逃离这里',
-                    '时间开始倒流...',
-                    '一切...重新开始...'
+                    'You place the black cube by the window...',
+                    'The lake surface begins to churn violently',
+                    'The price of truth...',
+                    'Is eternal recurrence',
+                    'You cannot escape from here',
+                    'Time begins to flow backwards...',
+                    'Everything... starts again...'
                 ];
 
                 let textIndex = 0;
@@ -3166,11 +3166,11 @@
                             ✨ The End ✨
                         </div>
                         <div style="font-size: 32px; color: #6a9aba; font-style: italic;">
-                            Redemption - 救赎
+                            Redemption
                         </div>
                         <div style="font-size: 20px; color: #888; margin-top: 30px; max-width: 600px; line-height: 1.8; text-align: center;">
-                            艾琳的灵魂获得了安息，湖中的秘密将被永远守护。<br>
-                            感谢你帮助她找到了平静。
+                            Erin's soul has found peace, the secret of the lake will be forever guarded.<br>
+                            Thank you for helping her find tranquility.
                         </div>
                     `;
                 } else {
@@ -3179,11 +3179,11 @@
                             ∞ The End ∞
                         </div>
                         <div style="font-size: 32px; color: #aa4a4a; font-style: italic;">
-                            ??? - 轮回
+                            ??? - Cycle
                         </div>
                         <div style="font-size: 20px; color: #888; margin-top: 30px; max-width: 600px; line-height: 1.8; text-align: center;">
-                            有些真相，注定无法被揭露。<br>
-                            记忆将会重置，循环将会继续...
+                            Some truths are destined to remain hidden.<br>
+                            Memory will be reset, the cycle will continue...
                         </div>
                     `;
                 }
@@ -3193,7 +3193,7 @@
                 `;
 
                 const restartButton = document.createElement('button');
-                restartButton.textContent = endingType === 'light' ? '再次游玩' : '重新开始循环';
+                restartButton.textContent = endingType === 'light' ? 'Play Again' : 'Restart Cycle';
                 restartButton.style.cssText = `
                     padding: 20px 50px;
                     font-size: 20px;
