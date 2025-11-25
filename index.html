@@ -2191,7 +2191,7 @@
                 `;
 
                 const confirmButton = document.createElement('button');
-                confirmButton.textContent = '确认';
+                confirmButton.textContent = 'Confirm';
                 confirmButton.style.cssText = `
                     padding: 12px 30px;
                     font-size: 18px;
@@ -2869,7 +2869,7 @@
                 `;
 
                 const confirmButton = document.createElement('button');
-                confirmButton.textContent = '确认';
+                confirmButton.textContent = 'Confirm';
                 confirmButton.style.cssText = `
                     padding: 12px 35px;
                     font-size: 18px;
@@ -2895,7 +2895,7 @@
                         overlay.remove();
                         this.openSafeBox();
                     } else {
-                        this.showDialog('密码错误...');
+                        this.showDialog('Wrong password...');
                         inputs.forEach(input => {
                             input.value = '';
                             input.style.borderColor = '#f00';
