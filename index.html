@@ -2642,67 +2642,68 @@
 
                 const paperContainer = document.createElement('div');
                 paperContainer.style.cssText = `
-                    width: 600px;
-                    height: 500px;
+                    width: 550px;
+                    max-height: 80vh;
                     background: linear-gradient(135deg, #f4e4c1 0%, #e8d4a8 100%);
                     border: 3px solid #8b7355;
                     border-radius: 10px;
                     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-                    padding: 40px;
+                    padding: 25px;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    gap: 20px;
+                    gap: 12px;
                     position: relative;
+                    overflow-y: auto;
                 `;
 
                 const title = document.createElement('div');
                 title.textContent = '🔍 Clue: The Secret of the Wall Painting Puzzle';
                 title.style.cssText = `
-                    font-size: 28px;
+                    font-size: 20px;
                     font-weight: bold;
                     color: #4a3a2a;
                     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
                     text-decoration: underline;
-                    margin-bottom: 10px;
+                    margin-bottom: 5px;
                 `;
 
                 const content = document.createElement('div');
                 content.style.cssText = `
-                    font-size: 20px;
+                    font-size: 15px;
                     color: #2a2a2a;
-                    line-height: 1.8;
+                    line-height: 1.6;
                     text-align: left;
                     background: rgba(255, 255, 255, 0.6);
-                    padding: 30px;
+                    padding: 20px;
                     border-radius: 8px;
                     border: 2px solid #8b7355;
                     width: 100%;
                 `;
 
                 content.innerHTML = `
-                    <div style="text-align: center; margin-bottom: 25px;">
-                        <div style="font-size: 24px; color: #8b4513; font-weight: bold;">
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <div style="font-size: 18px; color: #8b4513; font-weight: bold;">
                             ⚠️ Front Wall Painting Puzzle Rules ⚠️
                         </div>
                     </div>
-                    <div style="margin: 15px 0; padding: 15px; background: rgba(255, 255, 200, 0.5); border-left: 4px solid #8b4513; border-radius: 4px;">
+                    <div style="margin: 10px 0; padding: 12px; background: rgba(255, 255, 200, 0.5); border-left: 4px solid #8b4513; border-radius: 4px;">
                         <strong style="color: #d2691e;">Rule 1:</strong>
                         No row or column can have <strong style="color: #c00;">three consecutive identical</strong> numbers
                     </div>
-                    <div style="margin: 15px 0; padding: 10px; background: rgba(255, 230, 230, 0.6); border-radius: 4px;">
-                        <div style="text-align: center; margin: 10px 0;">
-                            ❌ <span style="font-family: monospace; font-size: 22px; color: #c00; font-weight: bold;">1 1 1</span> or <span style="font-family: monospace; font-size: 22px; color: #c00; font-weight: bold;">0 0 0</span> ← Not allowed!
+                    <div style="margin: 10px 0; padding: 8px; background: rgba(255, 230, 230, 0.6); border-radius: 4px;">
+                        <div style="text-align: center; margin: 8px 0;">
+                            ❌ <span style="font-family: monospace; font-size: 16px; color: #c00; font-weight: bold;">1 1 1</span> or <span style="font-family: monospace; font-size: 16px; color: #c00; font-weight: bold;">0 0 0</span> ← Not allowed!
                         </div>
-                        <div style="text-align: center; margin: 10px 0;">
-                            ✓ <span style="font-family: monospace; font-size: 22px; color: #0a0; font-weight: bold;">1 1 0</span> or <span style="font-family: monospace; font-size: 22px; color: #0a0; font-weight: bold;">0 1 0</span> ← Allowed
+                        <div style="text-align: center; margin: 8px 0;">
+                            ✓ <span style="font-family: monospace; font-size: 16px; color: #0a0; font-weight: bold;">1 1 0</span> or <span style="font-family: monospace; font-size: 16px; color: #0a0; font-weight: bold;">0 1 0</span> ← Allowed
                         </div>
                     </div>
-                    <div style="margin-top: 20px; padding: 15px; background: rgba(200, 230, 255, 0.5); border-left: 4px solid #4169e1; border-radius: 4px;">
+                    <div style="margin-top: 10px; padding: 12px; background: rgba(200, 230, 255, 0.5); border-left: 4px solid #4169e1; border-radius: 4px;">
                         <strong style="color: #4169e1;">Rule 2:</strong>
                         Each row and column must have <strong style="color: #00c;">equal numbers</strong> of 0s and 1s (3 each)
                     </div>
-                    <div style="margin-top: 25px; text-align: center; font-size: 18px; color: #666; font-style: italic;">
+                    <div style="margin-top: 15px; text-align: center; font-size: 14px; color: #666; font-style: italic;">
                         Hint: Carefully observe the existing numbers, they are the key to solving the puzzle!
                     </div>
                 `;
