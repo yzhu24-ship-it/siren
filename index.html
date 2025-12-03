@@ -1,9 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social Persona Mask Switcher</title>
+    <title>魔法手势系统 - Magic Gesture System</title>
+
+    <!-- Three.js for 3D rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+
+    <!-- MediaPipe Hands for gesture recognition -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1640029074/camera_utils.min.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -12,591 +20,1001 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 40px;
-            background: linear-gradient(135deg, #ffa07a 0%, #ff6b6b 100%);
-            transition: background 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: 'Luminari', 'Papyrus', 'Brush Script MT', cursive, serif;
             overflow: hidden;
-            position: relative;
+            background: #f5e6d3;
+            background-image:
+                linear-gradient(0deg, transparent 24%, rgba(139, 69, 19, .05) 25%, rgba(139, 69, 19, .05) 26%, transparent 27%, transparent 74%, rgba(139, 69, 19, .05) 75%, rgba(139, 69, 19, .05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(139, 69, 19, .05) 25%, rgba(139, 69, 19, .05) 26%, transparent 27%, transparent 74%, rgba(139, 69, 19, .05) 75%, rgba(139, 69, 19, .05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
         }
 
-        /* 背景动画装饰 */
+        /* 羊皮纸纹理覆盖层 */
         body::before {
             content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: backgroundMove 20s linear infinite;
-            pointer-events: none;
-        }
-
-        @keyframes backgroundMove {
-            0% {
-                transform: translate(0, 0);
-            }
-            100% {
-                transform: translate(50px, 50px);
-            }
-        }
-
-        .container {
-            position: relative;
-            z-index: 1;
-            text-align: center;
-            max-width: 600px;
-            width: 100%;
-        }
-
-        h1 {
-            color: white;
-            font-size: 2.5rem;
-            margin-bottom: 60px;
-            text-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
-            font-weight: 300;
-            letter-spacing: 2px;
-        }
-
-        .avatar-container {
-            margin: 0 auto 60px;
-            width: 300px;
-            height: 300px;
-            position: relative;
-        }
-
-        .avatar {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
-                        0 0 0 10px rgba(255, 255, 255, 0.1),
-                        0 0 0 20px rgba(255, 255, 255, 0.05);
-            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-                        box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            background: white;
-            animation: avatarPulse 3s ease-in-out infinite;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" /></filter><rect width="300" height="300" filter="url(%23noise)" opacity="0.05"/></svg>');
+            pointer-events: none;
+            z-index: 1;
         }
 
-        @keyframes avatarPulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.02);
-            }
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
         }
 
-        .avatar:hover {
-            transform: scale(1.05);
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4),
-                        0 0 0 10px rgba(255, 255, 255, 0.15),
-                        0 0 0 20px rgba(255, 255, 255, 0.08);
-        }
-
-        /* 切换动画效果 */
-        .avatar.switching {
-            animation: switchAnimation 0.6s ease-in-out;
-        }
-
-        @keyframes switchAnimation {
-            0% {
-                transform: scale(1) rotateY(0deg);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(0.8) rotateY(90deg);
-                opacity: 0.3;
-            }
-            100% {
-                transform: scale(1) rotateY(0deg);
-                opacity: 1;
-            }
-        }
-
-        .button-group {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        .persona-button {
-            padding: 20px 30px;
-            font-size: 1.1rem;
-            font-weight: 500;
-            border: none;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            position: relative;
+        #video-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 320px;
+            height: 240px;
+            border: 3px solid #8b4513;
+            border-radius: 15px;
             overflow: hidden;
+            box-shadow: 0 8px 32px rgba(139, 69, 19, 0.3);
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
         }
 
-        .persona-button::before {
-            content: '';
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        #hand-canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transform: translateX(-100%);
-            transition: transform 0.6s;
+            transform: scaleX(-1);
         }
 
-        .persona-button:hover::before {
-            transform: translateX(100%);
+        .hud {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            color: #3a2a1a;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
+            font-size: 18px;
+            background: rgba(245, 230, 211, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #8b4513;
+            box-shadow: 0 4px 16px rgba(139, 69, 19, 0.3);
+            max-width: 300px;
         }
 
-        .persona-button:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        .hud h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #6b3410;
         }
 
-        .persona-button:active {
-            transform: translateY(0);
+        .gesture-status {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 5px;
+            border-left: 3px solid #8b4513;
         }
 
-        .persona-button.active {
-            background: rgba(255, 255, 255, 0.4);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2),
-                        inset 0 2px 10px rgba(255, 255, 255, 0.2);
-            transform: scale(0.98);
+        .instruction {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 99;
+            background: rgba(245, 230, 211, 0.95);
+            padding: 30px 40px;
+            border-radius: 15px;
+            border: 3px solid #8b4513;
+            box-shadow: 0 8px 32px rgba(139, 69, 19, 0.5);
+            text-align: center;
+            color: #3a2a1a;
+            max-width: 600px;
         }
 
-        /* 状态指示器 */
-        .status-indicator {
-            margin-top: 40px;
+        .instruction h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #6b3410;
+        }
+
+        .instruction ul {
+            text-align: left;
+            margin: 20px 0;
+            line-height: 1.8;
+        }
+
+        .instruction button {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-family: inherit;
+            background: #8b4513;
             color: white;
-            font-size: 1.2rem;
-            opacity: 0.9;
-            text-shadow: 1px 2px 4px rgba(0, 0, 0, 0.2);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        /* 响应式设计 */
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 2rem;
-                margin-bottom: 40px;
-            }
-
-            .avatar-container {
-                width: 250px;
-                height: 250px;
-                margin-bottom: 40px;
-            }
-
-            .button-group {
-                grid-template-columns: 1fr;
-                max-width: 300px;
-            }
-
-            .persona-button {
-                font-size: 1rem;
-                padding: 18px 25px;
-            }
+        .instruction button:hover {
+            background: #a0522d;
+            transform: scale(1.05);
         }
 
-        /* 不同状态的背景色 */
-        body.family {
-            background: linear-gradient(135deg, #ffa07a 0%, #ff6b6b 100%);
+        .hidden {
+            display: none;
         }
 
-        body.friend {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        /* 魔法光标效果 */
+        #magic-cursor {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            border: 2px solid #ffd700;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.3), transparent);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+            display: none;
         }
 
-        body.colleague {
-            background: linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%);
+        /* 加载提示 */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 200;
+            background: rgba(245, 230, 211, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            border: 3px solid #8b4513;
+            text-align: center;
+            color: #3a2a1a;
         }
 
-        body.stranger {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #8b4513;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
-<body class="family">
-    <div class="container">
-        <h1>Social Persona Mask Switcher</h1>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading" class="loading">
+        <h2>正在加载魔法系统...</h2>
+        <div class="loading-spinner"></div>
+        <p>Loading Magic System...</p>
+    </div>
 
-        <div class="avatar-container">
-            <canvas id="avatar" class="avatar"></canvas>
-        </div>
+    <!-- Instruction Screen -->
+    <div id="instruction" class="instruction hidden">
+        <h1>✨ 魔法手势系统 ✨</h1>
+        <p style="font-size: 20px; margin-bottom: 20px;">Magic Gesture System</p>
 
-        <div class="button-group">
-            <button class="persona-button active" data-persona="family">👨‍👩‍👧‍👦 Family</button>
-            <button class="persona-button" data-persona="friend">🎉 Friends</button>
-            <button class="persona-button" data-persona="colleague">💼 Colleagues</button>
-            <button class="persona-button" data-persona="stranger">🎭 Strangers</button>
-        </div>
+        <ul>
+            <li><strong>👉 食指瞄准</strong>：默认状态，指向物体使其发光</li>
+            <li><strong>🤏 轻弹</strong>：食指与拇指快速捏合再放开，抓取物体</li>
+            <li><strong>🔄 顺时针画圈</strong>：归位咒，物体飞向书架</li>
+            <li><strong>🔃 逆时针画圈</strong>：粉碎咒，物体化为星光</li>
+        </ul>
 
-        <div class="status-indicator">
-            Current Mode: <span id="currentStatus">Family Mode</span>
+        <p style="margin-top: 20px; font-style: italic;">
+            请允许使用摄像头以开始魔法之旅！<br>
+            Please allow camera access to begin your magical journey!
+        </p>
+
+        <button id="start-btn">开始施法 Start Magic</button>
+    </div>
+
+    <!-- 3D Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Video Container for Hand Tracking -->
+    <div id="video-container">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="hand-canvas"></canvas>
+    </div>
+
+    <!-- HUD Information -->
+    <div class="hud">
+        <h2>🧙‍♀️ 魔法状态</h2>
+        <div id="gesture-info">
+            <div><strong>手势:</strong> <span id="gesture-name">等待检测...</span></div>
+            <div><strong>物体:</strong> <span id="object-status">无</span></div>
+            <div class="gesture-status">
+                <div id="spell-status">准备就绪</div>
+            </div>
         </div>
     </div>
 
+    <!-- Magic Cursor -->
+    <div id="magic-cursor"></div>
+
     <script>
-        // Drawing function for cute avatars with different expressions
-        function drawAvatar(ctx, expression, bgColor) {
-            const width = 300;
-            const height = 300;
+        // ============================================
+        // 全局变量和初始化
+        // ============================================
+        let scene, camera, renderer;
+        let hands;
+        let video, handCanvas, handCtx;
+        let magicObjects = [];
+        let shelf;
+        let particles = [];
+        let currentGesture = 'idle';
+        let selectedObject = null;
+        let grabbedObject = null;
+        let fingerTipPosition = { x: 0, y: 0, z: 0 };
 
-            // Clear canvas
-            ctx.clearRect(0, 0, width, height);
+        // 手势轨迹记录
+        let gestureTrail = [];
+        const TRAIL_LENGTH = 30;
 
-            // Background with gradient
-            const bgGradient = ctx.createRadialGradient(150, 150, 0, 150, 150, 150);
-            bgGradient.addColorStop(0, bgColor);
-            bgGradient.addColorStop(1, adjustBrightness(bgColor, -20));
-            ctx.fillStyle = bgGradient;
-            ctx.fillRect(0, 0, width, height);
+        // 音效上下文
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-            // Face shadow (for depth)
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.beginPath();
-            ctx.arc(150, 140, 78, 0, Math.PI * 2);
-            ctx.fill();
+        // ============================================
+        // 音效系统
+        // ============================================
+        function playSound(type) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
 
-            // Face
-            const faceGradient = ctx.createRadialGradient(150, 130, 0, 150, 140, 75);
-            faceGradient.addColorStop(0, '#ffd4b3');
-            faceGradient.addColorStop(1, '#f4c7a5');
-            ctx.fillStyle = faceGradient;
-            ctx.beginPath();
-            ctx.arc(150, 135, 75, 0, Math.PI * 2);
-            ctx.fill();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
 
-            // Hair (long wavy hair)
-            ctx.fillStyle = '#6b3410';
-            ctx.beginPath();
-            // Top bun/volume
-            ctx.ellipse(150, 85, 80, 50, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Hair highlights
-            ctx.fillStyle = '#8b4513';
-            ctx.beginPath();
-            ctx.ellipse(150, 85, 70, 43, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Left hair flow
-            ctx.fillStyle = '#6b3410';
-            ctx.beginPath();
-            ctx.moveTo(70, 90);
-            ctx.quadraticCurveTo(60, 120, 70, 180);
-            ctx.quadraticCurveTo(75, 200, 85, 215);
-            ctx.lineTo(95, 210);
-            ctx.quadraticCurveTo(85, 190, 80, 160);
-            ctx.quadraticCurveTo(75, 120, 85, 90);
-            ctx.fill();
-
-            // Right hair flow
-            ctx.beginPath();
-            ctx.moveTo(230, 90);
-            ctx.quadraticCurveTo(240, 120, 230, 180);
-            ctx.quadraticCurveTo(225, 200, 215, 215);
-            ctx.lineTo(205, 210);
-            ctx.quadraticCurveTo(215, 190, 220, 160);
-            ctx.quadraticCurveTo(225, 120, 215, 90);
-            ctx.fill();
-
-            // Blush
-            if (expression === 'family' || expression === 'friend') {
-                ctx.fillStyle = 'rgba(255, 150, 150, 0.3)';
-                ctx.beginPath();
-                ctx.ellipse(110, 145, 15, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(190, 145, 15, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
+            switch(type) {
+                case 'hover':
+                    oscillator.frequency.value = 440;
+                    gainNode.gain.value = 0.1;
+                    oscillator.type = 'sine';
+                    break;
+                case 'grab':
+                    oscillator.frequency.value = 523;
+                    gainNode.gain.value = 0.2;
+                    oscillator.type = 'triangle';
+                    break;
+                case 'return':
+                    oscillator.frequency.value = 659;
+                    gainNode.gain.value = 0.15;
+                    oscillator.type = 'square';
+                    break;
+                case 'destroy':
+                    oscillator.frequency.value = 880;
+                    gainNode.gain.value = 0.15;
+                    oscillator.type = 'sawtooth';
+                    break;
             }
 
-            // Eyes
-            if (expression === 'stranger') {
-                // Cold, looking away
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.ellipse(115, 125, 12, 15, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(185, 125, 12, 15, 0, 0, Math.PI * 2);
-                ctx.fill();
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
 
-                ctx.fillStyle = '#4a3728';
-                ctx.beginPath();
-                ctx.arc(112, 125, 8, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(188, 125, 8, 0, Math.PI * 2);
-                ctx.fill();
+        // ============================================
+        // Three.js 场景初始化
+        // ============================================
+        function initThreeJS() {
+            // 场景
+            scene = new THREE.Scene();
+            scene.background = null; // 透明背景，显示羊皮纸纹理
+            scene.fog = new THREE.Fog(0xf5e6d3, 10, 50);
 
-                // Flat eyebrows
-                ctx.strokeStyle = '#4a3728';
-                ctx.lineWidth = 2.5;
-                ctx.beginPath();
-                ctx.moveTo(100, 108);
-                ctx.lineTo(130, 108);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(170, 108);
-                ctx.lineTo(200, 108);
-                ctx.stroke();
-            } else if (expression === 'friend') {
-                // Super happy squinted eyes
-                ctx.fillStyle = '#4a3728';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(125, 122, 3, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(175, 122, 3, 0, Math.PI * 2);
-                ctx.fill();
+            // 相机
+            camera = new THREE.PerspectiveCamera(
+                75,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(0, 1.6, 5);
 
-                // Happy curved eyebrows
-                ctx.strokeStyle = '#4a3728';
-                ctx.lineWidth = 2.5;
-                ctx.beginPath();
-                ctx.moveTo(105, 108);
-                ctx.quadraticCurveTo(125, 102, 145, 108);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(155, 108);
-                ctx.quadraticCurveTo(175, 102, 195, 108);
-                ctx.stroke();
+            // 渲染器
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // 光照
+            const ambientLight = new THREE.AmbientLight(0xffd89b, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+
+            // 点光源（魔法氛围）
+            const pointLight = new THREE.PointLight(0xffd700, 1, 10);
+            pointLight.position.set(0, 3, 0);
+            scene.add(pointLight);
+
+            // 创建书架
+            createShelf();
+
+            // 创建魔法物体
+            createMagicObjects();
+
+            // 窗口调整
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createShelf() {
+            const shelfGroup = new THREE.Group();
+
+            // 书架材质 - 羊皮纸风格
+            const shelfMaterial = new THREE.MeshStandardMaterial({
+                color: 0x8b4513,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+
+            // 三层书架
+            for (let i = 0; i < 3; i++) {
+                const shelfGeometry = new THREE.BoxGeometry(6, 0.2, 1);
+                const shelfMesh = new THREE.Mesh(shelfGeometry, shelfMaterial);
+                shelfMesh.position.set(-5, i * 1.5, -3);
+                shelfMesh.castShadow = true;
+                shelfMesh.receiveShadow = true;
+                shelfGroup.add(shelfMesh);
+
+                // 侧板
+                if (i === 0) {
+                    const sideGeometry = new THREE.BoxGeometry(0.2, 4.5, 1);
+                    const leftSide = new THREE.Mesh(sideGeometry, shelfMaterial);
+                    leftSide.position.set(-8, 1.5, -3);
+                    shelfGroup.add(leftSide);
+
+                    const rightSide = new THREE.Mesh(sideGeometry, shelfMaterial);
+                    rightSide.position.set(-2, 1.5, -3);
+                    shelfGroup.add(rightSide);
+                }
+            }
+
+            shelf = shelfGroup;
+            scene.add(shelfGroup);
+        }
+
+        function createMagicObjects() {
+            const shapes = ['box', 'sphere', 'cone', 'torus'];
+            const colors = [0xff6b6b, 0x4ecdc4, 0xffe66d, 0xa8e6cf, 0xff8b94];
+
+            for (let i = 0; i < 5; i++) {
+                let geometry;
+                const shape = shapes[Math.floor(Math.random() * shapes.length)];
+
+                switch(shape) {
+                    case 'box':
+                        geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+                        break;
+                    case 'sphere':
+                        geometry = new THREE.SphereGeometry(0.3, 32, 32);
+                        break;
+                    case 'cone':
+                        geometry = new THREE.ConeGeometry(0.3, 0.6, 32);
+                        break;
+                    case 'torus':
+                        geometry = new THREE.TorusGeometry(0.3, 0.1, 16, 100);
+                        break;
+                }
+
+                const material = new THREE.MeshStandardMaterial({
+                    color: colors[i],
+                    roughness: 0.5,
+                    metalness: 0.3,
+                    emissive: 0x000000
+                });
+
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(
+                    (Math.random() - 0.5) * 8,
+                    Math.random() * 2 + 0.5,
+                    (Math.random() - 0.5) * 4
+                );
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                mesh.userData.originalPosition = mesh.position.clone();
+                mesh.userData.baseColor = colors[i];
+
+                scene.add(mesh);
+                magicObjects.push(mesh);
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ============================================
+        // MediaPipe 手势识别初始化
+        // ============================================
+        async function initMediaPipe() {
+            video = document.getElementById('video');
+            handCanvas = document.getElementById('hand-canvas');
+            handCtx = handCanvas.getContext('2d');
+
+            // 初始化 MediaPipe Hands
+            hands = new Hands({
+                locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${file}`;
+                }
+            });
+
+            hands.setOptions({
+                maxNumHands: 1,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.7,
+                minTrackingConfidence: 0.7
+            });
+
+            hands.onResults(onHandsResults);
+
+            // 启动摄像头
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 1280, height: 720 }
+                });
+                video.srcObject = stream;
+
+                // 等待视频准备好
+                await new Promise(resolve => {
+                    video.onloadedmetadata = () => {
+                        handCanvas.width = video.videoWidth;
+                        handCanvas.height = video.videoHeight;
+                        resolve();
+                    };
+                });
+
+                // 启动摄像头处理
+                const camera = new Camera(video, {
+                    onFrame: async () => {
+                        await hands.send({ image: video });
+                    },
+                    width: 1280,
+                    height: 720
+                });
+                camera.start();
+
+            } catch (error) {
+                console.error('无法访问摄像头:', error);
+                alert('无法访问摄像头。请确保已授予摄像头权限。');
+            }
+        }
+
+        // ============================================
+        // 手势识别结果处理
+        // ============================================
+        function onHandsResults(results) {
+            // 清空手部画布
+            handCtx.clearRect(0, 0, handCanvas.width, handCanvas.height);
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                const landmarks = results.multiHandLandmarks[0];
+
+                // 绘制手部骨架
+                drawHand(landmarks);
+
+                // 检测手势
+                detectGesture(landmarks);
+
+                // 更新 3D 场景中的交互
+                updateInteraction(landmarks);
             } else {
-                // Big cute eyes
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.ellipse(125, 125, 13, 16, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(175, 125, 13, 16, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Iris
-                ctx.fillStyle = '#4a3728';
-                ctx.beginPath();
-                ctx.arc(125, 128, 10, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(175, 128, 10, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Pupils with sparkle
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(125, 128, 6, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(175, 128, 6, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Eye sparkles
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.arc(122, 124, 2.5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(172, 124, 2.5, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Eyebrows
-                ctx.strokeStyle = '#4a3728';
-                ctx.lineWidth = 2.5;
-                if (expression === 'family') {
-                    ctx.beginPath();
-                    ctx.moveTo(105, 105);
-                    ctx.quadraticCurveTo(125, 103, 145, 106);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(155, 106);
-                    ctx.quadraticCurveTo(175, 103, 195, 105);
-                    ctx.stroke();
-                } else {
-                    ctx.beginPath();
-                    ctx.moveTo(105, 108);
-                    ctx.lineTo(145, 108);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(155, 108);
-                    ctx.lineTo(195, 108);
-                    ctx.stroke();
-                }
+                currentGesture = 'idle';
+                updateGestureUI('等待检测...');
             }
-
-            // Mouth
-            ctx.strokeStyle = '#4a3728';
-            ctx.fillStyle = '#ff6b9d';
-            ctx.lineWidth = 2.5;
-
-            if (expression === 'family') {
-                // Big happy smile
-                ctx.beginPath();
-                ctx.moveTo(115, 155);
-                ctx.quadraticCurveTo(150, 180, 185, 155);
-                ctx.stroke();
-
-                // Open mouth smile
-                ctx.fillStyle = 'rgba(255, 107, 157, 0.6)';
-                ctx.beginPath();
-                ctx.moveTo(115, 155);
-                ctx.quadraticCurveTo(150, 175, 185, 155);
-                ctx.quadraticCurveTo(150, 165, 115, 155);
-                ctx.fill();
-            } else if (expression === 'friend') {
-                // Super wide laugh
-                ctx.beginPath();
-                ctx.arc(150, 145, 30, 0.2, Math.PI - 0.2);
-                ctx.stroke();
-
-                // Open laughing mouth
-                ctx.fillStyle = 'rgba(255, 107, 157, 0.7)';
-                ctx.beginPath();
-                ctx.arc(150, 145, 28, 0.2, Math.PI - 0.2);
-                ctx.lineTo(150, 160);
-                ctx.fill();
-            } else if (expression === 'colleague') {
-                // Polite small smile
-                ctx.beginPath();
-                ctx.moveTo(130, 162);
-                ctx.quadraticCurveTo(150, 168, 170, 162);
-                ctx.stroke();
-            } else if (expression === 'stranger') {
-                // Flat line - indifferent
-                ctx.beginPath();
-                ctx.moveTo(130, 162);
-                ctx.lineTo(170, 162);
-                ctx.stroke();
-            }
-
-            // Cute nose
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.beginPath();
-            ctx.arc(150, 142, 2, 0, Math.PI * 2);
-            ctx.fill();
         }
 
-        // Helper function to adjust color brightness
-        function adjustBrightness(color, amount) {
-            const hex = color.replace('#', '');
-            const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
-            const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
-            const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
-            return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
-        }
+        function drawHand(landmarks) {
+            handCtx.strokeStyle = '#ffd700';
+            handCtx.lineWidth = 3;
+            handCtx.fillStyle = '#ffd700';
 
-        // Persona configurations
-        const personas = {
-            family: {
-                name: 'Family Mode',
-                expression: 'family',
-                bgColor: '#ffdfbf',
-                emoji: '👨‍👩‍👧‍👦'
-            },
-            friend: {
-                name: 'Friends Mode',
-                expression: 'friend',
-                bgColor: '#b6e3f4',
-                emoji: '🎉'
-            },
-            colleague: {
-                name: 'Colleagues Mode',
-                expression: 'colleague',
-                bgColor: '#d1d4f9',
-                emoji: '💼'
-            },
-            stranger: {
-                name: 'Strangers Mode',
-                expression: 'stranger',
-                bgColor: '#c0aede',
-                emoji: '🎭'
-            }
-        };
+            // 绘制连接线
+            const connections = [
+                [0, 1], [1, 2], [2, 3], [3, 4], // 拇指
+                [0, 5], [5, 6], [6, 7], [7, 8], // 食指
+                [0, 9], [9, 10], [10, 11], [11, 12], // 中指
+                [0, 13], [13, 14], [14, 15], [15, 16], // 无名指
+                [0, 17], [17, 18], [18, 19], [19, 20], // 小指
+                [5, 9], [9, 13], [13, 17] // 手掌
+            ];
 
-        // Get DOM elements
-        const canvas = document.getElementById('avatar');
-        const ctx = canvas.getContext('2d');
-        const statusElement = document.getElementById('currentStatus');
-        const buttons = document.querySelectorAll('.persona-button');
-        const body = document.body;
+            connections.forEach(([start, end]) => {
+                const startPoint = landmarks[start];
+                const endPoint = landmarks[end];
 
-        // Set canvas size
-        canvas.width = 300;
-        canvas.height = 300;
+                handCtx.beginPath();
+                handCtx.moveTo(startPoint.x * handCanvas.width, startPoint.y * handCanvas.height);
+                handCtx.lineTo(endPoint.x * handCanvas.width, endPoint.y * handCanvas.height);
+                handCtx.stroke();
+            });
 
-        // Switch persona function
-        function switchPersona(personaKey) {
-            const persona = personas[personaKey];
+            // 绘制关键点
+            landmarks.forEach((landmark, index) => {
+                const x = landmark.x * handCanvas.width;
+                const y = landmark.y * handCanvas.height;
 
-            // Add switching animation
-            canvas.classList.add('switching');
+                handCtx.beginPath();
+                handCtx.arc(x, y, 5, 0, Math.PI * 2);
+                handCtx.fill();
 
-            // Draw new avatar after animation delay
-            setTimeout(() => {
-                drawAvatar(ctx, persona.expression, persona.bgColor);
-            }, 300);
-
-            // Remove animation class
-            setTimeout(() => {
-                canvas.classList.remove('switching');
-            }, 600);
-
-            // Update background color
-            body.className = personaKey;
-
-            // Update status text
-            statusElement.textContent = persona.name;
-
-            // Update button states
-            buttons.forEach(btn => {
-                if (btn.dataset.persona === personaKey) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
+                // 高亮食指尖
+                if (index === 8) {
+                    handCtx.beginPath();
+                    handCtx.arc(x, y, 10, 0, Math.PI * 2);
+                    handCtx.strokeStyle = '#ff6b6b';
+                    handCtx.lineWidth = 3;
+                    handCtx.stroke();
                 }
             });
         }
 
-        // Add click events to buttons
-        buttons.forEach(button => {
-            button.addEventListener('click', () => {
-                const personaKey = button.dataset.persona;
-                switchPersona(personaKey);
-            });
-        });
+        // ============================================
+        // 手势检测逻辑
+        // ============================================
+        function detectGesture(landmarks) {
+            const indexTip = landmarks[8];
+            const indexMid = landmarks[6];
+            const thumbTip = landmarks[4];
+            const thumbMid = landmarks[3];
+            const middleTip = landmarks[12];
+            const ringTip = landmarks[16];
+            const pinkyTip = landmarks[20];
+            const wrist = landmarks[0];
 
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            const keyMap = {
-                '1': 'family',
-                '2': 'friend',
-                '3': 'colleague',
-                '4': 'stranger'
+            // 计算食指是否伸直
+            const indexExtended = indexTip.y < indexMid.y;
+
+            // 计算其他手指是否弯曲
+            const middleCurled = middleTip.y > landmarks[10].y;
+            const ringCurled = ringTip.y > landmarks[14].y;
+            const pinkyCurled = pinkyTip.y > landmarks[18].y;
+
+            // 计算拇指和食指的距离
+            const pinchDistance = Math.sqrt(
+                Math.pow(thumbTip.x - indexTip.x, 2) +
+                Math.pow(thumbTip.y - indexTip.y, 2) +
+                Math.pow(thumbTip.z - indexTip.z, 2)
+            );
+
+            // 记录食指轨迹用于画圈检测
+            gestureTrail.push({
+                x: indexTip.x,
+                y: indexTip.y,
+                timestamp: Date.now()
+            });
+
+            // 保持轨迹长度
+            if (gestureTrail.length > TRAIL_LENGTH) {
+                gestureTrail.shift();
+            }
+
+            // 清理旧轨迹（超过2秒）
+            const now = Date.now();
+            gestureTrail = gestureTrail.filter(point => now - point.timestamp < 2000);
+
+            // 检测轻弹手势（快速捏合）
+            if (pinchDistance < 0.05 && !grabbedObject) {
+                if (currentGesture !== 'pinch') {
+                    currentGesture = 'pinch';
+                    handlePinchGesture();
+                }
+            }
+            // 检测画圈手势
+            else if (gestureTrail.length >= TRAIL_LENGTH) {
+                const circleDirection = detectCircle();
+                if (circleDirection === 'clockwise') {
+                    currentGesture = 'clockwise';
+                    handleClockwiseGesture();
+                } else if (circleDirection === 'counterclockwise') {
+                    currentGesture = 'counterclockwise';
+                    handleCounterClockwiseGesture();
+                }
+            }
+            // 默认：食指瞄准
+            else if (indexExtended && middleCurled && ringCurled && pinkyCurled) {
+                currentGesture = 'pointing';
+                updateGestureUI('👉 食指瞄准');
+            } else {
+                currentGesture = 'idle';
+                updateGestureUI('等待手势...');
+            }
+        }
+
+        function detectCircle() {
+            if (gestureTrail.length < TRAIL_LENGTH) return null;
+
+            // 计算轨迹中心点
+            let centerX = 0, centerY = 0;
+            gestureTrail.forEach(point => {
+                centerX += point.x;
+                centerY += point.y;
+            });
+            centerX /= gestureTrail.length;
+            centerY /= gestureTrail.length;
+
+            // 计算角度变化总和
+            let totalAngle = 0;
+            for (let i = 1; i < gestureTrail.length; i++) {
+                const prev = gestureTrail[i - 1];
+                const curr = gestureTrail[i];
+
+                const angle1 = Math.atan2(prev.y - centerY, prev.x - centerX);
+                const angle2 = Math.atan2(curr.y - centerY, curr.x - centerX);
+
+                let diff = angle2 - angle1;
+
+                // 标准化角度差
+                if (diff > Math.PI) diff -= 2 * Math.PI;
+                if (diff < -Math.PI) diff += 2 * Math.PI;
+
+                totalAngle += diff;
+            }
+
+            // 判断方向（至少旋转了 270 度）
+            const threshold = Math.PI * 1.5;
+            if (totalAngle > threshold) {
+                return 'counterclockwise';
+            } else if (totalAngle < -threshold) {
+                return 'clockwise';
+            }
+
+            return null;
+        }
+
+        // ============================================
+        // 手势处理函数
+        // ============================================
+        function handlePinchGesture() {
+            updateGestureUI('🤏 轻弹抓取');
+            if (selectedObject && !grabbedObject) {
+                grabbedObject = selectedObject;
+                playSound('grab');
+                updateObjectStatus('已抓取');
+                createMagicCircle(grabbedObject.position);
+            }
+        }
+
+        function handleClockwiseGesture() {
+            updateGestureUI('🔄 归位咒');
+            if (grabbedObject) {
+                returnObjectToShelf(grabbedObject);
+                grabbedObject = null;
+                selectedObject = null;
+                gestureTrail = [];
+                playSound('return');
+                updateObjectStatus('已归位');
+            }
+        }
+
+        function handleCounterClockwiseGesture() {
+            updateGestureUI('🔃 粉碎咒');
+            if (grabbedObject) {
+                destroyObject(grabbedObject);
+                grabbedObject = null;
+                selectedObject = null;
+                gestureTrail = [];
+                playSound('destroy');
+                updateObjectStatus('已粉碎');
+            }
+        }
+
+        function updateInteraction(landmarks) {
+            const indexTip = landmarks[8];
+
+            // 将 2D 手部坐标转换为 3D 场景坐标
+            const x = (indexTip.x - 0.5) * 10;
+            const y = -(indexTip.y - 0.5) * 8;
+            const z = -indexTip.z * 5;
+
+            fingerTipPosition = { x, y, z };
+
+            // 更新魔法光标位置
+            const cursor = document.getElementById('magic-cursor');
+            cursor.style.left = (indexTip.x * window.innerWidth) + 'px';
+            cursor.style.top = (indexTip.y * window.innerHeight) + 'px';
+            cursor.style.display = 'block';
+
+            // 射线检测
+            const raycaster = new THREE.Raycaster();
+            const pointer = new THREE.Vector2(
+                (indexTip.x * 2 - 1),
+                -(indexTip.y * 2 - 1)
+            );
+
+            raycaster.setFromCamera(pointer, camera);
+            const intersects = raycaster.intersectObjects(magicObjects);
+
+            // 重置所有物体的发光
+            magicObjects.forEach(obj => {
+                obj.material.emissive.setHex(0x000000);
+                obj.material.emissiveIntensity = 0;
+            });
+
+            if (intersects.length > 0 && currentGesture === 'pointing') {
+                selectedObject = intersects[0].object;
+                selectedObject.material.emissive.setHex(selectedObject.userData.baseColor);
+                selectedObject.material.emissiveIntensity = 0.5;
+                playSound('hover');
+                updateObjectStatus('已选中');
+
+                // 创建光轨粒子
+                createParticleTrail(selectedObject.position);
+            } else if (!grabbedObject) {
+                selectedObject = null;
+                updateObjectStatus('无');
+            }
+
+            // 如果有抓取的物体，让它跟随手部
+            if (grabbedObject) {
+                const targetPos = new THREE.Vector3(x, y + 1, z + 3);
+                grabbedObject.position.lerp(targetPos, 0.1);
+
+                // 轻微旋转
+                grabbedObject.rotation.y += 0.02;
+
+                // 创建跟随粒子
+                createParticleTrail(grabbedObject.position);
+            }
+        }
+
+        // ============================================
+        // 粒子特效系统
+        // ============================================
+        function createParticleTrail(position) {
+            const geometry = new THREE.SphereGeometry(0.02, 8, 8);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0xffd700,
+                transparent: true,
+                opacity: 0.8
+            });
+            const particle = new THREE.Mesh(geometry, material);
+
+            particle.position.copy(position);
+            particle.position.x += (Math.random() - 0.5) * 0.2;
+            particle.position.y += (Math.random() - 0.5) * 0.2;
+            particle.position.z += (Math.random() - 0.5) * 0.2;
+
+            particle.userData.velocity = new THREE.Vector3(
+                (Math.random() - 0.5) * 0.02,
+                Math.random() * 0.02,
+                (Math.random() - 0.5) * 0.02
+            );
+            particle.userData.life = 1.0;
+
+            scene.add(particle);
+            particles.push(particle);
+        }
+
+        function createMagicCircle(position) {
+            const geometry = new THREE.RingGeometry(0.5, 0.6, 32);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0xffd700,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.8
+            });
+            const circle = new THREE.Mesh(geometry, material);
+
+            circle.position.copy(position);
+            circle.position.y -= 0.5;
+            circle.rotation.x = Math.PI / 2;
+
+            circle.userData.life = 1.0;
+            circle.userData.isCircle = true;
+
+            scene.add(circle);
+            particles.push(circle);
+        }
+
+        function createStarBurst(position, count = 30) {
+            for (let i = 0; i < count; i++) {
+                const geometry = new THREE.SphereGeometry(0.05, 8, 8);
+                const material = new THREE.MeshBasicMaterial({
+                    color: Math.random() > 0.5 ? 0xffd700 : 0xffffff,
+                    transparent: true,
+                    opacity: 1
+                });
+                const star = new THREE.Mesh(geometry, material);
+
+                star.position.copy(position);
+
+                const angle = (Math.PI * 2 * i) / count;
+                const speed = 0.05 + Math.random() * 0.05;
+                star.userData.velocity = new THREE.Vector3(
+                    Math.cos(angle) * speed,
+                    Math.random() * 0.1,
+                    Math.sin(angle) * speed
+                );
+                star.userData.life = 1.0;
+
+                scene.add(star);
+                particles.push(star);
+            }
+        }
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const particle = particles[i];
+
+                // 更新生命值
+                particle.userData.life -= 0.02;
+
+                if (particle.userData.life <= 0) {
+                    scene.remove(particle);
+                    particle.geometry.dispose();
+                    particle.material.dispose();
+                    particles.splice(i, 1);
+                    continue;
+                }
+
+                // 更新透明度
+                particle.material.opacity = particle.userData.life;
+
+                // 如果是魔法阵，旋转
+                if (particle.userData.isCircle) {
+                    particle.rotation.z += 0.05;
+                    particle.scale.multiplyScalar(1.02);
+                }
+                // 普通粒子移动
+                else if (particle.userData.velocity) {
+                    particle.position.add(particle.userData.velocity);
+                    particle.userData.velocity.y -= 0.001; // 重力
+                }
+            }
+        }
+
+        // ============================================
+        // 物体操作函数
+        // ============================================
+        function returnObjectToShelf(object) {
+            const targetY = Math.floor(Math.random() * 3) * 1.5 + 0.3;
+            const targetPos = new THREE.Vector3(-5, targetY, -2.5);
+
+            animateObjectToPosition(object, targetPos, () => {
+                createMagicCircle(targetPos);
+            });
+        }
+
+        function destroyObject(object) {
+            createStarBurst(object.position, 50);
+
+            const index = magicObjects.indexOf(object);
+            if (index > -1) {
+                magicObjects.splice(index, 1);
+            }
+
+            scene.remove(object);
+            object.geometry.dispose();
+            object.material.dispose();
+
+            // 1秒后重新生成物体
+            setTimeout(() => {
+                createMagicObjects();
+            }, 1000);
+        }
+
+        function animateObjectToPosition(object, targetPos, callback) {
+            const startPos = object.position.clone();
+            const duration = 60; // 帧数
+            let frame = 0;
+
+            const animate = () => {
+                frame++;
+                const progress = frame / duration;
+                const easeProgress = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+
+                object.position.lerpVectors(startPos, targetPos, easeProgress);
+
+                // 添加弧线轨迹
+                object.position.y += Math.sin(progress * Math.PI) * 2;
+
+                if (frame < duration) {
+                    requestAnimationFrame(animate);
+                } else if (callback) {
+                    callback();
+                }
             };
 
-            if (keyMap[e.key]) {
-                switchPersona(keyMap[e.key]);
+            animate();
+        }
+
+        // ============================================
+        // UI 更新函数
+        // ============================================
+        function updateGestureUI(gestureName) {
+            document.getElementById('gesture-name').textContent = gestureName;
+        }
+
+        function updateObjectStatus(status) {
+            document.getElementById('object-status').textContent = status;
+        }
+
+        function updateSpellStatus(status) {
+            document.getElementById('spell-status').textContent = status;
+        }
+
+        // ============================================
+        // 渲染循环
+        // ============================================
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // 更新粒子
+            updateParticles();
+
+            // 轻微相机摆动（增加魔法氛围）
+            camera.position.x = Math.sin(Date.now() * 0.0001) * 0.1;
+
+            // 渲染场景
+            renderer.render(scene, camera);
+        }
+
+        // ============================================
+        // 启动系统
+        // ============================================
+        document.getElementById('start-btn').addEventListener('click', async () => {
+            document.getElementById('instruction').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+
+            try {
+                // 初始化 Three.js
+                initThreeJS();
+
+                // 初始化 MediaPipe
+                await initMediaPipe();
+
+                // 隐藏加载界面
+                document.getElementById('loading').classList.add('hidden');
+
+                // 开始渲染
+                animate();
+
+                updateSpellStatus('✨ 魔法系统已激活！');
+            } catch (error) {
+                console.error('初始化失败:', error);
+                alert('系统初始化失败，请刷新页面重试。');
             }
         });
 
-        // Draw initial avatar (family mode)
-        drawAvatar(ctx, 'family', '#ffdfbf');
+        // 页面加载完成后显示说明
+        window.addEventListener('load', () => {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('instruction').classList.remove('hidden');
+        });
     </script>
 </body>
 </html>
