@@ -126,6 +126,25 @@
             text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
         }
 
+        /* 手势调试信息 */
+        #gestureDebug {
+            background: rgba(40, 40, 40, 0.9);
+            border: 1px solid #444;
+            padding: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .debug-row {
+            color: #888;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .debug-row span {
+            color: #00ff00;
+        }
+
         /* 物品栏 */
         #inventory {
             background: rgba(40, 40, 40, 0.9);
@@ -180,7 +199,17 @@
         #gameCanvas {
             flex: 1;
             cursor: crosshair;
-            image-rendering: crisp-edges;
+        }
+
+        /* 粒子容器 */
+        #particleCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
         }
 
         /* 底部 HUD */
@@ -291,13 +320,21 @@
             text-transform: uppercase;
         }
 
-        #startScreen p {
+        #startScreen .features {
             color: #aaa;
-            font-size: 14px;
+            font-size: 13px;
             margin-bottom: 40px;
-            text-align: center;
-            max-width: 600px;
-            line-height: 1.8;
+            text-align: left;
+            line-height: 2;
+        }
+
+        #startScreen .features div {
+            margin-bottom: 8px;
+        }
+
+        #startScreen .features span {
+            color: #00ff00;
+            font-weight: bold;
         }
 
         #startBtn {
@@ -359,6 +396,25 @@
             to { transform: rotate(360deg); }
         }
 
+        /* 慢动作提示 */
+        #slowMotionIndicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 50;
+        }
+
+        #slowMotionIndicator.active {
+            opacity: 1;
+        }
+
         /* 响应式 */
         @media (max-width: 1024px) {
             #leftPanel {
@@ -379,12 +435,14 @@
     <!-- 启动屏幕 -->
     <div id="startScreen">
         <h1>OFFICE DESK SIMULATOR</h1>
-        <div class="subtitle">Stress Relief Edition</div>
-        <p>
-            使用手势操控办公桌上的物品，释放工作压力<br>
-            握拳抓取 | 张开手释放 | 快速挥动投掷<br>
-            将垃圾扔进垃圾桶获得分数
-        </p>
+        <div class="subtitle">Advanced Gesture Recognition</div>
+        <div class="features">
+            <div>✓ <span>精确手势识别</span> - 拇指+食指捏取、握拳抓取</div>
+            <div>✓ <span>物品状态变化</span> - 纸张→捏合→碎裂→垃圾桶</div>
+            <div>✓ <span>慢动作效果</span> - 捏合和碎裂时自动触发</div>
+            <div>✓ <span>粒子系统</span> - 碎裂粒子飞散效果</div>
+            <div>✓ <span>真实物理</span> - 抛物线、旋转、重力模拟</div>
+        </div>
         <button id="startBtn">[ LAUNCH GAME ]</button>
     </div>
 
@@ -413,9 +471,17 @@
                     <span class="stat-value" id="comboDisplay">0x</span>
                 </div>
                 <div class="stat-row">
-                    <span>手势</span>
-                    <span class="stat-value" id="gestureDisplay">READY</span>
+                    <span>碎裂数</span>
+                    <span class="stat-value" id="crumbleCount">0</span>
                 </div>
+            </div>
+
+            <div class="panel-title">▶ Gesture Debug</div>
+            <div id="gestureDebug">
+                <div class="debug-row">手势: <span id="gestureType">WAIT</span></div>
+                <div class="debug-row">捏取距离: <span id="pinchDist">-</span></div>
+                <div class="debug-row">弯曲手指: <span id="bentFingers">-</span></div>
+                <div class="debug-row">物品状态: <span id="itemState">IDLE</span></div>
             </div>
 
             <div class="panel-title">▶ Inventory</div>
@@ -452,6 +518,8 @@
         <!-- 主游戏区域 -->
         <div id="mainArea">
             <canvas id="gameCanvas"></canvas>
+            <canvas id="particleCanvas"></canvas>
+            <div id="slowMotionIndicator">SLOW MOTION</div>
 
             <!-- 底部 HUD -->
             <div id="bottomHud">
@@ -475,7 +543,7 @@
 
                 <div class="hud-section">
                     <div class="hud-item">
-                        <div class="hud-label">Status</div>
+                        <div class="hud-label">Gesture</div>
                         <div class="hud-value" id="gestureStatus" style="font-size: 32px;">🖐️</div>
                     </div>
                 </div>
@@ -492,7 +560,7 @@
 
     <!-- 提示 -->
     <div id="hints" class="hidden">
-        > 握拳抓取，张开手释放，快速挥动投掷！
+        > 拇指+食指捏取物品，握拳投掷，快速挥动碎裂！
     </div>
 
     <script>
@@ -503,20 +571,36 @@
         let hands, camera;
         let score = 0;
         let combo = 0;
+        let crumbleTotal = 0;
         let comboTimer = null;
+        let timeScale = 1.0;
+        let slowMotionTimer = null;
 
         // 手势状态
         let handState = {
             isGrabbing: false,
+            isPinching: false,
+            pinchDistance: 0,
             position: { x: 0, y: 0 },
             velocity: { x: 0, y: 0 },
             previousPosition: { x: 0, y: 0 }
+        };
+
+        // 物品状态枚举
+        const ItemState = {
+            IDLE: 'IDLE',
+            GRABBED: 'GRABBED',
+            PINCHING: 'PINCHING',
+            THROWN: 'THROWN',
+            CRUMBLING: 'CRUMBLING',
+            TRASHED: 'TRASHED'
         };
 
         // 游戏物品
         let items = [];
         let trashBin = null;
         let grabbedItem = null;
+        let particles = [];
 
         // DOM 元素
         const startScreen = document.getElementById('startScreen');
@@ -525,21 +609,66 @@
         const inputVideo = document.getElementById('inputVideo');
         const handCanvas = document.getElementById('handCanvas');
         const gameCanvas = document.getElementById('gameCanvas');
+        const particleCanvas = document.getElementById('particleCanvas');
         const cameraStatus = document.getElementById('cameraStatus');
         const scoreElement = document.getElementById('score');
         const scoreDisplay = document.getElementById('scoreDisplay');
         const comboElement = document.getElementById('combo');
         const comboDisplay = document.getElementById('comboDisplay');
+        const crumbleCountElement = document.getElementById('crumbleCount');
         const gestureStatus = document.getElementById('gestureStatus');
-        const gestureDisplay = document.getElementById('gestureDisplay');
         const hints = document.getElementById('hints');
         const resetBtn = document.getElementById('resetBtn');
         const addItemBtn = document.getElementById('addItemBtn');
         const inventoryItems = document.querySelectorAll('.inventory-item');
+        const slowMotionIndicator = document.getElementById('slowMotionIndicator');
+
+        // 调试元素
+        const gestureTypeElement = document.getElementById('gestureType');
+        const pinchDistElement = document.getElementById('pinchDist');
+        const bentFingersElement = document.getElementById('bentFingers');
+        const itemStateElement = document.getElementById('itemState');
+
+        // ==================== 粒子类 ====================
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 10;
+                this.vy = (Math.random() - 0.5) * 10 - 5;
+                this.life = 1.0;
+                this.decay = 0.02;
+                this.size = Math.random() * 8 + 4;
+                this.color = color;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.3;
+            }
+
+            update() {
+                this.x += this.vx * timeScale;
+                this.y += this.vy * timeScale;
+                this.vy += 0.3 * timeScale; // 重力
+                this.life -= this.decay * timeScale;
+                this.rotation += this.rotationSpeed * timeScale;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+                ctx.restore();
+            }
+
+            isDead() {
+                return this.life <= 0;
+            }
+        }
 
         // ==================== 绘制木纹桌面背景 ====================
         function drawWoodTexture(ctx, width, height) {
-            // 基础木色
             const gradient = ctx.createLinearGradient(0, 0, 0, height);
             gradient.addColorStop(0, '#8B4513');
             gradient.addColorStop(0.5, '#A0522D');
@@ -547,7 +676,6 @@
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, width, height);
 
-            // 木纹纹理
             ctx.strokeStyle = 'rgba(101, 67, 33, 0.3)';
             ctx.lineWidth = 2;
             for (let i = 0; i < height; i += 20) {
@@ -560,7 +688,6 @@
                 ctx.stroke();
             }
 
-            // 添加一些暗色斑点
             ctx.fillStyle = 'rgba(60, 40, 20, 0.2)';
             for (let i = 0; i < 50; i++) {
                 const x = Math.random() * width;
@@ -582,7 +709,6 @@
                 const w = 100;
                 const h = 120;
 
-                // 垃圾桶身
                 ctx.fillStyle = '#404040';
                 ctx.strokeStyle = '#202020';
                 ctx.lineWidth = 3;
@@ -595,12 +721,10 @@
                 ctx.fill();
                 ctx.stroke();
 
-                // 垃圾桶盖
                 ctx.fillStyle = '#505050';
                 ctx.fillRect(pos.x - w/2 - 5, pos.y - h/2 - 10, w + 10, 12);
                 ctx.strokeRect(pos.x - w/2 - 5, pos.y - h/2 - 10, w + 10, 12);
 
-                // 垃圾桶图标
                 ctx.fillStyle = '#808080';
                 ctx.font = '40px Arial';
                 ctx.textAlign = 'center';
@@ -610,169 +734,40 @@
 
             // 渲染物品
             items.forEach(item => {
+                if (!item.customData) return;
+                if (item.customData.state === ItemState.CRUMBLING) return;
+
                 const pos = item.position;
                 const angle = item.angle;
+                const state = item.customData.state;
+                const scale = item.customData.scale || 1;
 
                 ctx.save();
                 ctx.translate(pos.x, pos.y);
                 ctx.rotate(angle);
+                ctx.scale(scale, scale);
+
+                // 如果是捏合状态，添加脉冲效果
+                if (state === ItemState.PINCHING) {
+                    const pulse = Math.sin(Date.now() * 0.01) * 0.1 + 0.9;
+                    ctx.scale(pulse, pulse);
+                }
 
                 switch(item.label) {
                     case 'paper':
-                        // 废纸团
-                        ctx.fillStyle = '#f0f0f0';
-                        ctx.strokeStyle = '#999';
-                        ctx.lineWidth = 2;
-
-                        // 不规则的纸团形状
-                        ctx.beginPath();
-                        for (let i = 0; i < 8; i++) {
-                            const a = (i / 8) * Math.PI * 2;
-                            const r = 20 + Math.sin(i * 2) * 5;
-                            const x = Math.cos(a) * r;
-                            const y = Math.sin(a) * r;
-                            if (i === 0) ctx.moveTo(x, y);
-                            else ctx.lineTo(x, y);
-                        }
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.stroke();
-
-                        // 纸张纹理线条
-                        ctx.strokeStyle = '#ccc';
-                        ctx.lineWidth = 1;
-                        for (let i = 0; i < 5; i++) {
-                            ctx.beginPath();
-                            ctx.moveTo(-15 + i * 3, -10);
-                            ctx.lineTo(-10 + i * 3, 10);
-                            ctx.stroke();
-                        }
+                        drawPaper(ctx);
                         break;
-
                     case 'cup':
-                        // 咖啡杯
-                        const cupW = 40;
-                        const cupH = 60;
-
-                        // 杯身
-                        ctx.fillStyle = '#d2691e';
-                        ctx.strokeStyle = '#8b4513';
-                        ctx.lineWidth = 2;
-                        ctx.fillRect(-cupW/2, -cupH/2, cupW, cupH);
-                        ctx.strokeRect(-cupW/2, -cupH/2, cupW, cupH);
-
-                        // 杯口高光
-                        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                        ctx.fillRect(-cupW/2, -cupH/2, cupW, 5);
-
-                        // 咖啡
-                        ctx.fillStyle = '#4a2511';
-                        ctx.fillRect(-cupW/2 + 3, -cupH/2 + 5, cupW - 6, cupH - 25);
-
-                        // 杯子把手
-                        ctx.strokeStyle = '#d2691e';
-                        ctx.lineWidth = 3;
-                        ctx.beginPath();
-                        ctx.arc(cupW/2, 0, 10, -Math.PI/2, Math.PI/2);
-                        ctx.stroke();
-
-                        // 蒸汽
-                        ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)';
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        ctx.moveTo(-5, -cupH/2 - 5);
-                        ctx.quadraticCurveTo(-3, -cupH/2 - 15, 0, -cupH/2 - 10);
-                        ctx.stroke();
-                        ctx.beginPath();
-                        ctx.moveTo(5, -cupH/2 - 5);
-                        ctx.quadraticCurveTo(3, -cupH/2 - 15, 0, -cupH/2 - 20);
-                        ctx.stroke();
+                        drawCup(ctx);
                         break;
-
                     case 'document':
-                        // 文件
-                        const docW = 60;
-                        const docH = 80;
-
-                        // 纸张
-                        ctx.fillStyle = '#ffffff';
-                        ctx.strokeStyle = '#888';
-                        ctx.lineWidth = 2;
-                        ctx.fillRect(-docW/2, -docH/2, docW, docH);
-                        ctx.strokeRect(-docW/2, -docH/2, docW, docH);
-
-                        // 折角
-                        ctx.fillStyle = '#e0e0e0';
-                        ctx.beginPath();
-                        ctx.moveTo(docW/2 - 15, -docH/2);
-                        ctx.lineTo(docW/2, -docH/2 + 15);
-                        ctx.lineTo(docW/2, -docH/2);
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.stroke();
-
-                        // 文字线条
-                        ctx.strokeStyle = '#333';
-                        ctx.lineWidth = 1;
-                        for (let i = 0; i < 8; i++) {
-                            const y = -docH/2 + 15 + i * 8;
-                            ctx.beginPath();
-                            ctx.moveTo(-docW/2 + 8, y);
-                            ctx.lineTo(docW/2 - 8, y);
-                            ctx.stroke();
-                        }
+                        drawDocument(ctx);
                         break;
-
                     case 'book':
-                        // 书本
-                        const bookW = 50;
-                        const bookH = 70;
-
-                        // 书封面
-                        ctx.fillStyle = '#8B0000';
-                        ctx.strokeStyle = '#4a0000';
-                        ctx.lineWidth = 3;
-                        ctx.fillRect(-bookW/2, -bookH/2, bookW, bookH);
-                        ctx.strokeRect(-bookW/2, -bookH/2, bookW, bookH);
-
-                        // 书脊
-                        ctx.fillStyle = '#600000';
-                        ctx.fillRect(-bookW/2, -bookH/2, 5, bookH);
-
-                        // 书名
-                        ctx.fillStyle = '#FFD700';
-                        ctx.font = 'bold 10px Arial';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText('WORK', 0, -10);
-                        ctx.fillText('MANUAL', 0, 5);
+                        drawBook(ctx);
                         break;
-
                     case 'pen':
-                        // 笔
-                        const penL = 60;
-
-                        // 笔身
-                        ctx.fillStyle = '#1E90FF';
-                        ctx.strokeStyle = '#104E8B';
-                        ctx.lineWidth = 2;
-                        ctx.fillRect(-penL/2, -4, penL - 10, 8);
-                        ctx.strokeRect(-penL/2, -4, penL - 10, 8);
-
-                        // 笔尖
-                        ctx.fillStyle = '#C0C0C0';
-                        ctx.beginPath();
-                        ctx.moveTo(penL/2 - 10, -4);
-                        ctx.lineTo(penL/2, 0);
-                        ctx.lineTo(penL/2 - 10, 4);
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.stroke();
-
-                        // 笔帽
-                        ctx.fillStyle = '#000080';
-                        ctx.fillRect(-penL/2 - 5, -4, 5, 8);
-                        ctx.strokeRect(-penL/2 - 5, -4, 5, 8);
+                        drawPen(ctx);
                         break;
                 }
 
@@ -780,22 +775,154 @@
             });
         }
 
+        // ==================== 绘制各种物品 ====================
+        function drawPaper(ctx) {
+            ctx.fillStyle = '#f0f0f0';
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 2;
+
+            ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+                const a = (i / 8) * Math.PI * 2;
+                const r = 20 + Math.sin(i * 2) * 5;
+                const x = Math.cos(a) * r;
+                const y = Math.sin(a) * r;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.moveTo(-15 + i * 3, -10);
+                ctx.lineTo(-10 + i * 3, 10);
+                ctx.stroke();
+            }
+        }
+
+        function drawCup(ctx) {
+            const cupW = 40;
+            const cupH = 60;
+
+            ctx.fillStyle = '#d2691e';
+            ctx.strokeStyle = '#8b4513';
+            ctx.lineWidth = 2;
+            ctx.fillRect(-cupW/2, -cupH/2, cupW, cupH);
+            ctx.strokeRect(-cupW/2, -cupH/2, cupW, cupH);
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(-cupW/2, -cupH/2, cupW, 5);
+
+            ctx.fillStyle = '#4a2511';
+            ctx.fillRect(-cupW/2 + 3, -cupH/2 + 5, cupW - 6, cupH - 25);
+
+            ctx.strokeStyle = '#d2691e';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(cupW/2, 0, 10, -Math.PI/2, Math.PI/2);
+            ctx.stroke();
+
+            ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-5, -cupH/2 - 5);
+            ctx.quadraticCurveTo(-3, -cupH/2 - 15, 0, -cupH/2 - 10);
+            ctx.stroke();
+        }
+
+        function drawDocument(ctx) {
+            const docW = 60;
+            const docH = 80;
+
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 2;
+            ctx.fillRect(-docW/2, -docH/2, docW, docH);
+            ctx.strokeRect(-docW/2, -docH/2, docW, docH);
+
+            ctx.fillStyle = '#e0e0e0';
+            ctx.beginPath();
+            ctx.moveTo(docW/2 - 15, -docH/2);
+            ctx.lineTo(docW/2, -docH/2 + 15);
+            ctx.lineTo(docW/2, -docH/2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 8; i++) {
+                const y = -docH/2 + 15 + i * 8;
+                ctx.beginPath();
+                ctx.moveTo(-docW/2 + 8, y);
+                ctx.lineTo(docW/2 - 8, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawBook(ctx) {
+            const bookW = 50;
+            const bookH = 70;
+
+            ctx.fillStyle = '#8B0000';
+            ctx.strokeStyle = '#4a0000';
+            ctx.lineWidth = 3;
+            ctx.fillRect(-bookW/2, -bookH/2, bookW, bookH);
+            ctx.strokeRect(-bookW/2, -bookH/2, bookW, bookH);
+
+            ctx.fillStyle = '#600000';
+            ctx.fillRect(-bookW/2, -bookH/2, 5, bookH);
+
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('WORK', 0, -10);
+            ctx.fillText('MANUAL', 0, 5);
+        }
+
+        function drawPen(ctx) {
+            const penL = 60;
+
+            ctx.fillStyle = '#1E90FF';
+            ctx.strokeStyle = '#104E8B';
+            ctx.lineWidth = 2;
+            ctx.fillRect(-penL/2, -4, penL - 10, 8);
+            ctx.strokeRect(-penL/2, -4, penL - 10, 8);
+
+            ctx.fillStyle = '#C0C0C0';
+            ctx.beginPath();
+            ctx.moveTo(penL/2 - 10, -4);
+            ctx.lineTo(penL/2, 0);
+            ctx.lineTo(penL/2 - 10, 4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#000080';
+            ctx.fillRect(-penL/2 - 5, -4, 5, 8);
+            ctx.strokeRect(-penL/2 - 5, -4, 5, 8);
+        }
+
         // ==================== 初始化物理引擎 ====================
         function initPhysics() {
             const canvasWidth = gameCanvas.clientWidth;
             const canvasHeight = gameCanvas.clientHeight;
 
-            // 设置 canvas 实际尺寸
             gameCanvas.width = canvasWidth;
             gameCanvas.height = canvasHeight;
+            particleCanvas.width = canvasWidth;
+            particleCanvas.height = canvasHeight;
 
-            // 创建引擎
             engine = Engine.create({
                 gravity: { x: 0, y: 1 }
             });
             world = engine.world;
 
-            // 创建渲染器
             render = Render.create({
                 canvas: gameCanvas,
                 engine: engine,
@@ -807,11 +934,9 @@
                 }
             });
 
-            // 绘制木纹背景
             const ctx = render.context;
             drawWoodTexture(ctx, canvasWidth, canvasHeight);
 
-            // 创建地面和墙壁（不可见）
             const ground = Bodies.rectangle(canvasWidth / 2, canvasHeight - 10, canvasWidth, 20, {
                 isStatic: true,
                 render: { visible: false }
@@ -829,27 +954,25 @@
 
             World.add(world, [ground, leftWall, rightWall]);
 
-            // 创建垃圾桶
             createTrashBin();
 
-            // 添加初始物品
             addRandomItem();
             addRandomItem();
             addRandomItem();
 
-            // 启动渲染和引擎
             Render.run(render);
             runner = Runner.create();
             Runner.run(runner, engine);
 
-            // 监听碰撞
             Events.on(engine, 'collisionStart', handleCollision);
 
-            // 自定义渲染循环
             Events.on(render, 'afterRender', () => {
                 drawWoodTexture(ctx, canvasWidth, canvasHeight);
                 renderCustomObjects();
             });
+
+            // 粒子更新循环
+            setInterval(updateParticles, 1000 / 60);
         }
 
         // ==================== 创建垃圾桶 ====================
@@ -880,6 +1003,9 @@
             const y = Math.random() * 200 + 100;
 
             let item;
+            let itemConfig = {
+                render: { visible: false }
+            };
 
             switch(type) {
                 case 'paper':
@@ -887,7 +1013,7 @@
                         label: 'paper',
                         restitution: 0.6,
                         friction: 0.1,
-                        render: { visible: false }
+                        ...itemConfig
                     });
                     break;
                 case 'cup':
@@ -895,7 +1021,7 @@
                         label: 'cup',
                         restitution: 0.3,
                         friction: 0.5,
-                        render: { visible: false }
+                        ...itemConfig
                     });
                     break;
                 case 'document':
@@ -903,7 +1029,7 @@
                         label: 'document',
                         restitution: 0.1,
                         friction: 0.8,
-                        render: { visible: false }
+                        ...itemConfig
                     });
                     break;
                 case 'book':
@@ -911,7 +1037,7 @@
                         label: 'book',
                         restitution: 0.2,
                         friction: 0.9,
-                        render: { visible: false }
+                        ...itemConfig
                     });
                     break;
                 case 'pen':
@@ -919,10 +1045,17 @@
                         label: 'pen',
                         restitution: 0.4,
                         friction: 0.3,
-                        render: { visible: false }
+                        ...itemConfig
                     });
                     break;
             }
+
+            // 添加自定义数据
+            item.customData = {
+                state: ItemState.IDLE,
+                scale: 1,
+                pinchTime: 0
+            };
 
             items.push(item);
             World.add(world, item);
@@ -945,11 +1078,15 @@
                     (bodyB === trashBin && items.includes(bodyA))) {
                     const item = bodyA === trashBin ? bodyB : bodyA;
 
-                    World.remove(world, item);
-                    items = items.filter(i => i !== item);
+                    if (item.customData.state !== ItemState.TRASHED) {
+                        item.customData.state = ItemState.TRASHED;
 
-                    updateScore(10);
-                    setTimeout(() => addRandomItem(), 500);
+                        World.remove(world, item);
+                        items = items.filter(i => i !== item);
+
+                        updateScore(10);
+                        setTimeout(() => addRandomItem(), 500);
+                    }
                 }
             });
         }
@@ -970,6 +1107,50 @@
                 comboElement.textContent = '0x';
                 comboDisplay.textContent = '0x';
             }, 3000);
+        }
+
+        // ==================== 慢动作控制 ====================
+        function setSlowMotion(duration = 1000) {
+            timeScale = 0.3;
+            engine.timing.timeScale = timeScale;
+            slowMotionIndicator.classList.add('active');
+
+            if (slowMotionTimer) clearTimeout(slowMotionTimer);
+            slowMotionTimer = setTimeout(() => {
+                timeScale = 1.0;
+                engine.timing.timeScale = timeScale;
+                slowMotionIndicator.classList.remove('active');
+            }, duration);
+        }
+
+        // ==================== 创建碎裂粒子 ====================
+        function createCrumbleParticles(x, y, label) {
+            const colors = {
+                'paper': '#f0f0f0',
+                'cup': '#d2691e',
+                'document': '#ffffff',
+                'book': '#8B0000',
+                'pen': '#1E90FF'
+            };
+            const color = colors[label] || '#ffffff';
+
+            for (let i = 0; i < 30; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+
+            setSlowMotion(1500);
+        }
+
+        // ==================== 更新粒子 ====================
+        function updateParticles() {
+            const ctx = particleCanvas.getContext('2d');
+            ctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+
+            particles = particles.filter(p => !p.isDead());
+            particles.forEach(p => {
+                p.update();
+                p.draw(ctx);
+            });
         }
 
         // ==================== 初始化 MediaPipe Hands ====================
@@ -1054,56 +1235,124 @@
                     y: handState.position.y - handState.previousPosition.y
                 };
 
-                const isGrabbing = detectGrabGesture(landmarks);
+                // 检测手势
+                const gestures = detectGestures(landmarks);
+                const isPinching = gestures.isPinching;
+                const isGrabbing = gestures.isGrabbing;
+                const bentFingers = gestures.bentFingers;
+                const pinchDistance = gestures.pinchDistance;
 
-                if (isGrabbing && !handState.isGrabbing) {
-                    tryGrabItem();
+                // 更新调试信息
+                pinchDistElement.textContent = pinchDistance.toFixed(2);
+                bentFingersElement.textContent = bentFingers + '/4';
+
+                // 状态转换逻辑
+                if (isPinching && !handState.isPinching) {
+                    // 开始捏取
+                    tryGrabItem('pinch');
+                    gestureStatus.textContent = '🤏';
+                    gestureTypeElement.textContent = 'PINCH';
+                } else if (isGrabbing && !handState.isGrabbing && !isPinching) {
+                    // 开始抓取
+                    tryGrabItem('grab');
                     gestureStatus.textContent = '✊';
-                    gestureDisplay.textContent = 'GRAB';
-                } else if (!isGrabbing && handState.isGrabbing) {
+                    gestureTypeElement.textContent = 'GRAB';
+                } else if (!isPinching && !isGrabbing && (handState.isPinching || handState.isGrabbing)) {
+                    // 释放物品
                     releaseItem();
                     gestureStatus.textContent = '🖐️';
-                    gestureDisplay.textContent = 'OPEN';
+                    gestureTypeElement.textContent = 'OPEN';
                 }
 
+                handState.isPinching = isPinching;
                 handState.isGrabbing = isGrabbing;
+                handState.pinchDistance = pinchDistance;
 
+                // 更新被抓取物品的位置
                 if (grabbedItem) {
                     Body.setPosition(grabbedItem, handState.position);
                     Body.setVelocity(grabbedItem, { x: 0, y: 0 });
+
+                    // 如果是捏取状态，检查是否可以捏碎
+                    if (handState.isPinching && grabbedItem.customData.state === ItemState.GRABBED) {
+                        grabbedItem.customData.state = ItemState.PINCHING;
+                        grabbedItem.customData.pinchTime = 0;
+                        setSlowMotion(1000);
+                    }
+
+                    // 捏取动画
+                    if (grabbedItem.customData.state === ItemState.PINCHING) {
+                        grabbedItem.customData.pinchTime += 16; // ~60fps
+                        const pinchProgress = Math.min(grabbedItem.customData.pinchTime / 1000, 1);
+                        grabbedItem.customData.scale = 1 - pinchProgress * 0.5;
+
+                        // 捏碎完成
+                        if (pinchProgress >= 1) {
+                            crumbleItem(grabbedItem);
+                        }
+                    }
+
+                    itemStateElement.textContent = grabbedItem.customData.state;
+                } else {
+                    itemStateElement.textContent = 'IDLE';
                 }
             } else {
                 gestureStatus.textContent = '❓';
-                gestureDisplay.textContent = 'WAIT';
+                gestureTypeElement.textContent = 'WAIT';
             }
         }
 
-        // ==================== 检测抓取手势 ====================
-        function detectGrabGesture(landmarks) {
+        // ==================== 检测多种手势 ====================
+        function detectGestures(landmarks) {
+            // 拇指(4) 和 食指(8) 的距离
+            const thumb = landmarks[4];
+            const indexFinger = landmarks[8];
+            const pinchDistance = Math.sqrt(
+                Math.pow(thumb.x - indexFinger.x, 2) +
+                Math.pow(thumb.y - indexFinger.y, 2) +
+                Math.pow(thumb.z - indexFinger.z, 2)
+            );
+
+            const isPinching = pinchDistance < 0.05; // 捏取阈值
+
+            // 检测手指弯曲（握拳）
             const fingerTips = [8, 12, 16, 20];
             const fingerBases = [6, 10, 14, 18];
-
             let bentFingers = 0;
+
             for (let i = 0; i < fingerTips.length; i++) {
                 const tip = landmarks[fingerTips[i]];
                 const base = landmarks[fingerBases[i]];
                 if (tip.y > base.y) bentFingers++;
             }
 
-            return bentFingers >= 3;
+            const isGrabbing = bentFingers >= 3;
+
+            return {
+                isPinching,
+                isGrabbing,
+                bentFingers,
+                pinchDistance
+            };
         }
 
         // ==================== 尝试抓取物品 ====================
-        function tryGrabItem() {
+        function tryGrabItem(method) {
             const grabRadius = 100;
 
             for (let item of items) {
+                if (item.customData.state === ItemState.CRUMBLING ||
+                    item.customData.state === ItemState.TRASHED) {
+                    continue;
+                }
+
                 const dx = item.position.x - handState.position.x;
                 const dy = item.position.y - handState.position.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
 
                 if (distance < grabRadius) {
                     grabbedItem = item;
+                    item.customData.state = ItemState.GRABBED;
                     Body.setStatic(grabbedItem, true);
                     break;
                 }
@@ -1113,35 +1362,69 @@
         // ==================== 释放物品 ====================
         function releaseItem() {
             if (grabbedItem) {
+                // 如果处于捏取状态但未完成，恢复大小
+                if (grabbedItem.customData.state === ItemState.PINCHING) {
+                    grabbedItem.customData.scale = 1;
+                }
+
                 Body.setStatic(grabbedItem, false);
+                grabbedItem.customData.state = ItemState.THROWN;
 
                 const speed = Math.sqrt(
                     handState.velocity.x ** 2 +
                     handState.velocity.y ** 2
                 );
 
-                if (speed > 5) {
+                // 如果速度足够快，触发碎裂
+                if (speed > 15) {
+                    crumbleItem(grabbedItem);
+                } else if (speed > 5) {
                     Body.setVelocity(grabbedItem, {
                         x: handState.velocity.x * 0.5,
                         y: handState.velocity.y * 0.5
                     });
+                    Body.setAngularVelocity(grabbedItem, (Math.random() - 0.5) * 0.3);
                 }
 
                 grabbedItem = null;
             }
         }
 
+        // ==================== 碎裂物品 ====================
+        function crumbleItem(item) {
+            if (item.customData.state === ItemState.CRUMBLING) return;
+
+            item.customData.state = ItemState.CRUMBLING;
+            createCrumbleParticles(item.position.x, item.position.y, item.label);
+
+            World.remove(world, item);
+            items = items.filter(i => i !== item);
+
+            if (item === grabbedItem) {
+                grabbedItem = null;
+            }
+
+            crumbleTotal++;
+            crumbleCountElement.textContent = crumbleTotal;
+            updateScore(5);
+
+            setTimeout(() => addRandomItem(), 1000);
+        }
+
         // ==================== 重置游戏 ====================
         function resetGame() {
             items.forEach(item => World.remove(world, item));
             items = [];
+            particles = [];
 
             score = 0;
             combo = 0;
+            crumbleTotal = 0;
             scoreElement.textContent = '0000';
             scoreDisplay.textContent = '0';
             comboElement.textContent = '0x';
             comboDisplay.textContent = '0x';
+            crumbleCountElement.textContent = '0';
 
             addRandomItem();
             addRandomItem();
@@ -1165,7 +1448,6 @@
         resetBtn.addEventListener('click', resetGame);
         addItemBtn.addEventListener('click', addRandomItem);
 
-        // 物品栏点击
         inventoryItems.forEach(item => {
             item.addEventListener('click', () => {
                 const itemType = item.dataset.item;
@@ -1177,7 +1459,6 @@
             });
         });
 
-        // 窗口大小调整
         window.addEventListener('resize', () => {
             if (render) {
                 const canvasWidth = gameCanvas.clientWidth;
@@ -1185,6 +1466,8 @@
 
                 gameCanvas.width = canvasWidth;
                 gameCanvas.height = canvasHeight;
+                particleCanvas.width = canvasWidth;
+                particleCanvas.height = canvasHeight;
                 render.canvas.width = canvasWidth;
                 render.canvas.height = canvasHeight;
                 render.options.width = canvasWidth;
