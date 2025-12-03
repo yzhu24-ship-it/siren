@@ -147,14 +147,14 @@
         }
 
         .hand-title {
-            color: #00ffff;
+            color: #ffffff;
             font-weight: bold;
             margin-bottom: 8px;
             font-size: 12px;
         }
 
         .hand-title.right {
-            color: #ff00ff;
+            color: #ffffff;
         }
 
         .debug-row {
@@ -505,13 +505,13 @@
             <div class="panel-title">▶ Hands Debug</div>
             <div id="gestureDebug">
                 <div id="leftHandDebug" class="hand-debug">
-                    <div class="hand-title">Left Hand (Cyan)</div>
+                    <div class="hand-title">Left Hand (White)</div>
                     <div class="debug-row">手势: <span id="leftGesture">-</span></div>
                     <div class="debug-row">捏取: <span id="leftPinch">-</span></div>
                     <div class="debug-row">状态: <span id="leftState">-</span></div>
                 </div>
                 <div id="rightHandDebug" class="hand-debug">
-                    <div class="hand-title right">Right Hand (Magenta)</div>
+                    <div class="hand-title right">Right Hand (White)</div>
                     <div class="debug-row">手势: <span id="rightGesture">-</span></div>
                     <div class="debug-row">捏取: <span id="rightPinch">-</span></div>
                     <div class="debug-row">状态: <span id="rightState">-</span></div>
@@ -594,7 +594,7 @@
 
     <!-- 提示 -->
     <div id="hints" class="hidden">
-        > 双手协作！左手（青色）右手（紫红），可同时抓取物品！
+        > 双手协作！左右手虚幻白色显示，可同时抓取物品！
     </div>
 
     <script>
@@ -622,7 +622,7 @@
                 previousPosition: { x: 0, y: 0 },
                 landmarks: null,
                 grabbedItem: null,
-                color: '#00ffff' // 青色
+                color: '#ffffff' // 白色
             },
             {
                 label: 'Right',
@@ -634,7 +634,7 @@
                 previousPosition: { x: 0, y: 0 },
                 landmarks: null,
                 grabbedItem: null,
-                color: '#ff00ff' // 紫红色
+                color: '#ffffff' // 白色
             }
         ];
 
@@ -762,7 +762,7 @@
 
                 // 绘制手部连接线（骨架）
                 ctx.save();
-                ctx.globalAlpha = 0.6;
+                ctx.globalAlpha = 0.4;
                 ctx.strokeStyle = handState.color;
                 ctx.lineWidth = 3;
                 ctx.shadowBlur = 15;
@@ -797,7 +797,7 @@
                 });
 
                 // 绘制手掌轮廓（半透明填充）
-                ctx.globalAlpha = 0.15;
+                ctx.globalAlpha = 0.1;
                 ctx.fillStyle = handState.color;
                 ctx.shadowBlur = 0;
                 ctx.beginPath();
@@ -814,7 +814,7 @@
                 // 绘制手部标签
                 const palmCenter = mappedLandmarks[9];
                 ctx.save();
-                ctx.globalAlpha = 0.8;
+                ctx.globalAlpha = 0.6;
                 ctx.fillStyle = handState.color;
                 ctx.font = 'bold 14px Courier New';
                 ctx.textAlign = 'center';
