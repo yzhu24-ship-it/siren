@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>办公桌解压模拟器 - Office Desk Stress Relief</title>
+    <title>办公桌解压模拟器 - Dual Hand Mode</title>
     <!-- MediaPipe Hands -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1640029074/camera_utils.js"></script>
@@ -45,6 +45,7 @@
             flex-direction: column;
             padding: 15px;
             gap: 15px;
+            overflow-y: auto;
         }
 
         .panel-title {
@@ -131,8 +132,29 @@
             background: rgba(40, 40, 40, 0.9);
             border: 1px solid #444;
             padding: 12px;
-            max-height: 150px;
-            overflow-y: auto;
+        }
+
+        .hand-debug {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #555;
+        }
+
+        .hand-debug:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .hand-title {
+            color: #00ffff;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .hand-title.right {
+            color: #ff00ff;
         }
 
         .debug-row {
@@ -198,7 +220,7 @@
 
         #gameCanvas {
             flex: 1;
-            cursor: crosshair;
+            cursor: none;
         }
 
         /* 粒子容器 */
@@ -435,13 +457,13 @@
     <!-- 启动屏幕 -->
     <div id="startScreen">
         <h1>OFFICE DESK SIMULATOR</h1>
-        <div class="subtitle">Advanced Gesture Recognition</div>
+        <div class="subtitle">Dual Hand Mode - Virtual Hands</div>
         <div class="features">
-            <div>✓ <span>精确手势识别</span> - 拇指+食指捏取、握拳抓取</div>
-            <div>✓ <span>物品状态变化</span> - 纸张→捏合→碎裂→垃圾桶</div>
-            <div>✓ <span>慢动作效果</span> - 捏合和碎裂时自动触发</div>
-            <div>✓ <span>粒子系统</span> - 碎裂粒子飞散效果</div>
-            <div>✓ <span>真实物理</span> - 抛物线、旋转、重力模拟</div>
+            <div>✓ <span>双手追踪</span> - 同时捕捉左右手动作</div>
+            <div>✓ <span>虚幻手部</span> - 游戏中显示半透明虚拟手</div>
+            <div>✓ <span>双手协作</span> - 左右手可独立抓取物品</div>
+            <div>✓ <span>精确手势</span> - 拇指+食指捏取、握拳抓取</div>
+            <div>✓ <span>粒子碎裂</span> - 慢动作 + 粒子飞散效果</div>
         </div>
         <button id="startBtn">[ LAUNCH GAME ]</button>
     </div>
@@ -474,14 +496,26 @@
                     <span>碎裂数</span>
                     <span class="stat-value" id="crumbleCount">0</span>
                 </div>
+                <div class="stat-row">
+                    <span>检测到手</span>
+                    <span class="stat-value" id="handCount">0</span>
+                </div>
             </div>
 
-            <div class="panel-title">▶ Gesture Debug</div>
+            <div class="panel-title">▶ Hands Debug</div>
             <div id="gestureDebug">
-                <div class="debug-row">手势: <span id="gestureType">WAIT</span></div>
-                <div class="debug-row">捏取距离: <span id="pinchDist">-</span></div>
-                <div class="debug-row">弯曲手指: <span id="bentFingers">-</span></div>
-                <div class="debug-row">物品状态: <span id="itemState">IDLE</span></div>
+                <div id="leftHandDebug" class="hand-debug">
+                    <div class="hand-title">Left Hand (Cyan)</div>
+                    <div class="debug-row">手势: <span id="leftGesture">-</span></div>
+                    <div class="debug-row">捏取: <span id="leftPinch">-</span></div>
+                    <div class="debug-row">状态: <span id="leftState">-</span></div>
+                </div>
+                <div id="rightHandDebug" class="hand-debug">
+                    <div class="hand-title right">Right Hand (Magenta)</div>
+                    <div class="debug-row">手势: <span id="rightGesture">-</span></div>
+                    <div class="debug-row">捏取: <span id="rightPinch">-</span></div>
+                    <div class="debug-row">状态: <span id="rightState">-</span></div>
+                </div>
             </div>
 
             <div class="panel-title">▶ Inventory</div>
@@ -543,8 +577,8 @@
 
                 <div class="hud-section">
                     <div class="hud-item">
-                        <div class="hud-label">Gesture</div>
-                        <div class="hud-value" id="gestureStatus" style="font-size: 32px;">🖐️</div>
+                        <div class="hud-label">Hands</div>
+                        <div class="hud-value" id="gestureStatus" style="font-size: 32px;">👐</div>
                     </div>
                 </div>
 
@@ -560,7 +594,7 @@
 
     <!-- 提示 -->
     <div id="hints" class="hidden">
-        > 拇指+食指捏取物品，握拳投掷，快速挥动碎裂！
+        > 双手协作！左手（青色）右手（紫红），可同时抓取物品！
     </div>
 
     <script>
@@ -576,15 +610,33 @@
         let timeScale = 1.0;
         let slowMotionTimer = null;
 
-        // 手势状态
-        let handState = {
-            isGrabbing: false,
-            isPinching: false,
-            pinchDistance: 0,
-            position: { x: 0, y: 0 },
-            velocity: { x: 0, y: 0 },
-            previousPosition: { x: 0, y: 0 }
-        };
+        // 双手状态（左手和右手）
+        let handStates = [
+            {
+                label: 'Left',
+                isGrabbing: false,
+                isPinching: false,
+                pinchDistance: 0,
+                position: { x: 0, y: 0 },
+                velocity: { x: 0, y: 0 },
+                previousPosition: { x: 0, y: 0 },
+                landmarks: null,
+                grabbedItem: null,
+                color: '#00ffff' // 青色
+            },
+            {
+                label: 'Right',
+                isGrabbing: false,
+                isPinching: false,
+                pinchDistance: 0,
+                position: { x: 0, y: 0 },
+                velocity: { x: 0, y: 0 },
+                previousPosition: { x: 0, y: 0 },
+                landmarks: null,
+                grabbedItem: null,
+                color: '#ff00ff' // 紫红色
+            }
+        ];
 
         // 物品状态枚举
         const ItemState = {
@@ -599,7 +651,6 @@
         // 游戏物品
         let items = [];
         let trashBin = null;
-        let grabbedItem = null;
         let particles = [];
 
         // DOM 元素
@@ -616,18 +667,13 @@
         const comboElement = document.getElementById('combo');
         const comboDisplay = document.getElementById('comboDisplay');
         const crumbleCountElement = document.getElementById('crumbleCount');
+        const handCountElement = document.getElementById('handCount');
         const gestureStatus = document.getElementById('gestureStatus');
         const hints = document.getElementById('hints');
         const resetBtn = document.getElementById('resetBtn');
         const addItemBtn = document.getElementById('addItemBtn');
         const inventoryItems = document.querySelectorAll('.inventory-item');
         const slowMotionIndicator = document.getElementById('slowMotionIndicator');
-
-        // 调试元素
-        const gestureTypeElement = document.getElementById('gestureType');
-        const pinchDistElement = document.getElementById('pinchDist');
-        const bentFingersElement = document.getElementById('bentFingers');
-        const itemStateElement = document.getElementById('itemState');
 
         // ==================== 粒子类 ====================
         class Particle {
@@ -647,7 +693,7 @@
             update() {
                 this.x += this.vx * timeScale;
                 this.y += this.vy * timeScale;
-                this.vy += 0.3 * timeScale; // 重力
+                this.vy += 0.3 * timeScale;
                 this.life -= this.decay * timeScale;
                 this.rotation += this.rotationSpeed * timeScale;
             }
@@ -699,6 +745,86 @@
             }
         }
 
+        // ==================== 绘制虚幻手部 ====================
+        function drawVirtualHands(ctx) {
+            handStates.forEach(handState => {
+                if (!handState.landmarks) return;
+
+                const landmarks = handState.landmarks;
+                const canvasWidth = gameCanvas.clientWidth;
+                const canvasHeight = gameCanvas.clientHeight;
+
+                // 映射关键点到游戏坐标
+                const mappedLandmarks = landmarks.map(lm => ({
+                    x: canvasWidth - (lm.x * canvasWidth),
+                    y: lm.y * canvasHeight
+                }));
+
+                // 绘制手部连接线（骨架）
+                ctx.save();
+                ctx.globalAlpha = 0.6;
+                ctx.strokeStyle = handState.color;
+                ctx.lineWidth = 3;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = handState.color;
+
+                // MediaPipe 手部连接定义
+                const connections = [
+                    [0, 1], [1, 2], [2, 3], [3, 4],        // 大拇指
+                    [0, 5], [5, 6], [6, 7], [7, 8],        // 食指
+                    [0, 9], [9, 10], [10, 11], [11, 12],   // 中指
+                    [0, 13], [13, 14], [14, 15], [15, 16], // 无名指
+                    [0, 17], [17, 18], [18, 19], [19, 20], // 小指
+                    [5, 9], [9, 13], [13, 17]              // 手掌
+                ];
+
+                connections.forEach(([start, end]) => {
+                    ctx.beginPath();
+                    ctx.moveTo(mappedLandmarks[start].x, mappedLandmarks[start].y);
+                    ctx.lineTo(mappedLandmarks[end].x, mappedLandmarks[end].y);
+                    ctx.stroke();
+                });
+
+                // 绘制关节点
+                ctx.fillStyle = handState.color;
+                ctx.shadowBlur = 20;
+                mappedLandmarks.forEach((point, index) => {
+                    ctx.beginPath();
+                    // 指尖用更大的点
+                    const radius = [4, 8, 12, 16, 20].includes(index) ? 6 : 4;
+                    ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // 绘制手掌轮廓（半透明填充）
+                ctx.globalAlpha = 0.15;
+                ctx.fillStyle = handState.color;
+                ctx.shadowBlur = 0;
+                ctx.beginPath();
+                ctx.moveTo(mappedLandmarks[0].x, mappedLandmarks[0].y);
+                ctx.lineTo(mappedLandmarks[5].x, mappedLandmarks[5].y);
+                ctx.lineTo(mappedLandmarks[9].x, mappedLandmarks[9].y);
+                ctx.lineTo(mappedLandmarks[13].x, mappedLandmarks[13].y);
+                ctx.lineTo(mappedLandmarks[17].x, mappedLandmarks[17].y);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.restore();
+
+                // 绘制手部标签
+                const palmCenter = mappedLandmarks[9];
+                ctx.save();
+                ctx.globalAlpha = 0.8;
+                ctx.fillStyle = handState.color;
+                ctx.font = 'bold 14px Courier New';
+                ctx.textAlign = 'center';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = handState.color;
+                ctx.fillText(handState.label, palmCenter.x, palmCenter.y - 40);
+                ctx.restore();
+            });
+        }
+
         // ==================== 自定义渲染物品 ====================
         function renderCustomObjects() {
             const ctx = render.context;
@@ -747,7 +873,6 @@
                 ctx.rotate(angle);
                 ctx.scale(scale, scale);
 
-                // 如果是捏合状态，添加脉冲效果
                 if (state === ItemState.PINCHING) {
                     const pulse = Math.sin(Date.now() * 0.01) * 0.1 + 0.9;
                     ctx.scale(pulse, pulse);
@@ -773,6 +898,9 @@
 
                 ctx.restore();
             });
+
+            // 绘制虚幻手部（在物品之上）
+            drawVirtualHands(ctx);
         }
 
         // ==================== 绘制各种物品 ====================
@@ -971,7 +1099,6 @@
                 renderCustomObjects();
             });
 
-            // 粒子更新循环
             setInterval(updateParticles, 1000 / 60);
         }
 
@@ -1050,11 +1177,11 @@
                     break;
             }
 
-            // 添加自定义数据
             item.customData = {
                 state: ItemState.IDLE,
                 scale: 1,
-                pinchTime: 0
+                pinchTime: 0,
+                grabbedBy: null
             };
 
             items.push(item);
@@ -1083,6 +1210,13 @@
 
                         World.remove(world, item);
                         items = items.filter(i => i !== item);
+
+                        // 清除手部引用
+                        handStates.forEach(hand => {
+                            if (hand.grabbedItem === item) {
+                                hand.grabbedItem = null;
+                            }
+                        });
 
                         updateScore(10);
                         setTimeout(() => addRandomItem(), 500);
@@ -1163,7 +1297,7 @@
                 });
 
                 hands.setOptions({
-                    maxNumHands: 1,
+                    maxNumHands: 2, // 双手追踪
                     modelComplexity: 1,
                     minDetectionConfidence: 0.7,
                     minTrackingConfidence: 0.7
@@ -1207,104 +1341,122 @@
             const ctx = handCanvas.getContext('2d');
             ctx.clearRect(0, 0, handCanvas.width, handCanvas.height);
 
-            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                const landmarks = results.multiHandLandmarks[0];
+            // 更新手部计数
+            const numHands = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
+            handCountElement.textContent = numHands;
 
-                drawConnectors(ctx, landmarks, HAND_CONNECTIONS, {
-                    color: '#00FF00',
-                    lineWidth: 2
-                });
-                drawLandmarks(ctx, landmarks, {
-                    color: '#FF0000',
-                    lineWidth: 1,
-                    radius: 3
-                });
+            // 更新手势图标
+            if (numHands === 0) {
+                gestureStatus.textContent = '❓';
+            } else if (numHands === 1) {
+                gestureStatus.textContent = '✋';
+            } else {
+                gestureStatus.textContent = '👐';
+            }
 
-                const palmCenter = landmarks[9];
-                const canvasWidth = gameCanvas.clientWidth;
-                const canvasHeight = gameCanvas.clientHeight;
+            // 重置所有手的状态
+            handStates.forEach(hand => {
+                hand.landmarks = null;
+            });
 
-                handState.previousPosition = { ...handState.position };
-                handState.position = {
-                    x: canvasWidth - (palmCenter.x * canvasWidth),
-                    y: palmCenter.y * canvasHeight
-                };
+            if (results.multiHandLandmarks && results.multiHandedness) {
+                results.multiHandLandmarks.forEach((landmarks, index) => {
+                    // 获取手的类型（Left 或 Right）
+                    const handedness = results.multiHandedness[index].label;
+                    const handIndex = handedness === 'Left' ? 0 : 1;
+                    const handState = handStates[handIndex];
 
-                handState.velocity = {
-                    x: handState.position.x - handState.previousPosition.x,
-                    y: handState.position.y - handState.previousPosition.y
-                };
+                    // 保存关键点数据
+                    handState.landmarks = landmarks;
 
-                // 检测手势
-                const gestures = detectGestures(landmarks);
-                const isPinching = gestures.isPinching;
-                const isGrabbing = gestures.isGrabbing;
-                const bentFingers = gestures.bentFingers;
-                const pinchDistance = gestures.pinchDistance;
+                    // 在摄像头画布绘制骨架
+                    drawConnectors(ctx, landmarks, HAND_CONNECTIONS, {
+                        color: handState.color,
+                        lineWidth: 2
+                    });
+                    drawLandmarks(ctx, landmarks, {
+                        color: handState.color,
+                        lineWidth: 1,
+                        radius: 3
+                    });
 
-                // 更新调试信息
-                pinchDistElement.textContent = pinchDistance.toFixed(2);
-                bentFingersElement.textContent = bentFingers + '/4';
+                    // 计算手部位置和速度
+                    const palmCenter = landmarks[9];
+                    const canvasWidth = gameCanvas.clientWidth;
+                    const canvasHeight = gameCanvas.clientHeight;
 
-                // 状态转换逻辑
-                if (isPinching && !handState.isPinching) {
-                    // 开始捏取
-                    tryGrabItem('pinch');
-                    gestureStatus.textContent = '🤏';
-                    gestureTypeElement.textContent = 'PINCH';
-                } else if (isGrabbing && !handState.isGrabbing && !isPinching) {
-                    // 开始抓取
-                    tryGrabItem('grab');
-                    gestureStatus.textContent = '✊';
-                    gestureTypeElement.textContent = 'GRAB';
-                } else if (!isPinching && !isGrabbing && (handState.isPinching || handState.isGrabbing)) {
-                    // 释放物品
-                    releaseItem();
-                    gestureStatus.textContent = '🖐️';
-                    gestureTypeElement.textContent = 'OPEN';
-                }
+                    handState.previousPosition = { ...handState.position };
+                    handState.position = {
+                        x: canvasWidth - (palmCenter.x * canvasWidth),
+                        y: palmCenter.y * canvasHeight
+                    };
 
-                handState.isPinching = isPinching;
-                handState.isGrabbing = isGrabbing;
-                handState.pinchDistance = pinchDistance;
+                    handState.velocity = {
+                        x: handState.position.x - handState.previousPosition.x,
+                        y: handState.position.y - handState.previousPosition.y
+                    };
 
-                // 更新被抓取物品的位置
-                if (grabbedItem) {
-                    Body.setPosition(grabbedItem, handState.position);
-                    Body.setVelocity(grabbedItem, { x: 0, y: 0 });
+                    // 检测手势
+                    const gestures = detectGestures(landmarks);
+                    const isPinching = gestures.isPinching;
+                    const isGrabbing = gestures.isGrabbing;
 
-                    // 如果是捏取状态，检查是否可以捏碎
-                    if (handState.isPinching && grabbedItem.customData.state === ItemState.GRABBED) {
-                        grabbedItem.customData.state = ItemState.PINCHING;
-                        grabbedItem.customData.pinchTime = 0;
-                        setSlowMotion(1000);
+                    // 更新调试信息
+                    updateHandDebug(handIndex, gestures);
+
+                    // 状态转换
+                    if (isPinching && !handState.isPinching) {
+                        tryGrabItem(handState);
+                    } else if (isGrabbing && !handState.isGrabbing && !isPinching) {
+                        tryGrabItem(handState);
+                    } else if (!isPinching && !isGrabbing && (handState.isPinching || handState.isGrabbing)) {
+                        releaseItem(handState);
                     }
 
-                    // 捏取动画
-                    if (grabbedItem.customData.state === ItemState.PINCHING) {
-                        grabbedItem.customData.pinchTime += 16; // ~60fps
-                        const pinchProgress = Math.min(grabbedItem.customData.pinchTime / 1000, 1);
-                        grabbedItem.customData.scale = 1 - pinchProgress * 0.5;
+                    handState.isPinching = isPinching;
+                    handState.isGrabbing = isGrabbing;
+                    handState.pinchDistance = gestures.pinchDistance;
 
-                        // 捏碎完成
-                        if (pinchProgress >= 1) {
-                            crumbleItem(grabbedItem);
+                    // 更新被抓取物品
+                    if (handState.grabbedItem) {
+                        Body.setPosition(handState.grabbedItem, handState.position);
+                        Body.setVelocity(handState.grabbedItem, { x: 0, y: 0 });
+
+                        if (handState.isPinching && handState.grabbedItem.customData.state === ItemState.GRABBED) {
+                            handState.grabbedItem.customData.state = ItemState.PINCHING;
+                            handState.grabbedItem.customData.pinchTime = 0;
+                            setSlowMotion(1000);
+                        }
+
+                        if (handState.grabbedItem.customData.state === ItemState.PINCHING) {
+                            handState.grabbedItem.customData.pinchTime += 16;
+                            const pinchProgress = Math.min(handState.grabbedItem.customData.pinchTime / 1000, 1);
+                            handState.grabbedItem.customData.scale = 1 - pinchProgress * 0.5;
+
+                            if (pinchProgress >= 1) {
+                                crumbleItem(handState.grabbedItem, handState);
+                            }
                         }
                     }
-
-                    itemStateElement.textContent = grabbedItem.customData.state;
-                } else {
-                    itemStateElement.textContent = 'IDLE';
-                }
-            } else {
-                gestureStatus.textContent = '❓';
-                gestureTypeElement.textContent = 'WAIT';
+                });
             }
         }
 
-        // ==================== 检测多种手势 ====================
+        // ==================== 更新手部调试信息 ====================
+        function updateHandDebug(handIndex, gestures) {
+            const prefix = handIndex === 0 ? 'left' : 'right';
+            const handState = handStates[handIndex];
+
+            document.getElementById(prefix + 'Gesture').textContent =
+                gestures.isPinching ? 'PINCH' : (gestures.isGrabbing ? 'GRAB' : 'OPEN');
+            document.getElementById(prefix + 'Pinch').textContent =
+                gestures.pinchDistance.toFixed(3);
+            document.getElementById(prefix + 'State').textContent =
+                handState.grabbedItem ? handState.grabbedItem.customData.state : 'IDLE';
+        }
+
+        // ==================== 检测手势 ====================
         function detectGestures(landmarks) {
-            // 拇指(4) 和 食指(8) 的距离
             const thumb = landmarks[4];
             const indexFinger = landmarks[8];
             const pinchDistance = Math.sqrt(
@@ -1313,9 +1465,8 @@
                 Math.pow(thumb.z - indexFinger.z, 2)
             );
 
-            const isPinching = pinchDistance < 0.05; // 捏取阈值
+            const isPinching = pinchDistance < 0.05;
 
-            // 检测手指弯曲（握拳）
             const fingerTips = [8, 12, 16, 20];
             const fingerBases = [6, 10, 14, 18];
             let bentFingers = 0;
@@ -1337,12 +1488,13 @@
         }
 
         // ==================== 尝试抓取物品 ====================
-        function tryGrabItem(method) {
+        function tryGrabItem(handState) {
             const grabRadius = 100;
 
             for (let item of items) {
                 if (item.customData.state === ItemState.CRUMBLING ||
-                    item.customData.state === ItemState.TRASHED) {
+                    item.customData.state === ItemState.TRASHED ||
+                    item.customData.grabbedBy) {
                     continue;
                 }
 
@@ -1351,47 +1503,49 @@
                 const distance = Math.sqrt(dx * dx + dy * dy);
 
                 if (distance < grabRadius) {
-                    grabbedItem = item;
+                    handState.grabbedItem = item;
                     item.customData.state = ItemState.GRABBED;
-                    Body.setStatic(grabbedItem, true);
+                    item.customData.grabbedBy = handState.label;
+                    Body.setStatic(item, true);
                     break;
                 }
             }
         }
 
         // ==================== 释放物品 ====================
-        function releaseItem() {
-            if (grabbedItem) {
-                // 如果处于捏取状态但未完成，恢复大小
-                if (grabbedItem.customData.state === ItemState.PINCHING) {
-                    grabbedItem.customData.scale = 1;
+        function releaseItem(handState) {
+            if (handState.grabbedItem) {
+                const item = handState.grabbedItem;
+
+                if (item.customData.state === ItemState.PINCHING) {
+                    item.customData.scale = 1;
                 }
 
-                Body.setStatic(grabbedItem, false);
-                grabbedItem.customData.state = ItemState.THROWN;
+                Body.setStatic(item, false);
+                item.customData.state = ItemState.THROWN;
+                item.customData.grabbedBy = null;
 
                 const speed = Math.sqrt(
                     handState.velocity.x ** 2 +
                     handState.velocity.y ** 2
                 );
 
-                // 如果速度足够快，触发碎裂
                 if (speed > 15) {
-                    crumbleItem(grabbedItem);
+                    crumbleItem(item, handState);
                 } else if (speed > 5) {
-                    Body.setVelocity(grabbedItem, {
+                    Body.setVelocity(item, {
                         x: handState.velocity.x * 0.5,
                         y: handState.velocity.y * 0.5
                     });
-                    Body.setAngularVelocity(grabbedItem, (Math.random() - 0.5) * 0.3);
+                    Body.setAngularVelocity(item, (Math.random() - 0.5) * 0.3);
                 }
 
-                grabbedItem = null;
+                handState.grabbedItem = null;
             }
         }
 
         // ==================== 碎裂物品 ====================
-        function crumbleItem(item) {
+        function crumbleItem(item, handState) {
             if (item.customData.state === ItemState.CRUMBLING) return;
 
             item.customData.state = ItemState.CRUMBLING;
@@ -1400,8 +1554,8 @@
             World.remove(world, item);
             items = items.filter(i => i !== item);
 
-            if (item === grabbedItem) {
-                grabbedItem = null;
+            if (handState && handState.grabbedItem === item) {
+                handState.grabbedItem = null;
             }
 
             crumbleTotal++;
@@ -1416,6 +1570,10 @@
             items.forEach(item => World.remove(world, item));
             items = [];
             particles = [];
+
+            handStates.forEach(hand => {
+                hand.grabbedItem = null;
+            });
 
             score = 0;
             combo = 0;
