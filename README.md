@@ -1,0 +1,149 @@
+# Siren - AR决策训练系统
+
+移动端AR手势交互原型集合，包含三个不同的AR决策训练系统。
+
+## 🚀 项目列表
+
+### 1. AR手势交互原型
+**入口:** [index-ar.html](index-ar.html)
+**演示:** [ar-gesture.html](ar-gesture.html)
+
+**特点:**
+- 双手合十固定背景场景
+- 6种手势交互模式
+- 实时手势识别（MediaPipe Hands）
+- Sobel边缘检测 + 区域着色
+
+**手势列表:**
+- 🙏 双手合十 - 固定背景场景
+- ✊ 握拳 - 轮廓区域变色
+- 👌 捏合 - AR元素虚拟化
+- 🤟 摇滚 - 元素消失效果
+- 🖐️ 展开手掌 - 显示信息面板
+- 👆 指向 - 交换元素位置
+
+---
+
+### 2. AR决策训练教练（静态版）
+**入口:** [index-trainer.html](index-trainer.html)
+**演示:** [ar-decision-trainer.html](ar-decision-trainer.html)
+
+**核心理念:**
+不是告诉你往哪放，而是训练你快速决策的能力
+
+**功能特性:**
+- 📸 环境校准（15秒）- 双手合十扫描桌面，自动识别5-7个物品区域
+- ⚡ 决策训练（60秒）- 每个物品3秒倒计时，手势快速决策
+- 📊 决策回顾（30秒）- 获得评分、模式分析和个性化建议
+
+**4种决策类型:**
+- 👆 立即处理 - 需要马上行动
+- 🖐️ 稍后处理 - 可以延后
+- 🤟 丢弃 - 不再需要
+- ✊ 归档 - 长期保存
+
+**游戏机制:**
+- 3秒倒计时 + 连击系统 + 压力值
+- 决策模式分析（拖延型/完美型/冲动型/平衡型）
+- Markdown格式待办清单导出
+
+---
+
+### 3. 动态AR决策教练（Phase 1原型）
+**入口:** [index-dynamic.html](index-dynamic.html)
+**演示:** [ar-dynamic-proto.html](ar-dynamic-proto.html)
+
+**创新点:**
+- 🔄 **持续扫描模式** - 无需固定背景，自由移动手机
+- 🤖 **AI物品识别** - TensorFlow.js COCO-SSD识别80+类真实物品
+- 🏷️ **实时AR标签** - 动态跟随物品移动
+- 🎯 **自动聚焦** - 物体停留中心1秒自动触发决策
+
+**Phase 1实现:**
+- ✅ TensorFlow.js COCO-SSD模型加载
+- ✅ 实时物品检测（杯子、书、手机等）
+- ✅ 动态AR标签系统
+- ✅ 中心聚焦区域检测
+- ✅ 决策面板UI
+- ✅ 基础统计追踪
+
+**未来计划（Phase 2-3）:**
+- 手势确认集成
+- 音频反馈
+- 训练仪表盘
+- 决策模式分析
+- 数据可视化
+
+---
+
+## 📋 技术栈
+
+| 技术 | 用途 |
+|------|------|
+| **MediaPipe Hands** | 手势识别（21关键点追踪） |
+| **TensorFlow.js COCO-SSD** | 物品识别（80+类别） |
+| **Canvas API** | 多层渲染系统 |
+| **Sobel算子** | 边缘检测 |
+| **BFS洪水填充** | 区域着色 |
+| **WebRTC getUserMedia** | 摄像头访问 |
+
+---
+
+## 🌐 部署
+
+### 本地测试
+```bash
+# Python 3
+python -m http.server 8000
+
+# 然后访问
+http://localhost:8000/index-ar.html
+http://localhost:8000/index-trainer.html
+http://localhost:8000/index-dynamic.html
+```
+
+### GitHub Pages部署
+1. 前往仓库 Settings → Pages
+2. 选择分支（建议使用 `main` 或 `gh-pages`）
+3. 点击 Save
+4. 访问: `https://yzhu24-ship-it.github.io/siren/`
+
+---
+
+## 📱 系统要求
+
+- ✅ 现代移动浏览器（Chrome 90+ / Safari 14+）
+- ✅ 摄像头访问权限
+- ✅ HTTPS连接（本地开发可用HTTP）
+- ✅ 稳定网络（首次加载MediaPipe/TensorFlow模型）
+- ✅ 光线充足环境（提升识别准确度）
+
+---
+
+## 🎯 使用场景对比
+
+| 场景 | 推荐版本 | 原因 |
+|------|---------|------|
+| 桌面整理 | 静态版 | 固定视角，批量决策 |
+| 房间巡视 | 动态版 | 移动扫描，逐个处理 |
+| 决策训练 | 静态版 | 完整游戏化机制 |
+| 快速整理 | 动态版 | 实时识别，即扫即决 |
+
+---
+
+## 📄 开源协议
+
+MIT License
+
+---
+
+## 🔗 相关链接
+
+- [MediaPipe Hands文档](https://google.github.io/mediapipe/solutions/hands.html)
+- [TensorFlow.js COCO-SSD](https://github.com/tensorflow/tfjs-models/tree/master/coco-ssd)
+- [整理决策理论](https://en.wikipedia.org/wiki/Tidying_Up)
+
+---
+
+**最后更新:** 2025-12-10
+**版本:** v1.0.0
