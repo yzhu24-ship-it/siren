@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>AR Magic Decision Coach - Mobile</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            background: #000;
+            touch-action: none;
+        }
+
+        /* Landscape orientation enforcement */
+        @media screen and (orientation: portrait) {
+            #orientation-warning {
+                display: flex !important;
+            }
+        }
+
+        #orientation-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            font-size: 24px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .rotate-icon {
+            font-size: 80px;
+            margin-bottom: 30px;
+            animation: rotateAnim 2s ease-in-out infinite;
+        }
+
+        @keyframes rotateAnim {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(90deg); }
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Video stream */
+        #video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+            z-index: 0;
+        }
+
+        /* Canvas layers */
+        #arCanvas, #magicCanvas, #handCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #arCanvas { z-index: 2; }
+        #magicCanvas { z-index: 3; }
+        #handCanvas { z-index: 4; opacity: 0.6; }
+
+        /* Status bar */
+        .status-bar {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 12px 25px;
+            border-radius: 25px;
+            color: white;
+            font-size: 14px;
+            z-index: 10;
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .mode-indicator {
+            font-size: 12px;
+            color: #4ecdc4;
+            margin-bottom: 3px;
+        }
+
+        /* Gesture hint */
+        #gesture-hint {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 16px;
+            display: none;
+            align-items: center;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .hand-icon {
+            font-size: 28px;
+            margin-right: 12px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        /* Decision UI */
+        #decision-ui {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #decision-ui.active {
+            display: flex;
+        }
+
+        .decision-panel {
+            background: rgba(0, 0, 0, 0.92);
+            border-radius: 25px;
+            padding: 30px;
+            color: white;
+            text-align: center;
+            min-width: 320px;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+        }
+
+        .decision-title {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .item-name {
+            color: #4ecdc4;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 25px;
+        }
+
+        .decision-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .decision-btn {
+            width: 100%;
+            min-height: 100px;
+            border: none;
+            border-radius: 20px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .decision-btn:active {
+            transform: scale(0.95);
+        }
+
+        .decision-btn.immediate {
+            background: linear-gradient(135deg, #FF6B6B, #EE5A52);
+        }
+
+        .decision-btn.later {
+            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+        }
+
+        .decision-btn.delete {
+            background: linear-gradient(135deg, #95A5A6, #7F8C8D);
+        }
+
+        .decision-btn.archive {
+            background: linear-gradient(135deg, #1DD1A1, #10AC84);
+        }
+
+        .btn-emoji {
+            font-size: 36px;
+        }
+
+        .gesture-tip {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+        }
+
+        /* Stats panel */
+        .stats-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 12px 18px;
+            border-radius: 15px;
+            color: white;
+            font-size: 12px;
+            z-index: 10;
+            min-width: 120px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 6px 0;
+        }
+
+        .stat-value {
+            color: #4ecdc4;
+            font-weight: bold;
+        }
+
+        /* Loading screen */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100000;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin-bottom: 25px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .loading-progress {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        /* Feedback message */
+        #feedback-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 20px;
+            font-size: 18px;
+            z-index: 10000;
+            transition: transform 0.3s ease-out;
+            pointer-events: none;
+        }
+
+        #feedback-message.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Orientation warning -->
+    <div id="orientation-warning">
+        <div class="rotate-icon">📱</div>
+        <div>Please rotate to landscape</div>
+        <div style="font-size: 16px; margin-top: 20px; opacity: 0.8;">
+            For best experience, hold device horizontally
+        </div>
+    </div>
+
+    <!-- Loading screen -->
+    <div id="loading">
+        <div class="loader"></div>
+        <div class="loading-text">Loading Magic Models...</div>
+        <div class="loading-progress">TensorFlow.js + MediaPipe Hands</div>
+    </div>
+
+    <!-- Main container -->
+    <div id="container">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="arCanvas"></canvas>
+        <canvas id="magicCanvas"></canvas>
+        <canvas id="handCanvas"></canvas>
+
+        <!-- Status bar -->
+        <div class="status-bar">
+            <div class="mode-indicator">Scanning Mode</div>
+            <div id="statusText">Open palm to summon decision</div>
+        </div>
+
+        <!-- Stats panel -->
+        <div class="stats-panel">
+            <div class="stat-row">
+                <span>Detected</span>
+                <span class="stat-value"><span id="detectedCount">0</span></span>
+            </div>
+            <div class="stat-row">
+                <span>Processed</span>
+                <span class="stat-value"><span id="processedCount">0</span></span>
+            </div>
+            <div class="stat-row">
+                <span>Remaining</span>
+                <span class="stat-value"><span id="remainingCount">0</span></span>
+            </div>
+        </div>
+
+        <!-- Gesture hint -->
+        <div id="gesture-hint">
+            <span class="hand-icon">🖐️</span>
+            <span id="hint-text">Open palm to start</span>
+        </div>
+    </div>
+
+    <!-- Decision UI -->
+    <div id="decision-ui">
+        <div class="decision-panel">
+            <div class="decision-title">What to do with</div>
+            <div class="item-name" id="item-name">Object</div>
+
+            <div class="decision-buttons">
+                <button class="decision-btn immediate" data-action="immediate">
+                    <span class="btn-emoji">🔥</span>
+                    <span>Do Now</span>
+                </button>
+                <button class="decision-btn later" data-action="later">
+                    <span class="btn-emoji">⏰</span>
+                    <span>Do Later</span>
+                </button>
+                <button class="decision-btn delete" data-action="delete">
+                    <span class="btn-emoji">🗑️</span>
+                    <span>Delete</span>
+                </button>
+                <button class="decision-btn archive" data-action="archive">
+                    <span class="btn-emoji">📁</span>
+                    <span>Archive</span>
+                </button>
+            </div>
+
+            <div class="gesture-tip">
+                👆 Point + 👌 Pinch to confirm<br>or tap button directly
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback message -->
+    <div id="feedback-message"></div>
+
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3"></script>
+
+    <!-- MediaPipe Hands -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js" crossorigin="anonymous"></script>
+
+    <script>
+        // ==============================================
+        // Mobile Configuration
+        // ==============================================
+
+        const MOBILE_CONFIG = {
+            detectionFrequency: 300,  // Detection every 300ms
+            maxDetections: 5,         // Max simultaneous detections
+            particleCount: 30,        // Reduced particles for mobile
+            palmHoldDuration: 1000,   // Palm must be open for 1s
+            focusRadius: 200,         // Focus area radius (pixels)
+            palmDistanceThreshold: 0.15, // Normalized distance threshold
+        };
+
+        // ==============================================
+        // Palm Open Detector Class
+        // ==============================================
+
+        class PalmOpenDetector {
+            constructor() {
+                this.palmOpenStartTime = 0;
+                this.palmOpenThreshold = MOBILE_CONFIG.palmHoldDuration;
+                this.isPalmOpen = false;
+                this.palmProgress = 0; // 0 to 1
+            }
+
+            /**
+             * Detect if palm is fully open
+             */
+            detectPalmOpen(landmarks) {
+                if (!landmarks || landmarks.length < 21) return false;
+
+                const wrist = landmarks[0];
+                const fingerTips = [4, 8, 12, 16, 20]; // Thumb, index, middle, ring, pinky
+
+                // Check all fingers are extended
+                let allFingersExtended = true;
+                for (const tipIndex of fingerTips) {
+                    const tip = landmarks[tipIndex];
+                    const distance = Math.sqrt(
+                        Math.pow(tip.x - wrist.x, 2) +
+                        Math.pow(tip.y - wrist.y, 2)
+                    );
+
+                    if (distance < MOBILE_CONFIG.palmDistanceThreshold) {
+                        allFingersExtended = false;
+                        break;
+                    }
+                }
+
+                // Check palm facing camera (thumb and pinky spread)
+                const thumbTip = landmarks[4];
+                const pinkyTip = landmarks[20];
+                const palmFacingCamera = Math.abs(thumbTip.x - pinkyTip.x) > 0.1;
+
+                return allFingersExtended && palmFacingCamera;
+            }
+
+            /**
+             * Update palm state and return trigger status
+             */
+            update(landmarks) {
+                const palmCurrentlyOpen = this.detectPalmOpen(landmarks);
+                const currentTime = Date.now();
+
+                if (palmCurrentlyOpen) {
+                    if (this.palmOpenStartTime === 0) {
+                        this.palmOpenStartTime = currentTime;
+                    }
+
+                    // Calculate progress
+                    const elapsed = currentTime - this.palmOpenStartTime;
+                    this.palmProgress = Math.min(1, elapsed / this.palmOpenThreshold);
+
+                    // Check if held long enough
+                    if (elapsed >= this.palmOpenThreshold && !this.isPalmOpen) {
+                        this.isPalmOpen = true;
+                        return { triggered: true, progress: 1 };
+                    }
+
+                    return { triggered: false, progress: this.palmProgress };
+                } else {
+                    // Reset when palm closes
+                    this.palmOpenStartTime = 0;
+                    this.isPalmOpen = false;
+                    this.palmProgress = 0;
+                    return { triggered: false, progress: 0 };
+                }
+            }
+
+            reset() {
+                this.palmOpenStartTime = 0;
+                this.isPalmOpen = false;
+                this.palmProgress = 0;
+            }
+        }
+
+        // ==============================================
+        // Focus Item Selector Class
+        // ==============================================
+
+        class FocusItemSelector {
+            constructor() {
+                this.currentFocusItem = null;
+                this.focusRadius = MOBILE_CONFIG.focusRadius;
+            }
+
+            /**
+             * Select item closest to screen center
+             */
+            selectFocusItem(detectedItems, screenCenter) {
+                if (!detectedItems || detectedItems.length === 0) {
+                    this.currentFocusItem = null;
+                    return null;
+                }
+
+                let closestItem = null;
+                let closestDistance = Infinity;
+
+                detectedItems.forEach(item => {
+                    const [x, y, width, height] = item.bbox;
+                    const itemCenter = {
+                        x: x + width / 2,
+                        y: y + height / 2
+                    };
+
+                    const distance = Math.sqrt(
+                        Math.pow(itemCenter.x - screenCenter.x, 2) +
+                        Math.pow(itemCenter.y - screenCenter.y, 2)
+                    );
+
+                    if (distance < this.focusRadius && distance < closestDistance) {
+                        closestDistance = distance;
+                        closestItem = item;
+                    }
+                });
+
+                this.currentFocusItem = closestItem;
+                return closestItem;
+            }
+
+            /**
+             * Draw focus effect around item
+             */
+            drawFocusEffect(item, ctx, progress = 1) {
+                if (!item) return;
+
+                const [x, y, width, height] = item.bbox;
+                const centerX = x + width / 2;
+                const centerY = y + height / 2;
+                const radius = Math.max(width, height) / 2 + 30;
+
+                // Pulsing outer ring
+                const time = Date.now() * 0.001;
+                const pulse = Math.sin(time * 3) * 5;
+
+                // Outer glow
+                const gradient = ctx.createRadialGradient(
+                    centerX, centerY, radius,
+                    centerX, centerY, radius + pulse + 30
+                );
+                gradient.addColorStop(0, 'rgba(78, 205, 196, 0)');
+                gradient.addColorStop(0.5, `rgba(78, 205, 196, ${0.4 * progress})`);
+                gradient.addColorStop(1, 'rgba(78, 205, 196, 0)');
+
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius + pulse + 30, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+
+                // Inner ring
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius + 15, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(255, 215, 0, ${0.6 + 0.4 * Math.sin(time * 5)})`;
+                ctx.lineWidth = 4;
+                ctx.stroke();
+
+                // Progress indicator
+                if (progress < 1) {
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius + 25, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress);
+                    ctx.strokeStyle = `rgba(255, 215, 0, 0.9)`;
+                    ctx.lineWidth = 6;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // ==============================================
+        // Main Application
+        // ==============================================
+
+        class ARMagicDecisionCoachMobile {
+            constructor() {
+                // DOM elements
+                this.video = document.getElementById('video');
+                this.arCanvas = document.getElementById('arCanvas');
+                this.arCtx = this.arCanvas.getContext('2d');
+                this.magicCanvas = document.getElementById('magicCanvas');
+                this.magicCtx = this.magicCanvas.getContext('2d');
+                this.handCanvas = document.getElementById('handCanvas');
+                this.handCtx = this.handCanvas.getContext('2d');
+
+                // Models
+                this.cocoModel = null;
+                this.handsModel = null;
+
+                // State
+                this.isProcessingItem = false;
+                this.processedItems = new Set();
+                this.detectedObjects = [];
+                this.currentFocusItem = null;
+                this.handLandmarks = null;
+                this.lastDetectionTime = 0;
+                this.decisions = [];
+
+                // Detectors
+                this.palmDetector = new PalmOpenDetector();
+                this.focusSelector = new FocusItemSelector();
+
+                // Decision buttons
+                this.setupDecisionButtons();
+            }
+
+            async init() {
+                try {
+                    console.log('🚀 Starting AR Magic Decision Coach Mobile');
+
+                    // Check mobile compatibility
+                    this.checkMobileCompatibility();
+
+                    // Initialize camera
+                    await this.initCamera();
+                    console.log('✅ Camera ready');
+
+                    // Load COCO-SSD
+                    document.querySelector('.loading-progress').textContent = 'Loading object detection...';
+                    this.cocoModel = await cocoSsd.load();
+                    console.log('✅ COCO-SSD loaded');
+
+                    // Load MediaPipe Hands
+                    document.querySelector('.loading-progress').textContent = 'Loading hand tracking...';
+                    await this.initHands();
+                    console.log('✅ MediaPipe Hands loaded');
+
+                    // Hide loading
+                    document.getElementById('loading').style.display = 'none';
+
+                    // Show gesture hint
+                    document.getElementById('gesture-hint').style.display = 'flex';
+
+                    // Start main loop
+                    this.mainLoop();
+
+                } catch (err) {
+                    console.error('❌ Initialization failed:', err);
+                    alert('Initialization failed: ' + err.message);
+                }
+            }
+
+            checkMobileCompatibility() {
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                if (!isMobile) {
+                    console.warn('Not a mobile device, some features may be limited');
+                }
+
+                if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+                    console.warn('Recommend using HTTPS for camera access');
+                }
+            }
+
+            async initCamera() {
+                try {
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error('Camera API not supported');
+                    }
+
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: 'environment',
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        },
+                        audio: false
+                    });
+
+                    this.video.srcObject = stream;
+
+                    return new Promise((resolve) => {
+                        this.video.onloadedmetadata = () => {
+                            this.resizeCanvas();
+                            resolve();
+                        };
+                    });
+                } catch (err) {
+                    let errorMsg = 'Failed to access camera: ';
+                    if (err.name === 'NotAllowedError') {
+                        errorMsg += 'Permission denied';
+                    } else if (err.name === 'NotFoundError') {
+                        errorMsg += 'No camera found';
+                    } else {
+                        errorMsg += err.message;
+                    }
+                    throw new Error(errorMsg);
+                }
+            }
+
+            async initHands() {
+                this.handsModel = new Hands({
+                    locateFile: (file) => {
+                        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${file}`;
+                    }
+                });
+
+                this.handsModel.setOptions({
+                    maxNumHands: 1,
+                    modelComplexity: 1,
+                    minDetectionConfidence: 0.7,
+                    minTrackingConfidence: 0.7
+                });
+
+                this.handsModel.onResults((results) => {
+                    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                        this.handLandmarks = results.multiHandLandmarks[0];
+                        this.drawHandSkeleton(results);
+                    } else {
+                        this.handLandmarks = null;
+                    }
+                });
+
+                const camera = new Camera(this.video, {
+                    onFrame: async () => {
+                        await this.handsModel.send({ image: this.video });
+                    },
+                    width: 1280,
+                    height: 720
+                });
+
+                camera.start();
+            }
+
+            resizeCanvas() {
+                [this.arCanvas, this.magicCanvas, this.handCanvas].forEach(canvas => {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                });
+            }
+
+            setupDecisionButtons() {
+                const buttons = document.querySelectorAll('.decision-btn');
+                buttons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const action = btn.dataset.action;
+                        this.completeDecision(action);
+                    });
+                });
+            }
+
+            // Main loop
+            async mainLoop() {
+                try {
+                    const currentTime = Date.now();
+
+                    // Control detection frequency
+                    if (currentTime - this.lastDetectionTime > MOBILE_CONFIG.detectionFrequency) {
+                        if (!this.isProcessingItem) {
+                            // Detect objects
+                            const predictions = await this.cocoModel.detect(this.video);
+                            this.detectedObjects = predictions
+                                .filter(p => p.score > 0.6)
+                                .slice(0, MOBILE_CONFIG.maxDetections);
+
+                            this.lastDetectionTime = currentTime;
+                        }
+                    }
+
+                    // Clear canvases
+                    this.arCtx.clearRect(0, 0, this.arCanvas.width, this.arCanvas.height);
+                    this.magicCtx.clearRect(0, 0, this.magicCanvas.width, this.magicCanvas.height);
+
+                    if (!this.isProcessingItem) {
+                        // Scanning mode
+                        this.processScanningMode();
+                    }
+
+                    // Update stats
+                    this.updateStats();
+
+                } catch (err) {
+                    console.error('Main loop error:', err);
+                }
+
+                requestAnimationFrame(() => this.mainLoop());
+            }
+
+            processScanningMode() {
+                // Filter unprocessed items
+                const availableItems = this.detectedObjects.filter(item =>
+                    !this.processedItems.has(this.getItemId(item))
+                );
+
+                // Draw AR labels
+                this.drawARLabels(availableItems);
+
+                // Check palm gesture
+                if (this.handLandmarks) {
+                    const palmResult = this.palmDetector.update(this.handLandmarks);
+
+                    if (palmResult.progress > 0 && availableItems.length > 0) {
+                        // Show focus effect while holding palm
+                        const screenCenter = {
+                            x: this.arCanvas.width / 2,
+                            y: this.arCanvas.height / 2
+                        };
+
+                        const focusItem = this.focusSelector.selectFocusItem(availableItems, screenCenter);
+                        if (focusItem) {
+                            this.focusSelector.drawFocusEffect(focusItem, this.magicCtx, palmResult.progress);
+                        }
+                    }
+
+                    if (palmResult.triggered && availableItems.length > 0) {
+                        // Trigger decision
+                        this.triggerDecision(availableItems);
+                    }
+                }
+
+                // Update hint text
+                this.updateGestureHint(availableItems.length);
+            }
+
+            triggerDecision(availableItems) {
+                const screenCenter = {
+                    x: this.arCanvas.width / 2,
+                    y: this.arCanvas.height / 2
+                };
+
+                const focusItem = this.focusSelector.selectFocusItem(availableItems, screenCenter);
+
+                if (focusItem) {
+                    this.isProcessingItem = true;
+                    this.currentFocusItem = focusItem;
+                    this.processedItems.add(this.getItemId(focusItem));
+
+                    // Play trigger sound
+                    this.playTriggerSound();
+
+                    // Show decision UI
+                    this.showDecisionUI(focusItem);
+
+                    // Reset palm detector
+                    this.palmDetector.reset();
+                }
+            }
+
+            showDecisionUI(item) {
+                document.getElementById('item-name').textContent = this.getItemLabel(item.class);
+                document.getElementById('decision-ui').classList.add('active');
+                document.getElementById('gesture-hint').style.display = 'none';
+                document.getElementById('statusText').textContent = 'Choose action...';
+            }
+
+            completeDecision(action) {
+                // Record decision
+                this.decisions.push({
+                    timestamp: Date.now(),
+                    item: this.currentFocusItem.class,
+                    action: action
+                });
+
+                // Show feedback
+                this.showFeedback(action);
+
+                // Play confirmation sound
+                this.playConfirmationSound();
+
+                // Hide decision UI
+                setTimeout(() => {
+                    document.getElementById('decision-ui').classList.remove('active');
+
+                    // Return to scanning
+                    setTimeout(() => {
+                        this.isProcessingItem = false;
+                        this.currentFocusItem = null;
+                        document.getElementById('gesture-hint').style.display = 'flex';
+                        document.getElementById('statusText').textContent = 'Open palm to summon decision';
+                    }, 500);
+                }, 300);
+            }
+
+            drawARLabels(items) {
+                items.forEach(item => {
+                    const [x, y, width, height] = item.bbox;
+                    const mirroredX = this.arCanvas.width - x - width;
+
+                    // Check if processed
+                    const isProcessed = this.processedItems.has(this.getItemId(item));
+                    const alpha = isProcessed ? 0.3 : 1.0;
+
+                    // Draw bounding box
+                    this.arCtx.strokeStyle = isProcessed ? `rgba(150, 150, 150, ${alpha})` : `rgba(255, 255, 255, ${alpha})`;
+                    this.arCtx.lineWidth = 2;
+                    this.arCtx.strokeRect(mirroredX, y, width, height);
+
+                    // Draw label
+                    const label = this.getItemLabel(item.class);
+                    this.arCtx.font = '16px Arial';
+                    const labelWidth = this.arCtx.measureText(label).width + 16;
+
+                    this.arCtx.fillStyle = isProcessed ? `rgba(100, 100, 100, ${alpha})` : `rgba(0, 0, 0, ${alpha * 0.8})`;
+                    this.arCtx.fillRect(mirroredX, y - 30, labelWidth, 30);
+
+                    this.arCtx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    this.arCtx.fillText(label, mirroredX + 8, y - 10);
+
+                    // Checkmark if processed
+                    if (isProcessed) {
+                        this.arCtx.font = '24px Arial';
+                        this.arCtx.fillText('✓', mirroredX + width - 30, y + 30);
+                    }
+                });
+            }
+
+            drawHandSkeleton(results) {
+                this.handCtx.clearRect(0, 0, this.handCanvas.width, this.handCanvas.height);
+
+                if (results.multiHandLandmarks) {
+                    for (const landmarks of results.multiHandLandmarks) {
+                        // Draw keypoints
+                        for (const landmark of landmarks) {
+                            const x = (1 - landmark.x) * this.handCanvas.width;
+                            const y = landmark.y * this.handCanvas.height;
+
+                            this.handCtx.beginPath();
+                            this.handCtx.arc(x, y, 5, 0, 2 * Math.PI);
+                            this.handCtx.fillStyle = 'rgba(0, 255, 0, 0.8)';
+                            this.handCtx.fill();
+                        }
+
+                        // Draw connections
+                        const connections = [
+                            [0, 1], [1, 2], [2, 3], [3, 4],
+                            [0, 5], [5, 6], [6, 7], [7, 8],
+                            [5, 9], [9, 10], [10, 11], [11, 12],
+                            [9, 13], [13, 14], [14, 15], [15, 16],
+                            [13, 17], [17, 18], [18, 19], [19, 20],
+                            [0, 17]
+                        ];
+
+                        this.handCtx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
+                        this.handCtx.lineWidth = 2;
+
+                        for (const [start, end] of connections) {
+                            const startPoint = landmarks[start];
+                            const endPoint = landmarks[end];
+
+                            const x1 = (1 - startPoint.x) * this.handCanvas.width;
+                            const y1 = startPoint.y * this.handCanvas.height;
+                            const x2 = (1 - endPoint.x) * this.handCanvas.width;
+                            const y2 = endPoint.y * this.handCanvas.height;
+
+                            this.handCtx.beginPath();
+                            this.handCtx.moveTo(x1, y1);
+                            this.handCtx.lineTo(x2, y2);
+                            this.handCtx.stroke();
+                        }
+                    }
+                }
+            }
+
+            updateStats() {
+                const unprocessed = this.detectedObjects.filter(item =>
+                    !this.processedItems.has(this.getItemId(item))
+                ).length;
+
+                document.getElementById('detectedCount').textContent = this.detectedObjects.length;
+                document.getElementById('processedCount').textContent = this.processedItems.size;
+                document.getElementById('remainingCount').textContent = unprocessed;
+            }
+
+            updateGestureHint(availableCount) {
+                const hintText = document.getElementById('hint-text');
+                if (availableCount > 0) {
+                    hintText.textContent = `${availableCount} items detected - open palm`;
+                } else if (this.processedItems.size > 0) {
+                    hintText.textContent = 'All items processed!';
+                } else {
+                    hintText.textContent = 'Point camera at objects';
+                }
+            }
+
+            showFeedback(action) {
+                const messages = {
+                    'immediate': '✓ Marked as Do Now',
+                    'later': '✓ Added to To-Do',
+                    'delete': '✓ Marked for Delete',
+                    'archive': '✓ Archived'
+                };
+
+                const feedbackEl = document.getElementById('feedback-message');
+                feedbackEl.textContent = messages[action] || '✓ Done';
+                feedbackEl.classList.add('show');
+
+                setTimeout(() => {
+                    feedbackEl.classList.remove('show');
+                }, 2000);
+            }
+
+            getItemLabel(className) {
+                const labels = {
+                    'person': '👤 Person',
+                    'cup': '☕ Cup',
+                    'bottle': '🍾 Bottle',
+                    'book': '📖 Book',
+                    'cell phone': '📱 Phone',
+                    'laptop': '💻 Laptop',
+                    'keyboard': '⌨️ Keyboard',
+                    'mouse': '🖱️ Mouse',
+                    'remote': '📺 Remote',
+                    'clock': '⏰ Clock'
+                };
+                return labels[className] || '📦 ' + className;
+            }
+
+            getItemId(item) {
+                return `${item.class}_${Math.round(item.bbox[0])}_${Math.round(item.bbox[1])}`;
+            }
+
+            playTriggerSound() {
+                try {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.3);
+                } catch (e) {}
+            }
+
+            playConfirmationSound() {
+                try {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+
+                    oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.15);
+
+                    oscillator.type = 'sine';
+
+                    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.4);
+                } catch (e) {}
+            }
+        }
+
+        // ==============================================
+        // Start Application
+        // ==============================================
+
+        window.addEventListener('load', async () => {
+            try {
+                const app = new ARMagicDecisionCoachMobile();
+                await app.init();
+            } catch (error) {
+                console.error('Application failed to start:', error);
+                document.querySelector('.loading-text').textContent = 'Failed: ' + error.message;
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            setTimeout(() => {
+                if (window.app) {
+                    window.app.resizeCanvas();
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>
