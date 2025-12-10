@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social Persona Mask Switcher</title>
+    <title>Siren - AR决策教练 | 纯网页版，无需安装App</title>
     <style>
         * {
             margin: 0;
@@ -12,591 +12,752 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 40px;
-            background: linear-gradient(135deg, #ffa07a 0%, #ff6b6b 100%);
-            transition: background 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: hidden;
-            position: relative;
+            padding: 20px;
+            overflow-x: hidden;
         }
 
-        /* 背景动画装饰 */
-        body::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: backgroundMove 20s linear infinite;
+        /* Animated background */
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(180deg); }
+        }
+
+        .bg-particle {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.4;
+            animation: float 4s ease-in-out infinite;
             pointer-events: none;
         }
 
-        @keyframes backgroundMove {
-            0% {
-                transform: translate(0, 0);
-            }
-            100% {
-                transform: translate(50px, 50px);
-            }
-        }
-
         .container {
+            max-width: 1200px;
+            margin: 0 auto;
             position: relative;
             z-index: 1;
+        }
+
+        /* Header */
+        .header {
             text-align: center;
-            max-width: 600px;
-            width: 100%;
-        }
-
-        h1 {
+            margin-bottom: 50px;
             color: white;
-            font-size: 2.5rem;
-            margin-bottom: 60px;
-            text-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
-            font-weight: 300;
-            letter-spacing: 2px;
         }
 
-        .avatar-container {
-            margin: 0 auto 60px;
-            width: 300px;
-            height: 300px;
-            position: relative;
+        .logo {
+            font-size: 120px;
+            margin-bottom: 20px;
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: glow 2s ease-in-out infinite;
         }
 
-        .avatar {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
-                        0 0 0 10px rgba(255, 255, 255, 0.1),
-                        0 0 0 20px rgba(255, 255, 255, 0.05);
-            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-                        box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            background: white;
-            animation: avatarPulse 3s ease-in-out infinite;
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5)); }
+            50% { filter: drop-shadow(0 0 40px rgba(255, 255, 255, 0.8)); }
         }
 
-        @keyframes avatarPulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.02);
-            }
+        .title {
+            font-size: 56px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            text-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
         }
 
-        .avatar:hover {
-            transform: scale(1.05);
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4),
-                        0 0 0 10px rgba(255, 255, 255, 0.15),
-                        0 0 0 20px rgba(255, 255, 255, 0.08);
+        .subtitle {
+            font-size: 24px;
+            opacity: 0.95;
+            line-height: 1.6;
+            margin-bottom: 20px;
         }
 
-        /* 切换动画效果 */
-        .avatar.switching {
-            animation: switchAnimation 0.6s ease-in-out;
+        .web-only-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #10B981, #059669);
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 15px;
+            box-shadow: 0 5px 20px rgba(16, 185, 129, 0.5);
+            animation: pulse-badge 2s ease-in-out infinite;
         }
 
-        @keyframes switchAnimation {
-            0% {
-                transform: scale(1) rotateY(0deg);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(0.8) rotateY(90deg);
-                opacity: 0.3;
-            }
-            100% {
-                transform: scale(1) rotateY(0deg);
-                opacity: 1;
-            }
+        @keyframes pulse-badge {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
-        .button-group {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        .persona-button {
-            padding: 20px 30px;
-            font-size: 1.1rem;
-            font-weight: 500;
-            border: none;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.2);
+        /* Device indicator */
+        .device-indicator {
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .device-indicator .icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .device-indicator .device-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .device-indicator .device-desc {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Version grid */
+        .version-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .version-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 35px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25);
+            transition: all 0.3s;
             position: relative;
             overflow: hidden;
         }
 
-        .persona-button::before {
+        .version-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transform: translateX(-100%);
-            transition: transform 0.6s;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
         }
 
-        .persona-button:hover::before {
-            transform: translateX(100%);
+        .version-card.recommended {
+            border: 3px solid #10B981;
+            box-shadow: 0 15px 50px rgba(16, 185, 129, 0.4);
         }
 
-        .persona-button:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        .version-card.recommended::before {
+            background: linear-gradient(90deg, #10B981, #059669);
         }
 
-        .persona-button:active {
-            transform: translateY(0);
+        .version-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
 
-        .persona-button.active {
-            background: rgba(255, 255, 255, 0.4);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2),
-                        inset 0 2px 10px rgba(255, 255, 255, 0.2);
-            transform: scale(0.98);
-        }
-
-        /* 状态指示器 */
-        .status-indicator {
-            margin-top: 40px;
+        .recommended-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10B981, #059669);
             color: white;
-            font-size: 1.2rem;
+            padding: 6px 15px;
+            border-radius: 15px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
+        }
+
+        .version-icon {
+            font-size: 72px;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .version-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .version-subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .device-tags {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .device-tag {
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .device-tag.pc {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .device-tag.mobile {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .device-tag.both {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .features {
+            margin-bottom: 20px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 15px;
+            color: #555;
+        }
+
+        .feature-item .icon {
+            font-size: 20px;
+        }
+
+        .version-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            text-align: center;
+            display: block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #f0f0f0;
+        }
+
+        /* Info section */
+        .info-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 35px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .info-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .info-content {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .info-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .info-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .info-list li:last-child {
+            border-bottom: none;
+        }
+
+        .info-list .icon {
+            font-size: 24px;
+        }
+
+        /* Requirements */
+        .requirements {
+            background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+            border-left: 5px solid #F59E0B;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+        }
+
+        .requirements-title {
+            font-weight: 700;
+            color: #92400E;
+            margin-bottom: 15px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .requirements-list {
+            color: #92400E;
+            font-size: 15px;
+            line-height: 2;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 50px;
+            font-size: 16px;
             opacity: 0.9;
-            text-shadow: 1px 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        /* 响应式设计 */
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 2rem;
-                margin-bottom: 40px;
+        .footer a {
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            border-bottom: 2px solid white;
+            transition: all 0.3s;
+        }
+
+        .footer a:hover {
+            opacity: 0.8;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 36px;
             }
 
-            .avatar-container {
-                width: 250px;
-                height: 250px;
-                margin-bottom: 40px;
+            .subtitle {
+                font-size: 18px;
             }
 
-            .button-group {
+            .version-grid {
                 grid-template-columns: 1fr;
-                max-width: 300px;
             }
 
-            .persona-button {
-                font-size: 1rem;
-                padding: 18px 25px;
+            .logo {
+                font-size: 80px;
             }
-        }
-
-        /* 不同状态的背景色 */
-        body.family {
-            background: linear-gradient(135deg, #ffa07a 0%, #ff6b6b 100%);
-        }
-
-        body.friend {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        body.colleague {
-            background: linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%);
-        }
-
-        body.stranger {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
     </style>
 </head>
-<body class="family">
+<body>
+    <!-- Background particles -->
+    <script>
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'bg-particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 4 + 's';
+            document.body.appendChild(particle);
+        }
+    </script>
+
     <div class="container">
-        <h1>Social Persona Mask Switcher</h1>
-
-        <div class="avatar-container">
-            <canvas id="avatar" class="avatar"></canvas>
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">🎯</div>
+            <h1 class="title">Siren AR决策教练</h1>
+            <p class="subtitle">
+                用增强现实和AI，让决策变得简单而有趣<br>
+                支持电脑和手机浏览器直接访问
+            </p>
+            <div class="web-only-badge">
+                ✅ 纯网页版 · 无需下载App · 打开即用
+            </div>
         </div>
 
-        <div class="button-group">
-            <button class="persona-button active" data-persona="family">👨‍👩‍👧‍👦 Family</button>
-            <button class="persona-button" data-persona="friend">🎉 Friends</button>
-            <button class="persona-button" data-persona="colleague">💼 Colleagues</button>
-            <button class="persona-button" data-persona="stranger">🎭 Strangers</button>
+        <!-- Device indicator -->
+        <div class="device-indicator">
+            <div class="icon" id="deviceIcon">📱</div>
+            <div class="device-name" id="deviceName">正在检测设备...</div>
+            <div class="device-desc" id="deviceDesc">为您推荐最适合的版本</div>
         </div>
 
-        <div class="status-indicator">
-            Current Mode: <span id="currentStatus">Family Mode</span>
+        <!-- Version cards -->
+        <div class="version-grid">
+            <!-- Mobile Palm Gesture Version -->
+            <div class="version-card" id="card-mobile">
+                <div class="version-icon">🤚</div>
+                <h2 class="version-title">移动掌控版</h2>
+                <p class="version-subtitle">手掌手势触发，顺序处理，专为手机优化</p>
+
+                <div class="device-tags">
+                    <span class="device-tag mobile">📱 手机推荐</span>
+                    <span class="device-tag pc">💻 电脑可用</span>
+                </div>
+
+                <div class="features">
+                    <div class="feature-item">
+                        <span class="icon">🤚</span>
+                        <span>张开手掌1秒触发决策</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">🎯</span>
+                        <span>屏幕中心自动聚焦物品</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">📋</span>
+                        <span>顺序处理，进度可视化</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">👆</span>
+                        <span>支持手势和触摸双模式</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">🔋</span>
+                        <span>省电优化，横屏体验最佳</span>
+                    </div>
+                </div>
+
+                <div class="version-actions">
+                    <a href="ar-magic-palm-mobile.html" class="btn btn-primary">立即体验</a>
+                    <a href="index-palm-mobile.html" class="btn btn-secondary">了解详情</a>
+                </div>
+            </div>
+
+            <!-- Magic Gesture Version -->
+            <div class="version-card">
+                <div class="version-icon">✨</div>
+                <h2 class="version-title">魔法手势版</h2>
+                <p class="version-subtitle">指尖魔法光效，捏合手势确认</p>
+
+                <div class="device-tags">
+                    <span class="device-tag both">🌐 通用版本</span>
+                </div>
+
+                <div class="features">
+                    <div class="feature-item">
+                        <span class="icon">✨</span>
+                        <span>魔法粒子光效跟随手指</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">👉</span>
+                        <span>指向按钮触发决策面板</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">🤏</span>
+                        <span>捏合手势确认选择</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">🎮</span>
+                        <span>沉浸式交互体验</span>
+                    </div>
+                </div>
+
+                <div class="version-actions">
+                    <a href="ar-magic-gesture.html" class="btn btn-primary">立即体验</a>
+                    <a href="index-magic.html" class="btn btn-secondary">了解详情</a>
+                </div>
+            </div>
+
+            <!-- Dynamic AR Version -->
+            <div class="version-card">
+                <div class="version-icon">🔄</div>
+                <h2 class="version-title">动态扫描版</h2>
+                <p class="version-subtitle">持续扫描模式，AI物品识别</p>
+
+                <div class="device-tags">
+                    <span class="device-tag both">🌐 通用版本</span>
+                </div>
+
+                <div class="features">
+                    <div class="feature-item">
+                        <span class="icon">🤖</span>
+                        <span>AI识别80+类真实物品</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">🔄</span>
+                        <span>无需固定背景，自由移动</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">🏷️</span>
+                        <span>实时AR标签动态跟随</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">⏱️</span>
+                        <span>物品停留中心1秒自动触发</span>
+                    </div>
+                </div>
+
+                <div class="version-actions">
+                    <a href="ar-dynamic-proto.html" class="btn btn-primary">立即体验</a>
+                    <a href="index-dynamic.html" class="btn btn-secondary">了解详情</a>
+                </div>
+            </div>
+
+            <!-- Static AR Version -->
+            <div class="version-card">
+                <div class="version-icon">🎯</div>
+                <h2 class="version-title">经典静态版</h2>
+                <p class="version-subtitle">固定视角，批量决策，适合桌面整理</p>
+
+                <div class="device-tags">
+                    <span class="device-tag pc">💻 电脑推荐</span>
+                </div>
+
+                <div class="features">
+                    <div class="feature-item">
+                        <span class="icon">📸</span>
+                        <span>拍摄快照，固定场景</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">🎮</span>
+                        <span>游戏化决策训练</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">⚡</span>
+                        <span>快速批量处理</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">📊</span>
+                        <span>完整数据统计</span>
+                    </div>
+                </div>
+
+                <div class="version-actions">
+                    <a href="ar-coach.html" class="btn btn-primary">立即体验</a>
+                    <a href="index-ar.html" class="btn btn-secondary">了解详情</a>
+                </div>
+            </div>
+
+            <!-- Decision Trainer Version -->
+            <div class="version-card">
+                <div class="version-icon">🏋️</div>
+                <h2 class="version-title">决策训练版</h2>
+                <p class="version-subtitle">纯训练模式，无AR，专注决策练习</p>
+
+                <div class="device-tags">
+                    <span class="device-tag both">🌐 通用版本</span>
+                </div>
+
+                <div class="features">
+                    <div class="feature-item">
+                        <span class="icon">🏋️</span>
+                        <span>专注决策能力训练</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">⚡</span>
+                        <span>无需摄像头，性能最优</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">📈</span>
+                        <span>详细进度追踪</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">🎯</span>
+                        <span>四象限决策法则</span>
+                    </div>
+                </div>
+
+                <div class="version-actions">
+                    <a href="decision-trainer.html" class="btn btn-primary">立即体验</a>
+                    <a href="index-trainer.html" class="btn btn-secondary">了解详情</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info sections -->
+        <div class="info-section">
+            <h2 class="info-title">
+                <span>🌐</span>
+                纯网页实现，无需任何App
+            </h2>
+            <div class="info-content">
+                <p><strong>Siren是100%的网页应用，所有功能都在浏览器中运行：</strong></p>
+                <ul class="info-list">
+                    <li>
+                        <span class="icon">✅</span>
+                        <span><strong>无需下载：</strong>直接在浏览器中打开网址即可使用</span>
+                    </li>
+                    <li>
+                        <span class="icon">✅</span>
+                        <span><strong>无需安装：</strong>不需要安装任何应用程序或插件</span>
+                    </li>
+                    <li>
+                        <span class="icon">✅</span>
+                        <span><strong>跨平台：</strong>电脑、手机、平板都能用同一个网址访问</span>
+                    </li>
+                    <li>
+                        <span class="icon">✅</span>
+                        <span><strong>即时更新：</strong>刷新页面即可获得最新功能</span>
+                    </li>
+                    <li>
+                        <span class="icon">✅</span>
+                        <span><strong>隐私安全：</strong>所有AI运算在您的设备上进行，数据不上传</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2 class="info-title">
+                <span>💻📱</span>
+                如何访问
+            </h2>
+            <div class="info-content">
+                <h3 style="margin-top: 0; color: #667eea;">方法1：本地测试（开发阶段）</h3>
+                <ol style="line-height: 2; margin-left: 20px;">
+                    <li>下载代码到本地</li>
+                    <li>在命令行运行：<code style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">python -m http.server 8000</code></li>
+                    <li><strong>电脑访问：</strong>浏览器打开 <code style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">http://localhost:8000/index.html</code></li>
+                    <li><strong>手机访问：</strong>
+                        <ul style="margin-top: 8px;">
+                            <li>确保手机和电脑在同一WiFi</li>
+                            <li>找到电脑的IP地址（如 192.168.1.100）</li>
+                            <li>手机浏览器打开 <code style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">http://192.168.1.100:8000/index.html</code></li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <h3 style="margin-top: 25px; color: #667eea;">方法2：GitHub Pages部署（推荐）</h3>
+                <ol style="line-height: 2; margin-left: 20px;">
+                    <li>代码已推送到GitHub仓库</li>
+                    <li>在仓库设置中启用GitHub Pages</li>
+                    <li><strong>所有设备访问同一个网址：</strong><br>
+                        <code style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">https://yzhu24-ship-it.github.io/siren/</code>
+                    </li>
+                    <li>电脑、手机、平板用同一个链接，自动适配</li>
+                </ol>
+
+                <div class="requirements">
+                    <div class="requirements-title">
+                        <span>⚠️</span> 浏览器要求
+                    </div>
+                    <div class="requirements-list">
+                        <strong>电脑端：</strong><br>
+                        • Chrome 90+ / Edge 90+ / Firefox 88+<br>
+                        • Safari 14+ (Mac)<br>
+                        <br>
+                        <strong>手机端：</strong><br>
+                        • Chrome 90+ (Android)<br>
+                        • Safari 14+ (iOS)<br>
+                        • 需要摄像头权限（AR版本）<br>
+                        • 建议使用HTTPS（GitHub Pages自动提供）
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>🎯 Siren AR决策教练 | 让决策变得简单而有趣</p>
+            <p style="margin-top: 15px;">
+                <a href="https://github.com/yzhu24-ship-it/siren" target="_blank">GitHub</a> ·
+                <a href="README.md">文档</a>
+            </p>
+            <p style="margin-top: 10px; font-size: 14px; opacity: 0.8;">
+                版本 v1.1.0 | MIT License
+            </p>
         </div>
     </div>
 
+    <!-- Device detection script -->
     <script>
-        // Drawing function for cute avatars with different expressions
-        function drawAvatar(ctx, expression, bgColor) {
-            const width = 300;
-            const height = 300;
+        // Detect device type
+        function detectDevice() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+            const isTablet = /ipad|android/i.test(userAgent) && !/mobile/i.test(userAgent);
 
-            // Clear canvas
-            ctx.clearRect(0, 0, width, height);
-
-            // Background with gradient
-            const bgGradient = ctx.createRadialGradient(150, 150, 0, 150, 150, 150);
-            bgGradient.addColorStop(0, bgColor);
-            bgGradient.addColorStop(1, adjustBrightness(bgColor, -20));
-            ctx.fillStyle = bgGradient;
-            ctx.fillRect(0, 0, width, height);
-
-            // Face shadow (for depth)
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.beginPath();
-            ctx.arc(150, 140, 78, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Face
-            const faceGradient = ctx.createRadialGradient(150, 130, 0, 150, 140, 75);
-            faceGradient.addColorStop(0, '#ffd4b3');
-            faceGradient.addColorStop(1, '#f4c7a5');
-            ctx.fillStyle = faceGradient;
-            ctx.beginPath();
-            ctx.arc(150, 135, 75, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Hair (long wavy hair)
-            ctx.fillStyle = '#6b3410';
-            ctx.beginPath();
-            // Top bun/volume
-            ctx.ellipse(150, 85, 80, 50, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Hair highlights
-            ctx.fillStyle = '#8b4513';
-            ctx.beginPath();
-            ctx.ellipse(150, 85, 70, 43, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Left hair flow
-            ctx.fillStyle = '#6b3410';
-            ctx.beginPath();
-            ctx.moveTo(70, 90);
-            ctx.quadraticCurveTo(60, 120, 70, 180);
-            ctx.quadraticCurveTo(75, 200, 85, 215);
-            ctx.lineTo(95, 210);
-            ctx.quadraticCurveTo(85, 190, 80, 160);
-            ctx.quadraticCurveTo(75, 120, 85, 90);
-            ctx.fill();
-
-            // Right hair flow
-            ctx.beginPath();
-            ctx.moveTo(230, 90);
-            ctx.quadraticCurveTo(240, 120, 230, 180);
-            ctx.quadraticCurveTo(225, 200, 215, 215);
-            ctx.lineTo(205, 210);
-            ctx.quadraticCurveTo(215, 190, 220, 160);
-            ctx.quadraticCurveTo(225, 120, 215, 90);
-            ctx.fill();
-
-            // Blush
-            if (expression === 'family' || expression === 'friend') {
-                ctx.fillStyle = 'rgba(255, 150, 150, 0.3)';
-                ctx.beginPath();
-                ctx.ellipse(110, 145, 15, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(190, 145, 15, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // Eyes
-            if (expression === 'stranger') {
-                // Cold, looking away
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.ellipse(115, 125, 12, 15, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(185, 125, 12, 15, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.fillStyle = '#4a3728';
-                ctx.beginPath();
-                ctx.arc(112, 125, 8, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(188, 125, 8, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Flat eyebrows
-                ctx.strokeStyle = '#4a3728';
-                ctx.lineWidth = 2.5;
-                ctx.beginPath();
-                ctx.moveTo(100, 108);
-                ctx.lineTo(130, 108);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(170, 108);
-                ctx.lineTo(200, 108);
-                ctx.stroke();
-            } else if (expression === 'friend') {
-                // Super happy squinted eyes
-                ctx.fillStyle = '#4a3728';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(125, 122, 3, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(175, 122, 3, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Happy curved eyebrows
-                ctx.strokeStyle = '#4a3728';
-                ctx.lineWidth = 2.5;
-                ctx.beginPath();
-                ctx.moveTo(105, 108);
-                ctx.quadraticCurveTo(125, 102, 145, 108);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(155, 108);
-                ctx.quadraticCurveTo(175, 102, 195, 108);
-                ctx.stroke();
-            } else {
-                // Big cute eyes
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.ellipse(125, 125, 13, 16, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(175, 125, 13, 16, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Iris
-                ctx.fillStyle = '#4a3728';
-                ctx.beginPath();
-                ctx.arc(125, 128, 10, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(175, 128, 10, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Pupils with sparkle
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(125, 128, 6, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(175, 128, 6, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Eye sparkles
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.arc(122, 124, 2.5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(172, 124, 2.5, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Eyebrows
-                ctx.strokeStyle = '#4a3728';
-                ctx.lineWidth = 2.5;
-                if (expression === 'family') {
-                    ctx.beginPath();
-                    ctx.moveTo(105, 105);
-                    ctx.quadraticCurveTo(125, 103, 145, 106);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(155, 106);
-                    ctx.quadraticCurveTo(175, 103, 195, 105);
-                    ctx.stroke();
-                } else {
-                    ctx.beginPath();
-                    ctx.moveTo(105, 108);
-                    ctx.lineTo(145, 108);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(155, 108);
-                    ctx.lineTo(195, 108);
-                    ctx.stroke();
-                }
-            }
-
-            // Mouth
-            ctx.strokeStyle = '#4a3728';
-            ctx.fillStyle = '#ff6b9d';
-            ctx.lineWidth = 2.5;
-
-            if (expression === 'family') {
-                // Big happy smile
-                ctx.beginPath();
-                ctx.moveTo(115, 155);
-                ctx.quadraticCurveTo(150, 180, 185, 155);
-                ctx.stroke();
-
-                // Open mouth smile
-                ctx.fillStyle = 'rgba(255, 107, 157, 0.6)';
-                ctx.beginPath();
-                ctx.moveTo(115, 155);
-                ctx.quadraticCurveTo(150, 175, 185, 155);
-                ctx.quadraticCurveTo(150, 165, 115, 155);
-                ctx.fill();
-            } else if (expression === 'friend') {
-                // Super wide laugh
-                ctx.beginPath();
-                ctx.arc(150, 145, 30, 0.2, Math.PI - 0.2);
-                ctx.stroke();
-
-                // Open laughing mouth
-                ctx.fillStyle = 'rgba(255, 107, 157, 0.7)';
-                ctx.beginPath();
-                ctx.arc(150, 145, 28, 0.2, Math.PI - 0.2);
-                ctx.lineTo(150, 160);
-                ctx.fill();
-            } else if (expression === 'colleague') {
-                // Polite small smile
-                ctx.beginPath();
-                ctx.moveTo(130, 162);
-                ctx.quadraticCurveTo(150, 168, 170, 162);
-                ctx.stroke();
-            } else if (expression === 'stranger') {
-                // Flat line - indifferent
-                ctx.beginPath();
-                ctx.moveTo(130, 162);
-                ctx.lineTo(170, 162);
-                ctx.stroke();
-            }
-
-            // Cute nose
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.beginPath();
-            ctx.arc(150, 142, 2, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // Helper function to adjust color brightness
-        function adjustBrightness(color, amount) {
-            const hex = color.replace('#', '');
-            const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
-            const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
-            const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
-            return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
-        }
-
-        // Persona configurations
-        const personas = {
-            family: {
-                name: 'Family Mode',
-                expression: 'family',
-                bgColor: '#ffdfbf',
-                emoji: '👨‍👩‍👧‍👦'
-            },
-            friend: {
-                name: 'Friends Mode',
-                expression: 'friend',
-                bgColor: '#b6e3f4',
-                emoji: '🎉'
-            },
-            colleague: {
-                name: 'Colleagues Mode',
-                expression: 'colleague',
-                bgColor: '#d1d4f9',
-                emoji: '💼'
-            },
-            stranger: {
-                name: 'Strangers Mode',
-                expression: 'stranger',
-                bgColor: '#c0aede',
-                emoji: '🎭'
-            }
-        };
-
-        // Get DOM elements
-        const canvas = document.getElementById('avatar');
-        const ctx = canvas.getContext('2d');
-        const statusElement = document.getElementById('currentStatus');
-        const buttons = document.querySelectorAll('.persona-button');
-        const body = document.body;
-
-        // Set canvas size
-        canvas.width = 300;
-        canvas.height = 300;
-
-        // Switch persona function
-        function switchPersona(personaKey) {
-            const persona = personas[personaKey];
-
-            // Add switching animation
-            canvas.classList.add('switching');
-
-            // Draw new avatar after animation delay
-            setTimeout(() => {
-                drawAvatar(ctx, persona.expression, persona.bgColor);
-            }, 300);
-
-            // Remove animation class
-            setTimeout(() => {
-                canvas.classList.remove('switching');
-            }, 600);
-
-            // Update background color
-            body.className = personaKey;
-
-            // Update status text
-            statusElement.textContent = persona.name;
-
-            // Update button states
-            buttons.forEach(btn => {
-                if (btn.dataset.persona === personaKey) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-        }
-
-        // Add click events to buttons
-        buttons.forEach(button => {
-            button.addEventListener('click', () => {
-                const personaKey = button.dataset.persona;
-                switchPersona(personaKey);
-            });
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            const keyMap = {
-                '1': 'family',
-                '2': 'friend',
-                '3': 'colleague',
-                '4': 'stranger'
+            return {
+                isMobile: isMobile && !isTablet,
+                isTablet: isTablet,
+                isDesktop: !isMobile && !isTablet
             };
+        }
 
-            if (keyMap[e.key]) {
-                switchPersona(keyMap[e.key]);
-            }
+        const device = detectDevice();
+        const deviceIcon = document.getElementById('deviceIcon');
+        const deviceName = document.getElementById('deviceName');
+        const deviceDesc = document.getElementById('deviceDesc');
+        const mobileCard = document.getElementById('card-mobile');
+
+        if (device.isMobile) {
+            deviceIcon.textContent = '📱';
+            deviceName.textContent = '您正在使用手机访问';
+            deviceDesc.textContent = '推荐使用"移动掌控版"，专为手机优化，支持横屏手势操作';
+
+            // Add recommended badge to mobile version
+            const badge = document.createElement('div');
+            badge.className = 'recommended-badge';
+            badge.textContent = '推荐';
+            mobileCard.appendChild(badge);
+            mobileCard.classList.add('recommended');
+        } else if (device.isTablet) {
+            deviceIcon.textContent = '📱';
+            deviceName.textContent = '您正在使用平板访问';
+            deviceDesc.textContent = '推荐使用"移动掌控版"或"动态扫描版"，都能提供良好体验';
+        } else {
+            deviceIcon.textContent = '💻';
+            deviceName.textContent = '您正在使用电脑访问';
+            deviceDesc.textContent = '所有版本都可正常使用，推荐"经典静态版"用于桌面整理';
+        }
+
+        // Add click tracking
+        document.querySelectorAll('.btn-primary').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                console.log('启动版本:', this.href);
+            });
         });
-
-        // Draw initial avatar (family mode)
-        drawAvatar(ctx, 'family', '#ffdfbf');
     </script>
 </body>
 </html>
