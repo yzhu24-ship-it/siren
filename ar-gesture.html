@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AR手势交互原型 - Gesture AR Prototype</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            background: #000;
+            touch-action: none;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 视频层 - 摄像头实时画面 */
+        #video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* 镜像翻转 */
+            z-index: 1;
+        }
+
+        /* 背景冻结层 */
+        #frozenBackground {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 2;
+            display: none;
+        }
+
+        /* AR渲染层 */
+        #arCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        /* 手势调试层 */
+        #debugCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        /* UI控制层 */
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* 状态指示器 */
+        .status-bar {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 12px 24px;
+            border-radius: 25px;
+            color: white;
+            font-size: 14px;
+            pointer-events: all;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ff4444;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-indicator.active {
+            background: #44ff44;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* 提示文本 */
+        .instruction {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            font-size: 16px;
+            text-align: center;
+            max-width: 80%;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .instruction.hidden {
+            opacity: 0;
+        }
+
+        /* 拍手特效 */
+        .clap-effect {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.8), transparent);
+            pointer-events: none;
+            animation: clapAnimation 0.6s ease-out forwards;
+            z-index: 5;
+        }
+
+        @keyframes clapAnimation {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(3);
+                opacity: 0;
+            }
+        }
+
+        /* 控制按钮 */
+        .control-buttons {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            pointer-events: all;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn.primary {
+            background: rgba(66, 153, 225, 0.6);
+            border-color: rgba(66, 153, 225, 0.8);
+        }
+
+        /* 加载动画 */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 18px;
+            text-align: center;
+            z-index: 100;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* AR元素样式提示 */
+        .ar-object-label {
+            position: absolute;
+            background: rgba(66, 153, 225, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 6;
+            font-weight: 500;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <!-- 摄像头视频流 -->
+        <video id="video" autoplay playsinline></video>
+
+        <!-- 冻结背景画布 -->
+        <canvas id="frozenBackground"></canvas>
+
+        <!-- AR元素渲染画布 -->
+        <canvas id="arCanvas"></canvas>
+
+        <!-- 手势调试画布 -->
+        <canvas id="debugCanvas"></canvas>
+
+        <!-- UI覆盖层 -->
+        <div class="ui-overlay">
+            <!-- 状态栏 -->
+            <div class="status-bar">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span id="statusText">初始化中...</span>
+            </div>
+
+            <!-- 操作提示 -->
+            <div class="instruction" id="instruction">
+                👏 双手拍手可以冻结背景<br>
+                ✋ 张开手掌可以抓取AR元素
+            </div>
+
+            <!-- 控制按钮 -->
+            <div class="control-buttons">
+                <button class="btn" id="resetBtn">重置背景</button>
+                <button class="btn" id="toggleDebugBtn">切换调试</button>
+                <button class="btn primary" id="addObjectBtn">添加AR元素</button>
+            </div>
+        </div>
+
+        <!-- 加载提示 -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            正在加载手势识别模型...<br>
+            <small>首次加载可能需要几秒钟</small>
+        </div>
+    </div>
+
+    <!-- MediaPipe Hands -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <script>
+        // ==============================================
+        // 全局变量和配置
+        // ==============================================
+
+        const video = document.getElementById('video');
+        const frozenCanvas = document.getElementById('frozenBackground');
+        const arCanvas = document.getElementById('arCanvas');
+        const debugCanvas = document.getElementById('debugCanvas');
+        const loading = document.getElementById('loading');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const instruction = document.getElementById('instruction');
+
+        const frozenCtx = frozenCanvas.getContext('2d');
+        const arCtx = arCanvas.getContext('2d');
+        const debugCtx = debugCanvas.getContext('2d');
+
+        // 状态管理
+        let isBackgroundFrozen = false;
+        let isDebugMode = true;
+        let handsData = { left: null, right: null };
+        let arObjects = [];
+        let selectedObject = null;
+
+        // 拍手检测状态
+        let lastHandDistance = 0;
+        let clapCooldown = false;
+        const CLAP_THRESHOLD = 0.1; // 双手距离阈值
+        const CLAP_COOLDOWN_MS = 1000; // 拍手冷却时间
+
+        // ==============================================
+        // 初始化摄像头
+        // ==============================================
+
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment', // 后置摄像头优先
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                });
+
+                video.srcObject = stream;
+
+                return new Promise((resolve) => {
+                    video.onloadedmetadata = () => {
+                        resizeCanvases();
+                        resolve();
+                    };
+                });
+            } catch (err) {
+                console.error('摄像头访问失败:', err);
+                alert('无法访问摄像头，请检查权限设置');
+            }
+        }
+
+        // ==============================================
+        // 调整画布尺寸
+        // ==============================================
+
+        function resizeCanvases() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            frozenCanvas.width = width;
+            frozenCanvas.height = height;
+            arCanvas.width = width;
+            arCanvas.height = height;
+            debugCanvas.width = width;
+            debugCanvas.height = height;
+        }
+
+        window.addEventListener('resize', resizeCanvases);
+
+        // ==============================================
+        // 初始化MediaPipe Hands
+        // ==============================================
+
+        const hands = new Hands({
+            locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+            }
+        });
+
+        hands.setOptions({
+            maxNumHands: 2,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.7,
+            minTrackingConfidence: 0.5
+        });
+
+        hands.onResults(onHandsResults);
+
+        // ==============================================
+        // 手势识别结果处理
+        // ==============================================
+
+        function onHandsResults(results) {
+            // 清除调试画布
+            debugCtx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
+
+            if (results.multiHandLandmarks && results.multiHandedness) {
+                // 重置手部数据
+                handsData = { left: null, right: null };
+
+                // 处理每只检测到的手
+                results.multiHandLandmarks.forEach((landmarks, index) => {
+                    const handedness = results.multiHandedness[index].label;
+                    const handLabel = handedness === 'Left' ? 'right' : 'left'; // 镜像反转
+
+                    handsData[handLabel] = {
+                        landmarks: landmarks,
+                        handedness: handLabel
+                    };
+
+                    // 绘制手部骨架（调试模式）
+                    if (isDebugMode) {
+                        drawHandLandmarks(landmarks, handLabel);
+                    }
+                });
+
+                // 检测拍手动作
+                detectClap();
+
+                // 检测手势交互
+                detectGestureInteraction();
+            }
+        }
+
+        // ==============================================
+        // 绘制手部关键点和骨架
+        // ==============================================
+
+        function drawHandLandmarks(landmarks, handLabel) {
+            const color = handLabel === 'left' ? '#00ff00' : '#ff0000';
+
+            // 绘制关键点
+            landmarks.forEach((landmark) => {
+                const x = landmark.x * debugCanvas.width;
+                const y = landmark.y * debugCanvas.height;
+
+                debugCtx.beginPath();
+                debugCtx.arc(x, y, 5, 0, 2 * Math.PI);
+                debugCtx.fillStyle = color;
+                debugCtx.fill();
+            });
+
+            // 绘制连接线
+            const connections = [
+                [0, 1], [1, 2], [2, 3], [3, 4], // 拇指
+                [0, 5], [5, 6], [6, 7], [7, 8], // 食指
+                [0, 9], [9, 10], [10, 11], [11, 12], // 中指
+                [0, 13], [13, 14], [14, 15], [15, 16], // 无名指
+                [0, 17], [17, 18], [18, 19], [19, 20], // 小指
+                [5, 9], [9, 13], [13, 17] // 手掌
+            ];
+
+            debugCtx.strokeStyle = color;
+            debugCtx.lineWidth = 2;
+
+            connections.forEach(([start, end]) => {
+                const startLandmark = landmarks[start];
+                const endLandmark = landmarks[end];
+
+                debugCtx.beginPath();
+                debugCtx.moveTo(
+                    startLandmark.x * debugCanvas.width,
+                    startLandmark.y * debugCanvas.height
+                );
+                debugCtx.lineTo(
+                    endLandmark.x * debugCanvas.width,
+                    endLandmark.y * debugCanvas.height
+                );
+                debugCtx.stroke();
+            });
+        }
+
+        // ==============================================
+        // 检测拍手动作
+        // ==============================================
+
+        function detectClap() {
+            if (!handsData.left || !handsData.right || clapCooldown) return;
+
+            // 获取双手手掌中心点（关键点9 - 中指根部）
+            const leftPalm = handsData.left.landmarks[9];
+            const rightPalm = handsData.right.landmarks[9];
+
+            // 计算双手距离
+            const distance = Math.sqrt(
+                Math.pow(leftPalm.x - rightPalm.x, 2) +
+                Math.pow(leftPalm.y - rightPalm.y, 2)
+            );
+
+            // 检测快速接近（拍手）
+            if (lastHandDistance > CLAP_THRESHOLD && distance < CLAP_THRESHOLD) {
+                onClapDetected();
+            }
+
+            lastHandDistance = distance;
+        }
+
+        // ==============================================
+        // 拍手检测到时的处理
+        // ==============================================
+
+        function onClapDetected() {
+            console.log('检测到拍手！');
+
+            // 设置冷却时间
+            clapCooldown = true;
+            setTimeout(() => {
+                clapCooldown = false;
+            }, CLAP_COOLDOWN_MS);
+
+            // 冻结/解冻背景
+            if (!isBackgroundFrozen) {
+                freezeBackground();
+            } else {
+                unfreezeBackground();
+            }
+
+            // 显示拍手特效
+            showClapEffect();
+        }
+
+        // ==============================================
+        // 冻结背景
+        // ==============================================
+
+        function freezeBackground() {
+            isBackgroundFrozen = true;
+
+            // 捕获当前视频帧
+            frozenCtx.save();
+            frozenCtx.scale(-1, 1); // 镜像翻转
+            frozenCtx.drawImage(
+                video,
+                -frozenCanvas.width, 0,
+                frozenCanvas.width, frozenCanvas.height
+            );
+            frozenCtx.restore();
+
+            // 显示冻结画布，隐藏视频
+            frozenCanvas.style.display = 'block';
+            video.style.display = 'none';
+
+            updateStatus('背景已冻结 - 可以添加AR元素', true);
+        }
+
+        // ==============================================
+        // 解冻背景
+        // ==============================================
+
+        function unfreezeBackground() {
+            isBackgroundFrozen = false;
+
+            frozenCanvas.style.display = 'none';
+            video.style.display = 'block';
+
+            // 清除AR元素
+            arObjects = [];
+            selectedObject = null;
+
+            updateStatus('背景已解冻', true);
+        }
+
+        // ==============================================
+        // 显示拍手特效
+        // ==============================================
+
+        function showClapEffect() {
+            if (!handsData.left || !handsData.right) return;
+
+            const leftPalm = handsData.left.landmarks[9];
+            const rightPalm = handsData.right.landmarks[9];
+
+            const centerX = ((leftPalm.x + rightPalm.x) / 2) * window.innerWidth;
+            const centerY = ((leftPalm.y + rightPalm.y) / 2) * window.innerHeight;
+
+            const effect = document.createElement('div');
+            effect.className = 'clap-effect';
+            effect.style.left = (centerX - 50) + 'px';
+            effect.style.top = (centerY - 50) + 'px';
+
+            document.getElementById('container').appendChild(effect);
+
+            setTimeout(() => {
+                effect.remove();
+            }, 600);
+        }
+
+        // ==============================================
+        // 检测手势交互
+        // ==============================================
+
+        function detectGestureInteraction() {
+            if (!isBackgroundFrozen || arObjects.length === 0) return;
+
+            // 检测食指是否指向AR元素（简化版）
+            const hand = handsData.left || handsData.right;
+            if (!hand) return;
+
+            const indexTip = hand.landmarks[8]; // 食指尖端
+            const indexX = indexTip.x * arCanvas.width;
+            const indexY = indexTip.y * arCanvas.height;
+
+            // 检查是否触摸到AR元素
+            arObjects.forEach(obj => {
+                const dist = Math.sqrt(
+                    Math.pow(obj.x - indexX, 2) +
+                    Math.pow(obj.y - indexY, 2)
+                );
+
+                if (dist < obj.size / 2) {
+                    obj.hovered = true;
+
+                    // 检测抓取手势（手掌张开程度）
+                    if (isGrabGesture(hand)) {
+                        obj.x = indexX;
+                        obj.y = indexY;
+                    }
+                } else {
+                    obj.hovered = false;
+                }
+            });
+        }
+
+        // ==============================================
+        // 判断是否为抓取手势
+        // ==============================================
+
+        function isGrabGesture(hand) {
+            // 简单判断：食指和拇指距离
+            const thumb = hand.landmarks[4];
+            const index = hand.landmarks[8];
+
+            const distance = Math.sqrt(
+                Math.pow(thumb.x - index.x, 2) +
+                Math.pow(thumb.y - index.y, 2)
+            );
+
+            return distance < 0.08; // 距离小于阈值认为是抓取
+        }
+
+        // ==============================================
+        // 添加AR元素
+        // ==============================================
+
+        function addARObject() {
+            if (!isBackgroundFrozen) {
+                alert('请先拍手冻结背景！');
+                return;
+            }
+
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#fd79a8'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+            arObjects.push({
+                x: arCanvas.width / 2,
+                y: arCanvas.height / 2,
+                size: 80 + Math.random() * 40,
+                color: randomColor,
+                hovered: false,
+                type: 'circle'
+            });
+        }
+
+        // ==============================================
+        // 渲染AR元素
+        // ==============================================
+
+        function renderARObjects() {
+            arCtx.clearRect(0, 0, arCanvas.width, arCanvas.height);
+
+            arObjects.forEach(obj => {
+                arCtx.save();
+
+                // 如果被悬停，添加发光效果
+                if (obj.hovered) {
+                    arCtx.shadowColor = obj.color;
+                    arCtx.shadowBlur = 20;
+                }
+
+                // 绘制圆形AR元素
+                arCtx.fillStyle = obj.color;
+                arCtx.beginPath();
+                arCtx.arc(obj.x, obj.y, obj.size / 2, 0, 2 * Math.PI);
+                arCtx.fill();
+
+                // 绘制边框
+                arCtx.strokeStyle = 'white';
+                arCtx.lineWidth = 3;
+                arCtx.stroke();
+
+                arCtx.restore();
+            });
+        }
+
+        // ==============================================
+        // 更新状态显示
+        // ==============================================
+
+        function updateStatus(text, active = true) {
+            statusText.textContent = text;
+            if (active) {
+                statusIndicator.classList.add('active');
+            } else {
+                statusIndicator.classList.remove('active');
+            }
+        }
+
+        // ==============================================
+        // 主渲染循环
+        // ==============================================
+
+        function renderLoop() {
+            renderARObjects();
+            requestAnimationFrame(renderLoop);
+        }
+
+        // ==============================================
+        // 事件监听
+        // ==============================================
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (isBackgroundFrozen) {
+                unfreezeBackground();
+            }
+        });
+
+        document.getElementById('toggleDebugBtn').addEventListener('click', () => {
+            isDebugMode = !isDebugMode;
+            if (!isDebugMode) {
+                debugCtx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
+            }
+        });
+
+        document.getElementById('addObjectBtn').addEventListener('click', addARObject);
+
+        // ==============================================
+        // 初始化流程
+        // ==============================================
+
+        async function init() {
+            try {
+                // 初始化摄像头
+                await initCamera();
+
+                // 启动MediaPipe摄像头
+                const camera = new Camera(video, {
+                    onFrame: async () => {
+                        await hands.send({ image: video });
+                    },
+                    width: 1280,
+                    height: 720
+                });
+
+                await camera.start();
+
+                // 隐藏加载提示
+                loading.style.display = 'none';
+
+                // 更新状态
+                updateStatus('就绪 - 双手拍手冻结背景', true);
+
+                // 启动渲染循环
+                renderLoop();
+
+                console.log('AR手势系统初始化完成！');
+
+            } catch (err) {
+                console.error('初始化失败:', err);
+                loading.innerHTML = `
+                    <div style="color: #ff4444;">
+                        ❌ 初始化失败<br>
+                        ${err.message}
+                    </div>
+                `;
+            }
+        }
+
+        // 启动应用
+        init();
+    </script>
+</body>
+</html>
