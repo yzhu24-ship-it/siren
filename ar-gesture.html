@@ -188,6 +188,49 @@
             }
         }
 
+        /* 手势模式指示器 */
+        .gesture-mode-indicator {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-radius: 15px;
+            color: white;
+            font-size: 14px;
+            pointer-events: none;
+            max-width: 300px;
+            display: none;
+        }
+
+        .gesture-mode-indicator.active {
+            display: block;
+        }
+
+        .gesture-mode-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .gesture-mode-icon {
+            font-size: 24px;
+        }
+
+        .gesture-list {
+            font-size: 12px;
+            opacity: 0.8;
+            line-height: 1.8;
+        }
+
+        .gesture-list-item {
+            margin: 5px 0;
+        }
+
         /* 控制按钮 */
         .control-buttons {
             position: absolute;
@@ -291,6 +334,21 @@
                 请双手合十，拍手固定背景
             </div>
 
+            <!-- 手势模式指示器 -->
+            <div class="gesture-mode-indicator" id="gestureModeIndicator">
+                <div class="gesture-mode-title">
+                    <span class="gesture-mode-icon" id="modeIcon">🎯</span>
+                    <span id="modeText">等待手势...</span>
+                </div>
+                <div class="gesture-list">
+                    <div class="gesture-list-item">👌 捏合 → 变色模式</div>
+                    <div class="gesture-list-item">✊ 握拳 → 虚拟化模式</div>
+                    <div class="gesture-list-item">🤟 摇滚 → 消失模式</div>
+                    <div class="gesture-list-item">🖐️ 展开 → 信息模式</div>
+                    <div class="gesture-list-item">👆 指向 → 互换模式</div>
+                </div>
+            </div>
+
             <!-- 控制按钮 -->
             <div class="control-buttons">
                 <button class="btn" id="resetBtn">重置背景</button>
@@ -325,6 +383,9 @@
         const statusIndicator = document.getElementById('statusIndicator');
         const statusText = document.getElementById('statusText');
         const instruction = document.getElementById('instruction');
+        const gestureModeIndicator = document.getElementById('gestureModeIndicator');
+        const modeIcon = document.getElementById('modeIcon');
+        const modeText = document.getElementById('modeText');
 
         const frozenCtx = frozenCanvas.getContext('2d');
         const arCtx = arCanvas.getContext('2d');
@@ -359,6 +420,24 @@
         const CLAP_DISTANCE_NEAR = 30; // 拍手时的距离阈值（像素）
         let clapCooldown = false;
         const CLAP_COOLDOWN_MS = 1000; // 拍手冷却时间
+
+        // ==============================================
+        // 阶段3：手势模式系统
+        // ==============================================
+
+        const GestureModes = {
+            NONE: 'none',                   // 无模式
+            COLOR_CHANGE: 'color_change',   // 👌 捏合 → 变色模式
+            VIRTUALIZE: 'virtualize',       // ✊ 握拳 → 虚拟化模式
+            DISAPPEAR: 'disappear',         // 🤟 摇滚 → 消失模式
+            INFO: 'info',                   // 🖐️ 手掌展开 → 信息模式
+            SWAP: 'swap'                    // 👆 食指指向 → 互换模式
+        };
+
+        let currentGestureMode = GestureModes.NONE;
+        let modeTimeout = null;
+        const MODE_TIMEOUT_MS = 5000; // 模式5秒后自动重置
+        let swapSelectedObjects = []; // 互换模式选中的物体
 
         // ==============================================
         // 初始化摄像头
@@ -612,8 +691,12 @@
             updateStatus('背景已固定', true);
             updateInstruction('background_frozen');
 
+            // 步骤7：显示手势模式指示器
+            gestureModeIndicator.classList.add('active');
+
             console.log('  ✅ 阶段2完成：背景已固定！');
             console.log('📍 提示：现在手部骨架会绘制在固定背景上');
+            console.log('📍 提示：现在可以使用手势进行交互');
         }
 
         // ==============================================
@@ -638,6 +721,12 @@
 
             // 清除距离历史
             handDistanceHistory = [];
+
+            // 隐藏手势模式指示器
+            gestureModeIndicator.classList.remove('active');
+
+            // 重置手势模式
+            resetGestureMode();
 
             updateStatus('系统就绪', true);
             updateInstruction('waiting_clap');
@@ -671,35 +760,203 @@
         }
 
         // ==============================================
-        // 检测手势交互
+        // 阶段3：检测手势并激活模式
         // ==============================================
 
         function detectGestureInteraction() {
-            if (!isBackgroundFrozen || arObjects.length === 0) return;
+            // 只在背景冻结后才能进行手势交互
+            if (!isBackgroundFrozen) return;
 
-            // 检测食指是否指向AR元素（简化版）
             const hand = handsData.left || handsData.right;
             if (!hand) return;
 
+            // 识别手势并激活对应模式
+            const gesture = recognizeGesture(hand);
+            if (gesture !== GestureModes.NONE && currentGestureMode === GestureModes.NONE) {
+                activateGestureMode(gesture);
+            }
+
+            // 如果有激活的模式，执行对应的交互
+            if (currentGestureMode !== GestureModes.NONE && arObjects.length > 0) {
+                performModeInteraction(hand);
+            }
+        }
+
+        // ==============================================
+        // 阶段3：识别5种手势
+        // ==============================================
+
+        function recognizeGesture(hand) {
+            const landmarks = hand.landmarks;
+
+            // 获取关键点
+            const thumb_tip = landmarks[4];
+            const index_tip = landmarks[8];
+            const middle_tip = landmarks[12];
+            const ring_tip = landmarks[16];
+            const pinky_tip = landmarks[20];
+
+            const thumb_mcp = landmarks[2];
+            const index_mcp = landmarks[5];
+            const middle_mcp = landmarks[9];
+            const ring_mcp = landmarks[13];
+            const pinky_mcp = landmarks[17];
+
+            // 计算手指是否伸直（判断指尖是否远离手掌）
+            const isIndexStraight = index_tip.y < index_mcp.y - 0.05;
+            const isMiddleStraight = middle_tip.y < middle_mcp.y - 0.05;
+            const isRingStraight = ring_tip.y < ring_mcp.y - 0.05;
+            const isPinkyStraight = pinky_tip.y < pinky_mcp.y - 0.05;
+
+            // 计算拇指和食指距离（像素）
+            const thumbIndexDistance = Math.sqrt(
+                Math.pow((thumb_tip.x - index_tip.x) * debugCanvas.width, 2) +
+                Math.pow((thumb_tip.y - index_tip.y) * debugCanvas.height, 2)
+            );
+
+            // 1. 👌 捏合手势（拇指+食指接近，其他手指弯曲）
+            if (thumbIndexDistance < 40 && !isMiddleStraight && !isRingStraight) {
+                return GestureModes.COLOR_CHANGE;
+            }
+
+            // 2. ✊ 握拳手势（所有手指弯曲）
+            if (!isIndexStraight && !isMiddleStraight && !isRingStraight && !isPinkyStraight) {
+                return GestureModes.VIRTUALIZE;
+            }
+
+            // 3. 🤟 摇滚手势（食指+小指伸直，其他弯曲）
+            if (isIndexStraight && isPinkyStraight && !isMiddleStraight && !isRingStraight) {
+                return GestureModes.DISAPPEAR;
+            }
+
+            // 4. 🖐️ 手掌展开（所有手指伸直）
+            if (isIndexStraight && isMiddleStraight && isRingStraight && isPinkyStraight) {
+                return GestureModes.INFO;
+            }
+
+            // 5. 👆 食指指向（只有食指伸直）
+            if (isIndexStraight && !isMiddleStraight && !isRingStraight && !isPinkyStraight) {
+                return GestureModes.SWAP;
+            }
+
+            return GestureModes.NONE;
+        }
+
+        // ==============================================
+        // 阶段3：激活手势模式
+        // ==============================================
+
+        function activateGestureMode(mode) {
+            currentGestureMode = mode;
+            currentState = AppStates.AR_ACTIVE;
+
+            // 清除之前的超时
+            if (modeTimeout) {
+                clearTimeout(modeTimeout);
+            }
+
+            // 设置模式超时（5秒后自动重置）
+            modeTimeout = setTimeout(() => {
+                resetGestureMode();
+            }, MODE_TIMEOUT_MS);
+
+            // 根据模式显示提示
+            const modeNames = {
+                [GestureModes.COLOR_CHANGE]: '👌 变色模式已激活',
+                [GestureModes.VIRTUALIZE]: '✊ 虚拟化模式已激活',
+                [GestureModes.DISAPPEAR]: '🤟 消失模式已激活',
+                [GestureModes.INFO]: '🖐️ 信息模式已激活',
+                [GestureModes.SWAP]: '👆 互换模式已激活'
+            };
+
+            console.log(`📍 阶段3：${modeNames[mode]}`);
+            updateStatus(modeNames[mode], true);
+
+            // 更新手势模式指示器
+            const modeIcons = {
+                [GestureModes.COLOR_CHANGE]: '👌',
+                [GestureModes.VIRTUALIZE]: '✊',
+                [GestureModes.DISAPPEAR]: '🤟',
+                [GestureModes.INFO]: '🖐️',
+                [GestureModes.SWAP]: '👆'
+            };
+
+            const modeTexts = {
+                [GestureModes.COLOR_CHANGE]: '变色模式',
+                [GestureModes.VIRTUALIZE]: '虚拟化模式',
+                [GestureModes.DISAPPEAR]: '消失模式',
+                [GestureModes.INFO]: '信息模式',
+                [GestureModes.SWAP]: '互换模式'
+            };
+
+            modeIcon.textContent = modeIcons[mode];
+            modeText.textContent = modeTexts[mode];
+        }
+
+        // ==============================================
+        // 阶段3：重置手势模式
+        // ==============================================
+
+        function resetGestureMode() {
+            console.log('🔄 模式已重置');
+            currentGestureMode = GestureModes.NONE;
+            currentState = AppStates.BACKGROUND_FROZEN;
+            swapSelectedObjects = [];
+
+            if (modeTimeout) {
+                clearTimeout(modeTimeout);
+                modeTimeout = null;
+            }
+
+            updateStatus('背景已固定', true);
+            updateInstruction('background_frozen');
+        }
+
+        // ==============================================
+        // 阶段3：执行模式交互
+        // ==============================================
+
+        function performModeInteraction(hand) {
             const indexTip = hand.landmarks[8]; // 食指尖端
             const indexX = indexTip.x * arCanvas.width;
             const indexY = indexTip.y * arCanvas.height;
 
-            // 检查是否触摸到AR元素
-            arObjects.forEach(obj => {
+            // 检测手指接触的物体
+            arObjects.forEach((obj, index) => {
+                if (obj.disappeared) return; // 已消失的物体不再交互
+
                 const dist = Math.sqrt(
                     Math.pow(obj.x - indexX, 2) +
                     Math.pow(obj.y - indexY, 2)
                 );
 
-                if (dist < obj.size / 2) {
-                    obj.hovered = true;
+                const isTouching = dist < obj.size / 2;
 
-                    // 检测抓取手势（手掌张开程度）
-                    if (isGrabGesture(hand)) {
-                        obj.x = indexX;
-                        obj.y = indexY;
+                if (isTouching) {
+                    // 根据当前模式执行操作
+                    switch (currentGestureMode) {
+                        case GestureModes.COLOR_CHANGE:
+                            changeObjectColor(obj);
+                            break;
+
+                        case GestureModes.VIRTUALIZE:
+                            virtualizeObject(obj);
+                            break;
+
+                        case GestureModes.DISAPPEAR:
+                            disappearObject(obj);
+                            break;
+
+                        case GestureModes.INFO:
+                            showObjectInfo(obj, indexX, indexY);
+                            break;
+
+                        case GestureModes.SWAP:
+                            selectObjectForSwap(obj, index);
+                            break;
                     }
+
+                    obj.hovered = true;
                 } else {
                     obj.hovered = false;
                 }
@@ -707,20 +964,111 @@
         }
 
         // ==============================================
-        // 判断是否为抓取手势
+        // 阶段3：变色模式 - 随机变色
         // ==============================================
 
-        function isGrabGesture(hand) {
-            // 简单判断：食指和拇指距离
-            const thumb = hand.landmarks[4];
-            const index = hand.landmarks[8];
+        function changeObjectColor(obj) {
+            if (obj.lastColorChange && Date.now() - obj.lastColorChange < 500) return;
 
-            const distance = Math.sqrt(
-                Math.pow(thumb.x - index.x, 2) +
-                Math.pow(thumb.y - index.y, 2)
-            );
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#fd79a8', '#ff9ff3', '#54a0ff'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
-            return distance < 0.08; // 距离小于阈值认为是抓取
+            obj.color = randomColor;
+            obj.lastColorChange = Date.now();
+
+            console.log(`✨ 物体变色: ${randomColor}`);
+        }
+
+        // ==============================================
+        // 阶段3：虚拟化模式 - 变半透明
+        // ==============================================
+
+        function virtualizeObject(obj) {
+            if (!obj.virtualized) {
+                obj.virtualized = true;
+                obj.originalOpacity = obj.opacity || 1.0;
+                obj.opacity = 0.3;
+                console.log('👻 物体虚拟化');
+            }
+        }
+
+        // ==============================================
+        // 阶段3：消失模式 - 消失
+        // ==============================================
+
+        function disappearObject(obj) {
+            if (!obj.disappeared) {
+                obj.disappeared = true;
+                console.log('💨 物体消失');
+            }
+        }
+
+        // ==============================================
+        // 阶段3：信息模式 - 显示物体信息
+        // ==============================================
+
+        function showObjectInfo(obj, x, y) {
+            if (obj.infoShown) return;
+
+            obj.infoShown = true;
+            obj.info = {
+                id: obj.id || arObjects.indexOf(obj),
+                color: obj.color,
+                size: Math.round(obj.size),
+                x: Math.round(obj.x),
+                y: Math.round(obj.y)
+            };
+
+            console.log('ℹ️ 显示物体信息:', obj.info);
+
+            // 3秒后隐藏信息
+            setTimeout(() => {
+                obj.infoShown = false;
+            }, 3000);
+        }
+
+        // ==============================================
+        // 阶段3：互换模式 - 选择物体互换位置
+        // ==============================================
+
+        function selectObjectForSwap(obj, index) {
+            // 检查是否已选中
+            if (swapSelectedObjects.includes(index)) return;
+
+            swapSelectedObjects.push(index);
+            obj.selected = true;
+
+            console.log(`📍 已选择物体 #${index}，当前选中: ${swapSelectedObjects.length}/2`);
+
+            // 如果选中了两个物体，执行互换
+            if (swapSelectedObjects.length === 2) {
+                swapObjects(swapSelectedObjects[0], swapSelectedObjects[1]);
+                swapSelectedObjects = [];
+            }
+        }
+
+        // ==============================================
+        // 阶段3：互换物体位置
+        // ==============================================
+
+        function swapObjects(index1, index2) {
+            const obj1 = arObjects[index1];
+            const obj2 = arObjects[index2];
+
+            // 交换位置
+            const tempX = obj1.x;
+            const tempY = obj1.y;
+
+            obj1.x = obj2.x;
+            obj1.y = obj2.y;
+            obj2.x = tempX;
+            obj2.y = tempY;
+
+            // 清除选中状态
+            obj1.selected = false;
+            obj2.selected = false;
+
+            console.log(`🔄 物体 #${index1} 和 #${index2} 已互换位置`);
         }
 
         // ==============================================
@@ -737,29 +1085,49 @@
             const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
             arObjects.push({
-                x: arCanvas.width / 2,
-                y: arCanvas.height / 2,
+                id: arObjects.length,
+                x: arCanvas.width / 2 + (Math.random() - 0.5) * 200,
+                y: arCanvas.height / 2 + (Math.random() - 0.5) * 200,
                 size: 80 + Math.random() * 40,
                 color: randomColor,
+                opacity: 1.0,
                 hovered: false,
+                disappeared: false,
+                virtualized: false,
+                selected: false,
+                infoShown: false,
                 type: 'circle'
             });
+
+            console.log(`➕ 添加AR物体 #${arObjects.length - 1}`);
         }
 
         // ==============================================
-        // 渲染AR元素
+        // 阶段3：渲染AR元素（支持新特性）
         // ==============================================
 
         function renderARObjects() {
             arCtx.clearRect(0, 0, arCanvas.width, arCanvas.height);
 
-            arObjects.forEach(obj => {
+            arObjects.forEach((obj, index) => {
+                // 如果物体已消失，不渲染
+                if (obj.disappeared) return;
+
                 arCtx.save();
+
+                // 设置透明度
+                arCtx.globalAlpha = obj.opacity || 1.0;
 
                 // 如果被悬停，添加发光效果
                 if (obj.hovered) {
                     arCtx.shadowColor = obj.color;
                     arCtx.shadowBlur = 20;
+                }
+
+                // 如果被选中（互换模式），添加高亮边框
+                if (obj.selected) {
+                    arCtx.shadowColor = '#ffff00';
+                    arCtx.shadowBlur = 30;
                 }
 
                 // 绘制圆形AR元素
@@ -769,12 +1137,52 @@
                 arCtx.fill();
 
                 // 绘制边框
-                arCtx.strokeStyle = 'white';
-                arCtx.lineWidth = 3;
+                if (obj.selected) {
+                    arCtx.strokeStyle = '#ffff00';
+                    arCtx.lineWidth = 5;
+                } else if (obj.virtualized) {
+                    arCtx.strokeStyle = '#00ffff';
+                    arCtx.lineWidth = 3;
+                    arCtx.setLineDash([5, 5]); // 虚线边框
+                } else {
+                    arCtx.strokeStyle = 'white';
+                    arCtx.lineWidth = 3;
+                }
                 arCtx.stroke();
 
                 arCtx.restore();
+
+                // 绘制物体信息（信息模式）
+                if (obj.infoShown && obj.info) {
+                    drawObjectInfo(obj);
+                }
             });
+        }
+
+        // ==============================================
+        // 阶段3：绘制物体信息
+        // ==============================================
+
+        function drawObjectInfo(obj) {
+            arCtx.save();
+
+            const infoX = obj.x;
+            const infoY = obj.y - obj.size / 2 - 60;
+
+            // 绘制信息框背景
+            arCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            arCtx.fillRect(infoX - 80, infoY - 10, 160, 50);
+
+            // 绘制信息文字
+            arCtx.fillStyle = 'white';
+            arCtx.font = '12px Arial';
+            arCtx.textAlign = 'center';
+
+            arCtx.fillText(`ID: ${obj.info.id}`, infoX, infoY + 5);
+            arCtx.fillText(`颜色: ${obj.info.color}`, infoX, infoY + 20);
+            arCtx.fillText(`大小: ${obj.info.size}px`, infoX, infoY + 35);
+
+            arCtx.restore();
         }
 
         // ==============================================
