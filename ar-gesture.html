@@ -49,6 +49,18 @@
             display: none;
         }
 
+        /* 轮廓检测层 */
+        #edgeCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
         /* AR渲染层 */
         #arCanvas {
             position: absolute;
@@ -56,7 +68,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 3;
+            z-index: 4;
             pointer-events: none;
         }
 
@@ -67,7 +79,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 4;
+            z-index: 5;
             pointer-events: none;
         }
 
@@ -405,6 +417,7 @@
             <div class="control-buttons">
                 <button class="btn" id="resetBtn">重置背景</button>
                 <button class="btn" id="toggleDebugBtn">切换调试</button>
+                <button class="btn" id="toggleEdgeBtn">切换轮廓</button>
                 <button class="btn primary" id="addObjectBtn">添加AR元素</button>
             </div>
         </div>
@@ -429,6 +442,7 @@
 
         const video = document.getElementById('video');
         const frozenCanvas = document.getElementById('frozenBackground');
+        const edgeCanvas = document.getElementById('edgeCanvas');
         const arCanvas = document.getElementById('arCanvas');
         const debugCanvas = document.getElementById('debugCanvas');
         const loading = document.getElementById('loading');
@@ -444,6 +458,7 @@
         const cancelHint = document.getElementById('cancelHint');
 
         const frozenCtx = frozenCanvas.getContext('2d');
+        const edgeCtx = edgeCanvas.getContext('2d');
         const arCtx = arCanvas.getContext('2d');
         const debugCtx = debugCanvas.getContext('2d');
 
@@ -538,6 +553,8 @@
 
             frozenCanvas.width = width;
             frozenCanvas.height = height;
+            edgeCanvas.width = width;
+            edgeCanvas.height = height;
             arCanvas.width = width;
             arCanvas.height = height;
             debugCanvas.width = width;
@@ -789,6 +806,12 @@
             console.log('  ✅ 阶段2完成：背景已固定！');
             console.log('📍 提示：现在手部骨架会绘制在固定背景上');
             console.log('📍 提示：现在可以使用手势进行交互');
+
+            // 步骤9：检测并绘制物体轮廓
+            console.log('  🔍 开始检测物体轮廓...');
+            setTimeout(() => {
+                detectAndDrawEdges();
+            }, 100); // 等待画布渲染完成
         }
 
         // ==============================================
@@ -830,6 +853,9 @@
                 instructionTimeout = null;
             }
 
+            // 清除轮廓检测结果
+            clearEdges();
+
             updateStatus('系统就绪', true);
             updateInstruction('waiting_clap');
 
@@ -859,6 +885,86 @@
             setTimeout(() => {
                 effect.remove();
             }, 600);
+        }
+
+        // ==============================================
+        // 阶段2.5：物体轮廓检测（Sobel边缘检测）
+        // ==============================================
+
+        function detectAndDrawEdges() {
+            console.log('  📐 正在进行边缘检测...');
+
+            // 获取冻结画布的图像数据
+            const imageData = frozenCtx.getImageData(0, 0, frozenCanvas.width, frozenCanvas.height);
+            const width = imageData.width;
+            const height = imageData.height;
+            const data = imageData.data;
+
+            // 创建灰度图像
+            const grayData = new Uint8ClampedArray(width * height);
+            for (let i = 0; i < data.length; i += 4) {
+                const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                grayData[i / 4] = gray;
+            }
+
+            // Sobel算子边缘检测
+            const edgeData = new Uint8ClampedArray(width * height);
+            const threshold = 50; // 边缘检测阈值
+
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    const idx = y * width + x;
+
+                    // Sobel X方向
+                    const gx =
+                        -1 * grayData[(y - 1) * width + (x - 1)] +
+                        -2 * grayData[y * width + (x - 1)] +
+                        -1 * grayData[(y + 1) * width + (x - 1)] +
+                         1 * grayData[(y - 1) * width + (x + 1)] +
+                         2 * grayData[y * width + (x + 1)] +
+                         1 * grayData[(y + 1) * width + (x + 1)];
+
+                    // Sobel Y方向
+                    const gy =
+                        -1 * grayData[(y - 1) * width + (x - 1)] +
+                        -2 * grayData[(y - 1) * width + x] +
+                        -1 * grayData[(y - 1) * width + (x + 1)] +
+                         1 * grayData[(y + 1) * width + (x - 1)] +
+                         2 * grayData[(y + 1) * width + x] +
+                         1 * grayData[(y + 1) * width + (x + 1)];
+
+                    // 计算梯度幅值
+                    const magnitude = Math.sqrt(gx * gx + gy * gy);
+
+                    edgeData[idx] = magnitude > threshold ? 255 : 0;
+                }
+            }
+
+            // 绘制边缘到画布
+            edgeCtx.clearRect(0, 0, edgeCanvas.width, edgeCanvas.height);
+            const edgeImageData = edgeCtx.createImageData(width, height);
+
+            for (let i = 0; i < edgeData.length; i++) {
+                const idx = i * 4;
+                if (edgeData[i] > 0) {
+                    // 绘制为青色轮廓线
+                    edgeImageData.data[idx] = 0;       // R
+                    edgeImageData.data[idx + 1] = 255; // G
+                    edgeImageData.data[idx + 2] = 255; // B
+                    edgeImageData.data[idx + 3] = 255; // A
+                }
+            }
+
+            edgeCtx.putImageData(edgeImageData, 0, 0);
+            console.log('  ✅ 物体轮廓检测完成！');
+        }
+
+        // ==============================================
+        // 清除轮廓检测结果
+        // ==============================================
+
+        function clearEdges() {
+            edgeCtx.clearRect(0, 0, edgeCanvas.width, edgeCanvas.height);
         }
 
         // ==============================================
@@ -1428,6 +1534,16 @@
             isHandSkeletonVisible = !isHandSkeletonVisible;
             if (!isHandSkeletonVisible) {
                 debugCtx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
+            }
+        });
+
+        document.getElementById('toggleEdgeBtn').addEventListener('click', () => {
+            if (edgeCanvas.style.display === 'none') {
+                edgeCanvas.style.display = 'block';
+                console.log('✅ 轮廓显示已开启');
+            } else {
+                edgeCanvas.style.display = 'none';
+                console.log('❌ 轮廓显示已关闭');
             }
         });
 
