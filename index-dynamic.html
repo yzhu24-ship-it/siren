@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态AR决策教练 - 边扫描边决策</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 50px;
+            max-width: 700px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        .concept-card {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+            border-left: 5px solid #f5576c;
+        }
+
+        .concept-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .concept-desc {
+            color: #666;
+            line-height: 1.8;
+            font-size: 16px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .feature-desc {
+            font-size: 14px;
+            color: #888;
+            line-height: 1.6;
+        }
+
+        .comparison {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .comparison-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .comparison-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .comparison-item h4 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .comparison-item ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .comparison-item li {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .comparison-item li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+        }
+
+        .cta-button {
+            display: block;
+            width: 100%;
+            padding: 25px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 15px;
+            font-size: 22px;
+            font-weight: 600;
+            margin: 40px 0 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(245, 87, 108, 0.6);
+        }
+
+        .cta-button:active {
+            transform: translateY(-1px);
+        }
+
+        .secondary-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .secondary-link a {
+            color: #f5576c;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .secondary-link a:hover {
+            text-decoration: underline;
+        }
+
+        .requirements {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+
+        .requirements-title {
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .requirements-list {
+            color: #856404;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #f5576c;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="badge">🚀 Phase 1 原型</div>
+            <div class="logo">📱</div>
+            <h1>动态AR决策教练</h1>
+            <p class="subtitle">
+                <span class="highlight">边扫描边决策</span>，无需固定背景<br>
+                用手机实时识别物品，自然流畅的决策体验
+            </p>
+        </div>
+
+        <div class="concept-card">
+            <div class="concept-title">✨ 全新交互方式</div>
+            <div class="concept-desc">
+                告别"固定场景"的限制，使用手机摄像头自由扫描周围环境。<br>
+                <strong>TensorFlow.js + COCO-SSD</strong> 实时识别真实物品（杯子、书、手机等），<br>
+                物体停留在中心区域1秒即自动触发决策面板。
+            </div>
+        </div>
+
+        <div class="comparison">
+            <div class="comparison-title">📊 两种模式对比</div>
+            <div class="comparison-grid">
+                <div class="comparison-item">
+                    <h4>🖼️ 静态版</h4>
+                    <ul>
+                        <li>双手合十固定背景</li>
+                        <li>手动框选物品区域</li>
+                        <li>批量决策训练</li>
+                        <li>适合桌面整理</li>
+                    </ul>
+                </div>
+                <div class="comparison-item">
+                    <h4>📱 动态版（当前）</h4>
+                    <ul>
+                        <li>持续扫描无需固定</li>
+                        <li>AI自动识别物品</li>
+                        <li>逐个决策处理</li>
+                        <li>适合移动场景</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <div class="feature-title">AI物品识别</div>
+                <div class="feature-desc">COCO-SSD识别80+类物品</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <div class="feature-title">自动聚焦</div>
+                <div class="feature-desc">停留1秒自动触发决策</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🏷️</div>
+                <div class="feature-title">实时AR标签</div>
+                <div class="feature-desc">动态跟随物品移动</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">流畅体验</div>
+                <div class="feature-desc">30fps实时渲染</div>
+            </div>
+        </div>
+
+        <a href="ar-dynamic-proto.html" class="cta-button">
+            🚀 开始动态扫描体验
+        </a>
+
+        <div class="secondary-link">
+            <a href="index-trainer.html">← 返回静态决策训练版本</a>
+        </div>
+
+        <div class="requirements">
+            <div class="requirements-title">⚙️ 系统要求</div>
+            <div class="requirements-list">
+                • 现代移动浏览器（Chrome/Safari）<br>
+                • 允许摄像头访问权限<br>
+                • HTTPS安全连接<br>
+                • 稳定的网络连接（首次加载TensorFlow.js模型 ~5MB）<br>
+                • 建议在光线充足环境下使用
+            </div>
+        </div>
+    </div>
+</body>
+</html>

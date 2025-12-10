@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>动态AR决策教练 - 原型</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* 视频流 */
+        #video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        /* AR叠加层 */
+        #arCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* 中央瞄准框 */
+        .focus-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border: 3px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .focus-area.active {
+            border-color: #4ecdc4;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+        }
+
+        /* 状态栏 */
+        .status-bar {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-radius: 25px;
+            color: white;
+            font-size: 16px;
+            z-index: 10;
+            text-align: center;
+        }
+
+        .mode-indicator {
+            font-size: 14px;
+            color: #4ecdc4;
+            margin-bottom: 5px;
+        }
+
+        /* 决策面板 */
+        .decision-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.95), transparent);
+            padding: 30px 20px 40px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+            z-index: 10;
+        }
+
+        .decision-panel.active {
+            transform: translateY(0);
+        }
+
+        .decision-title {
+            text-align: center;
+            color: white;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .decision-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .decision-btn {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .decision-btn:active {
+            transform: scale(0.95);
+        }
+
+        .decision-btn.immediate {
+            border-color: #ff4444;
+            background: rgba(255, 68, 68, 0.2);
+        }
+
+        .decision-btn.later {
+            border-color: #ffaa00;
+            background: rgba(255, 170, 0, 0.2);
+        }
+
+        .decision-btn.delete {
+            border-color: #888888;
+            background: rgba(136, 136, 136, 0.2);
+        }
+
+        .decision-btn.archive {
+            border-color: #4444ff;
+            background: rgba(68, 68, 255, 0.2);
+        }
+
+        .btn-icon {
+            font-size: 32px;
+        }
+
+        .btn-label {
+            font-size: 14px;
+        }
+
+        /* 统计面板 */
+        .stats-panel {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-radius: 15px;
+            color: white;
+            font-size: 14px;
+            z-index: 10;
+            min-width: 150px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+        }
+
+        .stat-value {
+            color: #4ecdc4;
+            font-weight: bold;
+        }
+
+        /* 加载屏幕 */
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 100;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .loading-progress {
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <!-- 视频流 -->
+        <video id="video" autoplay playsinline></video>
+
+        <!-- AR画布 -->
+        <canvas id="arCanvas"></canvas>
+
+        <!-- 中央瞄准框 -->
+        <div class="focus-area" id="focusArea"></div>
+
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <div class="mode-indicator">扫描模式</div>
+            <div id="statusText">移动手机扫描物品</div>
+        </div>
+
+        <!-- 统计面板 -->
+        <div class="stats-panel">
+            <div class="stat-row">
+                <span>已扫描</span>
+                <span class="stat-value"><span id="scanCount">0</span> 个</span>
+            </div>
+            <div class="stat-row">
+                <span>已决策</span>
+                <span class="stat-value"><span id="decisionCount">0</span> 个</span>
+            </div>
+        </div>
+
+        <!-- 决策面板 -->
+        <div class="decision-panel" id="decisionPanel">
+            <div class="decision-title">
+                为 <strong id="focusedItemName">物品</strong> 做决策
+            </div>
+            <div class="decision-buttons">
+                <button class="decision-btn immediate" data-decision="immediate">
+                    <span class="btn-icon">🔥</span>
+                    <span class="btn-label">立即处理</span>
+                </button>
+                <button class="decision-btn later" data-decision="later">
+                    <span class="btn-icon">⏰</span>
+                    <span class="btn-label">稍后处理</span>
+                </button>
+                <button class="decision-btn delete" data-decision="delete">
+                    <span class="btn-icon">🗑️</span>
+                    <span class="btn-label">丢弃</span>
+                </button>
+                <button class="decision-btn archive" data-decision="archive">
+                    <span class="btn-icon">📁</span>
+                    <span class="btn-label">归档</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 加载屏幕 -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div class="loading-text">正在加载AI模型</div>
+            <div class="loading-progress">TensorFlow.js + COCO-SSD (约5MB)</div>
+        </div>
+    </div>
+
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3"></script>
+
+    <script>
+        // ==============================================
+        // 全局变量
+        // ==============================================
+
+        const video = document.getElementById('video');
+        const arCanvas = document.getElementById('arCanvas');
+        const arCtx = arCanvas.getContext('2d');
+
+        let cocoModel = null;
+        let isScanning = false;
+        let detectedObjects = [];
+        let focusedObject = null;
+        let focusStartTime = 0;
+        const FOCUS_THRESHOLD = 1000; // 1秒稳定聚焦
+
+        let scanCount = 0;
+        let decisionCount = 0;
+        let decisions = [];
+
+        // ==============================================
+        // 初始化
+        // ==============================================
+
+        async function init() {
+            try {
+                console.log('🚀 启动动态AR决策教练');
+
+                // 初始化摄像头
+                await initCamera();
+                console.log('✅ 摄像头就绪');
+
+                // 加载COCO-SSD模型
+                document.querySelector('.loading-progress').textContent = '正在加载物品识别模型...';
+                cocoModel = await cocoSsd.load();
+                console.log('✅ COCO-SSD模型加载完成');
+
+                // 隐藏加载界面
+                document.getElementById('loading').style.display = 'none';
+
+                // 开始扫描
+                isScanning = true;
+                scanLoop();
+
+            } catch (err) {
+                console.error('❌ 初始化失败:', err);
+                alert('初始化失败：' + err.message);
+            }
+        }
+
+        async function initCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: 'environment',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
+            });
+
+            video.srcObject = stream;
+
+            return new Promise((resolve) => {
+                video.onloadedmetadata = () => {
+                    resizeCanvas();
+                    resolve();
+                };
+            });
+        }
+
+        function resizeCanvas() {
+            arCanvas.width = window.innerWidth;
+            arCanvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // ==============================================
+        // 扫描循环
+        // ==============================================
+
+        async function scanLoop() {
+            if (!isScanning) return;
+
+            try {
+                // 物品检测
+                const predictions = await cocoModel.detect(video);
+
+                // 更新检测到的物品
+                detectedObjects = predictions.filter(p => p.score > 0.6);
+
+                // 清除画布
+                arCtx.clearRect(0, 0, arCanvas.width, arCanvas.height);
+
+                // 绘制AR标签
+                drawARLabels();
+
+                // 检查聚焦
+                checkFocus();
+
+                // 更新统计
+                document.getElementById('scanCount').textContent = detectedObjects.length;
+
+            } catch (err) {
+                console.error('扫描错误:', err);
+            }
+
+            // 继续循环
+            requestAnimationFrame(scanLoop);
+        }
+
+        // ==============================================
+        // AR标签绘制
+        // ==============================================
+
+        function drawARLabels() {
+            detectedObjects.forEach(obj => {
+                const [x, y, width, height] = obj.bbox;
+
+                // 转换坐标（镜像）
+                const mirroredX = arCanvas.width - x - width;
+
+                // 检查是否是聚焦物品
+                const isFocused = focusedObject &&
+                                 focusedObject.class === obj.class &&
+                                 Math.abs(focusedObject.bbox[0] - obj.bbox[0]) < 50;
+
+                // 绘制边框
+                arCtx.strokeStyle = isFocused ? '#4ecdc4' : 'rgba(255, 255, 255, 0.6)';
+                arCtx.lineWidth = isFocused ? 4 : 2;
+                arCtx.strokeRect(mirroredX, y, width, height);
+
+                // 绘制标签背景
+                const label = getItemLabel(obj.class);
+                const labelWidth = arCtx.measureText(label).width + 20;
+                const labelHeight = 30;
+
+                arCtx.fillStyle = isFocused ? 'rgba(78, 205, 196, 0.9)' : 'rgba(0, 0, 0, 0.7)';
+                arCtx.fillRect(mirroredX, y - labelHeight, labelWidth, labelHeight);
+
+                // 绘制文字
+                arCtx.fillStyle = 'white';
+                arCtx.font = '16px Arial';
+                arCtx.fillText(label, mirroredX + 10, y - 10);
+
+                // 置信度
+                if (isFocused) {
+                    const confidence = (obj.score * 100).toFixed(0) + '%';
+                    arCtx.font = '12px Arial';
+                    arCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    arCtx.fillText(confidence, mirroredX + 10, y + 20);
+                }
+            });
+        }
+
+        function getItemLabel(className) {
+            const labels = {
+                'person': '👤 人',
+                'cup': '☕ 杯子',
+                'bottle': '🍾 瓶子',
+                'book': '📖 书',
+                'cell phone': '📱 手机',
+                'laptop': '💻 电脑',
+                'keyboard': '⌨️ 键盘',
+                'mouse': '🖱️ 鼠标',
+                'remote': '📺 遥控器',
+                'clock': '⏰ 时钟',
+                'vase': '🏺 花瓶',
+                'scissors': '✂️ 剪刀',
+                'teddy bear': '🧸 玩具熊',
+                'hair drier': '💨 吹风机',
+                'toothbrush': '🪥 牙刷'
+            };
+            return labels[className] || '📦 ' + className;
+        }
+
+        // ==============================================
+        // 聚焦检测
+        // ==============================================
+
+        function checkFocus() {
+            const focusArea = {
+                x: arCanvas.width / 2 - 100,
+                y: arCanvas.height / 2 - 100,
+                width: 200,
+                height: 200
+            };
+
+            // 找到在聚焦区域内的物品
+            const objectsInFocus = detectedObjects.filter(obj => {
+                const [x, y, width, height] = obj.bbox;
+                const mirroredX = arCanvas.width - x - width;
+                const centerX = mirroredX + width / 2;
+                const centerY = y + height / 2;
+
+                return centerX >= focusArea.x &&
+                       centerX <= focusArea.x + focusArea.width &&
+                       centerY >= focusArea.y &&
+                       centerY <= focusArea.y + focusArea.height;
+            });
+
+            if (objectsInFocus.length > 0) {
+                const newFocus = objectsInFocus[0];
+
+                // 检查是否是同一个物品
+                if (!focusedObject || focusedObject.class !== newFocus.class) {
+                    focusedObject = newFocus;
+                    focusStartTime = Date.now();
+                    document.getElementById('focusArea').classList.add('active');
+                    document.getElementById('statusText').textContent = `聚焦中: ${getItemLabel(newFocus.class)}`;
+                } else {
+                    // 持续聚焦
+                    const focusDuration = Date.now() - focusStartTime;
+                    if (focusDuration >= FOCUS_THRESHOLD && !isInDecisionMode()) {
+                        enterDecisionMode(focusedObject);
+                    }
+                }
+            } else {
+                // 失去聚焦
+                if (focusedObject && !isInDecisionMode()) {
+                    focusedObject = null;
+                    focusStartTime = 0;
+                    document.getElementById('focusArea').classList.remove('active');
+                    document.getElementById('statusText').textContent = '移动手机扫描物品';
+                }
+            }
+        }
+
+        // ==============================================
+        // 决策模式
+        // ==============================================
+
+        function isInDecisionMode() {
+            return document.getElementById('decisionPanel').classList.contains('active');
+        }
+
+        function enterDecisionMode(object) {
+            console.log(`📍 进入决策模式: ${object.class}`);
+
+            document.getElementById('focusedItemName').textContent = getItemLabel(object.class);
+            document.getElementById('decisionPanel').classList.add('active');
+            document.getElementById('statusText').textContent = '请做出决策...';
+
+            // 停止扫描循环（保持画面）
+            isScanning = false;
+        }
+
+        function exitDecisionMode() {
+            document.getElementById('decisionPanel').classList.remove('active');
+            focusedObject = null;
+            focusStartTime = 0;
+            document.getElementById('focusArea').classList.remove('active');
+            document.getElementById('statusText').textContent = '移动手机扫描物品';
+
+            // 恢复扫描
+            isScanning = true;
+            scanLoop();
+        }
+
+        // ==============================================
+        // 决策处理
+        // ==============================================
+
+        function makeDecision(decisionType) {
+            const decision = {
+                timestamp: Date.now(),
+                item: focusedObject.class,
+                itemLabel: getItemLabel(focusedObject.class),
+                decision: decisionType,
+                confidence: focusedObject.score
+            };
+
+            decisions.push(decision);
+            decisionCount++;
+
+            console.log('✅ 决策记录:', decision);
+
+            // 更新统计
+            document.getElementById('decisionCount').textContent = decisionCount;
+
+            // 显示反馈
+            showDecisionFeedback(decisionType);
+
+            // 延迟退出
+            setTimeout(() => {
+                exitDecisionMode();
+            }, 500);
+        }
+
+        function showDecisionFeedback(type) {
+            const icons = {
+                immediate: '🔥',
+                later: '⏰',
+                delete: '🗑️',
+                archive: '📁'
+            };
+
+            // 简单的视觉反馈
+            const feedback = document.createElement('div');
+            feedback.style.position = 'fixed';
+            feedback.style.top = '50%';
+            feedback.style.left = '50%';
+            feedback.style.transform = 'translate(-50%, -50%)';
+            feedback.style.fontSize = '80px';
+            feedback.style.zIndex = '1000';
+            feedback.style.animation = 'fadeOut 0.6s ease-out forwards';
+            feedback.textContent = icons[type];
+
+            document.body.appendChild(feedback);
+
+            setTimeout(() => feedback.remove(), 600);
+        }
+
+        // ==============================================
+        // 事件监听
+        // ==============================================
+
+        document.querySelectorAll('.decision-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const decision = btn.dataset.decision;
+                makeDecision(decision);
+            });
+        });
+
+        // ==============================================
+        // 导出功能（控制台测试）
+        // ==============================================
+
+        window.exportDecisions = function() {
+            console.log('📊 决策记录:', decisions);
+            return decisions;
+        };
+
+        // 添加CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+                50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+                100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 启动应用
+        init();
+    </script>
+</body>
+</html>
