@@ -322,6 +322,22 @@
         #feedback-message.show {
             transform: translate(-50%, -50%) scale(1);
         }
+
+        /* Progress bar animations */
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(118, 75, 162, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(118, 75, 162, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(118, 75, 162, 0); }
+        }
+
+        #magic-progress-bar.completed #magic-progress-fill {
+            animation: pulse 1s ease-in-out;
+        }
     </style>
 </head>
 <body>
@@ -374,6 +390,65 @@
         <div id="gesture-hint">
             <span class="hand-icon">🖐️</span>
             <span id="hint-text">Open palm to start</span>
+        </div>
+
+        <!-- Progress Bar -->
+        <div id="magic-progress-container" style="
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 500px;
+            z-index: 900;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            padding: 12px 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        ">
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
+                color: white;
+                font-size: 13px;
+            ">
+                <span>Progress</span>
+                <span id="magic-progress-text" style="color: #4ecdc4; font-weight: bold;">0/10</span>
+            </div>
+            <div id="magic-progress-bar" style="
+                width: 100%;
+                height: 8px;
+                background: rgba(255, 255, 255, 0.15);
+                border-radius: 4px;
+                overflow: hidden;
+                position: relative;
+            " role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div id="magic-progress-fill" style="
+                    width: 0%;
+                    height: 100%;
+                    background: linear-gradient(90deg, #667eea, #764ba2);
+                    border-radius: 4px;
+                    transition: width 0.5s cubic-bezier(0.2, 0.8, 0.3, 1);
+                    position: relative;
+                    overflow: hidden;
+                ">
+                    <div style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: linear-gradient(90deg,
+                            rgba(255, 255, 255, 0) 0%,
+                            rgba(255, 255, 255, 0.3) 50%,
+                            rgba(255, 255, 255, 0) 100%);
+                        animation: shimmer 2s infinite;
+                    "></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -517,6 +592,207 @@
         }
 
         // ==============================================
+        // Progress Bar System Class
+        // ==============================================
+
+        class ProgressBarSystem {
+            constructor() {
+                this.currentProgress = 0;
+                this.maxProgress = 10; // 10 items = 100%
+                this.isVisible = true;
+            }
+
+            /**
+             * Update progress after each decision
+             */
+            updateProgress() {
+                this.currentProgress = Math.min(this.currentProgress + 1, this.maxProgress);
+
+                // Update UI
+                this.updateUI();
+
+                // Check completion
+                if (this.currentProgress >= this.maxProgress) {
+                    setTimeout(() => this.onComplete(), 300);
+                }
+
+                return this.getProgressData();
+            }
+
+            /**
+             * Get current progress data
+             */
+            getProgressData() {
+                const percentage = (this.currentProgress / this.maxProgress) * 100;
+                return {
+                    current: this.currentProgress,
+                    max: this.maxProgress,
+                    percentage: percentage,
+                    remaining: this.maxProgress - this.currentProgress
+                };
+            }
+
+            /**
+             * Handle progress completion
+             */
+            onComplete() {
+                // Play completion animation
+                this.playCompletionAnimation();
+
+                // Show completion message
+                this.showCompletionMessage();
+
+                // Reset after delay
+                setTimeout(() => this.resetProgress(), 3000);
+            }
+
+            /**
+             * Play completion animation
+             */
+            playCompletionAnimation() {
+                // Pulse effect on progress bar
+                const progressBar = document.getElementById('magic-progress-bar');
+                if (progressBar) {
+                    progressBar.classList.add('completed');
+                    setTimeout(() => progressBar.classList.remove('completed'), 1000);
+                }
+
+                // Particle burst
+                this.createParticleBurst();
+            }
+
+            /**
+             * Show completion message
+             */
+            showCompletionMessage() {
+                const message = document.createElement('div');
+                message.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(0, 0, 0, 0.9);
+                    color: white;
+                    padding: 25px 40px;
+                    border-radius: 20px;
+                    text-align: center;
+                    z-index: 10001;
+                    border: 2px solid #764ba2;
+                    box-shadow: 0 0 40px rgba(118, 75, 162, 0.6);
+                    animation: popIn 0.3s ease-out;
+                `;
+
+                message.innerHTML = `
+                    <div style="font-size: 48px; margin-bottom: 15px;">✨</div>
+                    <div style="font-size: 20px; font-weight: bold; margin-bottom: 8px;">
+                        Round Complete!
+                    </div>
+                    <div style="font-size: 15px; opacity: 0.9;">
+                        Organized 10 items successfully
+                    </div>
+                `;
+
+                // Add animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes popIn {
+                        0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+                        100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(style);
+
+                document.body.appendChild(message);
+
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    if (message.parentNode) message.parentNode.removeChild(message);
+                    if (style.parentNode) style.parentNode.removeChild(style);
+                }, 3000);
+            }
+
+            /**
+             * Reset progress
+             */
+            resetProgress() {
+                this.currentProgress = 0;
+                this.updateUI();
+            }
+
+            /**
+             * Create particle burst effect
+             */
+            createParticleBurst() {
+                const particles = 15;
+                const centerX = window.innerWidth / 2;
+                const centerY = 50;
+
+                for (let i = 0; i < particles; i++) {
+                    setTimeout(() => {
+                        const particle = document.createElement('div');
+                        particle.style.cssText = `
+                            position: fixed;
+                            top: ${centerY}px;
+                            left: ${centerX}px;
+                            width: 8px;
+                            height: 8px;
+                            background: linear-gradient(135deg, #667eea, #764ba2);
+                            border-radius: 50%;
+                            pointer-events: none;
+                            z-index: 999;
+                        `;
+
+                        document.body.appendChild(particle);
+
+                        const angle = Math.random() * Math.PI * 2;
+                        const distance = 60 + Math.random() * 80;
+                        const duration = 700 + Math.random() * 300;
+
+                        particle.animate([
+                            { transform: `translate(0, 0) scale(1)`, opacity: 1 },
+                            { transform: `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px) scale(0)`, opacity: 0 }
+                        ], {
+                            duration: duration,
+                            easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)'
+                        });
+
+                        setTimeout(() => {
+                            if (particle.parentNode) particle.parentNode.removeChild(particle);
+                        }, duration);
+                    }, i * 20);
+                }
+            }
+
+            /**
+             * Update progress bar UI
+             */
+            updateUI() {
+                const progressFill = document.getElementById('magic-progress-fill');
+                const progressText = document.getElementById('magic-progress-text');
+                const progressBar = document.getElementById('magic-progress-bar');
+
+                if (progressFill && progressText && progressBar) {
+                    const percentage = (this.currentProgress / this.maxProgress) * 100;
+
+                    progressFill.style.width = `${percentage}%`;
+                    progressText.textContent = `${this.currentProgress}/${this.maxProgress}`;
+                    progressBar.setAttribute('aria-valuenow', percentage);
+                }
+            }
+
+            /**
+             * Set progress bar visibility
+             */
+            setVisibility(visible) {
+                this.isVisible = visible;
+                const container = document.getElementById('magic-progress-container');
+                if (container) {
+                    container.style.display = visible ? 'block' : 'none';
+                }
+            }
+        }
+
+        // ==============================================
         // Focus Item Selector Class
         // ==============================================
 
@@ -638,6 +914,7 @@
                 // Detectors
                 this.palmDetector = new PalmOpenDetector();
                 this.focusSelector = new FocusItemSelector();
+                this.progressSystem = new ProgressBarSystem();
 
                 // Decision buttons
                 this.setupDecisionButtons();
@@ -888,6 +1165,9 @@
                     item: this.currentFocusItem.class,
                     action: action
                 });
+
+                // Update progress bar
+                this.progressSystem.updateProgress();
 
                 // Show feedback
                 this.showFeedback(action);
