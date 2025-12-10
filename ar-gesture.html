@@ -360,6 +360,9 @@
         <!-- 冻结背景画布 -->
         <canvas id="frozenBackground"></canvas>
 
+        <!-- 轮廓检测画布 -->
+        <canvas id="edgeCanvas"></canvas>
+
         <!-- AR元素渲染画布 -->
         <canvas id="arCanvas"></canvas>
 
@@ -1182,7 +1185,13 @@
             const indexX = indexTip.x * arCanvas.width;
             const indexY = indexTip.y * arCanvas.height;
 
-            // 检测手指接触的物体
+            // 颜色变换模式：作用于背景区域
+            if (currentGestureMode === GestureModes.COLOR_CHANGE) {
+                changeRegionColor(indexX, indexY);
+                return;
+            }
+
+            // 其他模式：检测手指接触的AR物体
             arObjects.forEach((obj, index) => {
                 if (obj.disappeared) return; // 已消失的物体不再交互
 
@@ -1196,10 +1205,6 @@
                 if (isTouching) {
                     // 根据当前模式执行操作
                     switch (currentGestureMode) {
-                        case GestureModes.COLOR_CHANGE:
-                            changeObjectColor(obj);
-                            break;
-
                         case GestureModes.VIRTUALIZE:
                             virtualizeObject(obj);
                             break;
@@ -1225,7 +1230,186 @@
         }
 
         // ==============================================
-        // 阶段3：变色模式 - 随机变色
+        // 阶段3：变色模式 - 区域变色（洪水填充）
+        // ==============================================
+
+        let lastRegionColorChange = 0;
+        const coloredRegions = new Set(); // 记录已变色的区域（避免重复）
+
+        function changeRegionColor(fingerX, fingerY) {
+            // 防抖：避免频繁触发
+            if (Date.now() - lastRegionColorChange < 500) return;
+
+            const x = Math.floor(fingerX);
+            const y = Math.floor(fingerY);
+
+            // 边界检查
+            if (x < 0 || x >= frozenCanvas.width || y < 0 || y >= frozenCanvas.height) return;
+
+            console.log(`🎨 检测到手指位置: (${x}, ${y})，开始区域变色...`);
+
+            // 生成随机颜色偏移（色相旋转）
+            const hueShift = Math.random() * 360;
+
+            // 执行洪水填充变色
+            floodFillColor(x, y, hueShift);
+
+            lastRegionColorChange = Date.now();
+        }
+
+        // ==============================================
+        // 洪水填充算法 - 扫描线优化版本
+        // ==============================================
+
+        function floodFillColor(startX, startY, hueShift) {
+            const imageData = frozenCtx.getImageData(0, 0, frozenCanvas.width, frozenCanvas.height);
+            const width = imageData.width;
+            const height = imageData.height;
+            const data = imageData.data;
+
+            // 获取边缘数据（用于判断边界）
+            const edgeData = edgeCtx.getImageData(0, 0, edgeCanvas.width, edgeCanvas.height);
+            const edges = edgeData.data;
+
+            // 获取起始点颜色
+            const startIdx = (startY * width + startX) * 4;
+            const startR = data[startIdx];
+            const startG = data[startIdx + 1];
+            const startB = data[startIdx + 2];
+
+            console.log(`  起始点颜色: RGB(${startR}, ${startG}, ${startB})`);
+
+            // 检查是否在边缘上
+            const edgeIdx = startIdx;
+            if (edges[edgeIdx + 1] > 200 && edges[edgeIdx + 2] > 200) {
+                console.log(`  ⚠️ 点击位置在轮廓线上，无法填充`);
+                return;
+            }
+
+            // 使用队列进行广度优先搜索
+            const queue = [[startX, startY]];
+            const visited = new Set();
+            visited.add(`${startX},${startY}`);
+
+            const tolerance = 30; // 颜色容差
+            let pixelsChanged = 0;
+            const maxPixels = 50000; // 最大填充像素数（防止填充整个画面）
+
+            // 判断两个颜色是否相似
+            function isSimilarColor(r, g, b) {
+                return Math.abs(r - startR) <= tolerance &&
+                       Math.abs(g - startG) <= tolerance &&
+                       Math.abs(b - startB) <= tolerance;
+            }
+
+            // 应用色相偏移
+            function applyHueShift(r, g, b, shift) {
+                // RGB转HSL
+                const rNorm = r / 255;
+                const gNorm = g / 255;
+                const bNorm = b / 255;
+
+                const max = Math.max(rNorm, gNorm, bNorm);
+                const min = Math.min(rNorm, gNorm, bNorm);
+                const delta = max - min;
+
+                let h = 0;
+                let s = 0;
+                let l = (max + min) / 2;
+
+                if (delta !== 0) {
+                    s = l > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+
+                    if (max === rNorm) {
+                        h = ((gNorm - bNorm) / delta + (gNorm < bNorm ? 6 : 0)) / 6;
+                    } else if (max === gNorm) {
+                        h = ((bNorm - rNorm) / delta + 2) / 6;
+                    } else {
+                        h = ((rNorm - gNorm) / delta + 4) / 6;
+                    }
+                }
+
+                // 应用色相偏移
+                h = (h * 360 + shift) % 360 / 360;
+
+                // HSL转RGB
+                function hueToRgb(p, q, t) {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                }
+
+                let newR, newG, newB;
+
+                if (s === 0) {
+                    newR = newG = newB = l;
+                } else {
+                    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                    const p = 2 * l - q;
+                    newR = hueToRgb(p, q, h + 1/3);
+                    newG = hueToRgb(p, q, h);
+                    newB = hueToRgb(p, q, h - 1/3);
+                }
+
+                return [
+                    Math.round(newR * 255),
+                    Math.round(newG * 255),
+                    Math.round(newB * 255)
+                ];
+            }
+
+            // 扫描线填充
+            while (queue.length > 0 && pixelsChanged < maxPixels) {
+                const [x, y] = queue.shift();
+                const idx = (y * width + x) * 4;
+
+                // 检查是否在边缘上（青色边缘）
+                const edgeIdx = idx;
+                if (edges[edgeIdx + 1] > 200 && edges[edgeIdx + 2] > 200) {
+                    continue; // 遇到边缘，停止扩散
+                }
+
+                // 检查颜色是否相似
+                if (!isSimilarColor(data[idx], data[idx + 1], data[idx + 2])) {
+                    continue;
+                }
+
+                // 应用颜色变换
+                const [newR, newG, newB] = applyHueShift(data[idx], data[idx + 1], data[idx + 2], hueShift);
+                data[idx] = newR;
+                data[idx + 1] = newG;
+                data[idx + 2] = newB;
+                pixelsChanged++;
+
+                // 检查四个方向的邻居
+                const neighbors = [
+                    [x + 1, y],
+                    [x - 1, y],
+                    [x, y + 1],
+                    [x, y - 1]
+                ];
+
+                for (const [nx, ny] of neighbors) {
+                    const key = `${nx},${ny}`;
+                    if (nx >= 0 && nx < width && ny >= 0 && ny < height && !visited.has(key)) {
+                        visited.add(key);
+                        queue.push([nx, ny]);
+                    }
+                }
+            }
+
+            // 将修改后的图像数据写回画布
+            frozenCtx.putImageData(imageData, 0, 0);
+
+            console.log(`  ✅ 区域变色完成！共修改 ${pixelsChanged} 个像素`);
+            console.log(`  🎨 色相偏移: ${Math.round(hueShift)}°`);
+        }
+
+        // ==============================================
+        // 阶段3：变色模式 - 随机变色（AR物体，已弃用）
         // ==============================================
 
         function changeObjectColor(obj) {
