@@ -393,6 +393,14 @@
                 </div>
             </div>
 
+            <!-- 模式取消提示 -->
+            <div class="debug-info" id="cancelHint" style="display: none;">
+                <div style="color: #ff6b6b; font-weight: bold; margin-bottom: 8px;">✖️ 取消模式</div>
+                <div style="font-size: 12px; color: #888;">
+                    💡 双手交叉即可取消当前模式
+                </div>
+            </div>
+
             <!-- 控制按钮 -->
             <div class="control-buttons">
                 <button class="btn" id="resetBtn">重置背景</button>
@@ -433,6 +441,7 @@
         const debugInfo = document.getElementById('debugInfo');
         const distanceValue = document.getElementById('distanceValue');
         const debugStatus = document.getElementById('debugStatus');
+        const cancelHint = document.getElementById('cancelHint');
 
         const frozenCtx = frozenCanvas.getContext('2d');
         const arCtx = arCanvas.getContext('2d');
@@ -486,6 +495,8 @@
         let modeTimeout = null;
         const MODE_TIMEOUT_MS = 5000; // 模式5秒后自动重置
         let swapSelectedObjects = []; // 互换模式选中的物体
+        let crossCooldown = false; // 交叉手势冷却
+        const CROSS_COOLDOWN_MS = 1000; // 交叉冷却时间
 
         // ==============================================
         // 初始化摄像头
@@ -770,8 +781,9 @@
             // 步骤7：显示手势模式指示器
             gestureModeIndicator.classList.add('active');
 
-            // 步骤8：隐藏调试信息
+            // 步骤8：隐藏调试信息，显示取消提示
             debugInfo.classList.add('hidden');
+            cancelHint.style.display = 'block';
 
             console.log('  ✅ 阶段2完成：背景已固定！');
             console.log('📍 提示：现在手部骨架会绘制在固定背景上');
@@ -804,8 +816,9 @@
             // 隐藏手势模式指示器
             gestureModeIndicator.classList.remove('active');
 
-            // 显示调试信息
+            // 显示调试信息，隐藏取消提示
             debugInfo.classList.remove('hidden');
+            cancelHint.style.display = 'none';
 
             // 重置手势模式
             resetGestureMode();
@@ -852,6 +865,15 @@
             const hand = handsData.left || handsData.right;
             if (!hand) return;
 
+            // 检测双手交叉以取消当前模式
+            if (currentGestureMode !== GestureModes.NONE) {
+                if (detectHandsCross()) {
+                    console.log('✖️ 检测到双手交叉，取消当前模式');
+                    resetGestureMode();
+                    return; // 取消后不再检测新手势
+                }
+            }
+
             // 识别手势并激活对应模式
             const gesture = recognizeGesture(hand);
             if (gesture !== GestureModes.NONE && currentGestureMode === GestureModes.NONE) {
@@ -862,6 +884,42 @@
             if (currentGestureMode !== GestureModes.NONE && arObjects.length > 0) {
                 performModeInteraction(hand);
             }
+        }
+
+        // ==============================================
+        // 阶段3：检测双手交叉（用于取消模式）
+        // ==============================================
+
+        function detectHandsCross() {
+            // 需要双手都在画面内
+            if (!handsData.left || !handsData.right) return false;
+
+            // 冷却期内不检测
+            if (crossCooldown) return false;
+
+            // 获取双手手掌中心点（关键点9）
+            const leftPalm = handsData.left.landmarks[9];
+            const rightPalm = handsData.right.landmarks[9];
+
+            // 转换为像素坐标
+            const leftX = leftPalm.x * debugCanvas.width;
+            const rightX = rightPalm.x * debugCanvas.width;
+
+            // 判断交叉：左手的X坐标 > 右手的X坐标
+            // （正常情况下，左手应该在左侧，右手在右侧）
+            const isCrossed = leftX > rightX + 50; // 加50px容差，避免误触发
+
+            if (isCrossed) {
+                // 设置冷却时间
+                crossCooldown = true;
+                setTimeout(() => {
+                    crossCooldown = false;
+                }, CROSS_COOLDOWN_MS);
+
+                return true;
+            }
+
+            return false;
         }
 
         // ==============================================
@@ -990,8 +1048,16 @@
                 modeTimeout = null;
             }
 
+            // 清除所有物体的选中状态
+            arObjects.forEach(obj => {
+                obj.selected = false;
+            });
+
             updateStatus('背景已固定', true);
             updateInstruction('background_frozen');
+
+            // 显示取消提示
+            cancelHint.style.display = 'none';
         }
 
         // ==============================================
