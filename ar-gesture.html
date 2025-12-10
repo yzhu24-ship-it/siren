@@ -497,6 +497,7 @@
         let swapSelectedObjects = []; // 互换模式选中的物体
         let crossCooldown = false; // 交叉手势冷却
         const CROSS_COOLDOWN_MS = 1000; // 交叉冷却时间
+        let instructionTimeout = null; // 提示文字自动淡出的计时器
 
         // ==============================================
         // 初始化摄像头
@@ -822,6 +823,12 @@
 
             // 重置手势模式
             resetGestureMode();
+
+            // 清除提示文字的自动隐藏计时器
+            if (instructionTimeout) {
+                clearTimeout(instructionTimeout);
+                instructionTimeout = null;
+            }
 
             updateStatus('系统就绪', true);
             updateInstruction('waiting_clap');
@@ -1354,20 +1361,31 @@
             const instructions = {
                 'waiting_clap': {
                     icon: '🙏',
-                    text: '请双手合十，拍手固定背景'
+                    text: '请双手合十，拍手固定背景',
+                    autoHide: false // 不自动隐藏
                 },
                 'background_frozen': {
                     icon: '✅',
-                    text: '背景已固定！现在请尝试手势交互'
+                    text: '背景已固定！现在请尝试手势交互',
+                    autoHide: true, // 3秒后自动隐藏
+                    hideDelay: 3000
                 },
                 'ar_active': {
                     icon: '🎯',
-                    text: '用手势拖动AR元素'
+                    text: '用手势拖动AR元素',
+                    autoHide: true,
+                    hideDelay: 2000
                 }
             };
 
             const config = instructions[stage];
             if (config) {
+                // 清除之前的自动隐藏计时器
+                if (instructionTimeout) {
+                    clearTimeout(instructionTimeout);
+                    instructionTimeout = null;
+                }
+
                 // 清空并重新构建内容
                 instruction.innerHTML = `
                     <span class="instruction-icon">${config.icon}</span>
@@ -1376,6 +1394,14 @@
 
                 // 确保显示提示
                 instruction.classList.remove('hidden');
+
+                // 如果设置了自动隐藏，则在指定时间后淡出
+                if (config.autoHide) {
+                    instructionTimeout = setTimeout(() => {
+                        instruction.classList.add('hidden');
+                        console.log('💡 提示文字已自动淡出');
+                    }, config.hideDelay);
+                }
             }
         }
 
