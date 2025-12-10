@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR整理决策教练 - 训练你的决策能力</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 50px;
+            max-width: 700px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .concept-card {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+            border-left: 5px solid #667eea;
+        }
+
+        .concept-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .concept-desc {
+            color: #666;
+            line-height: 1.8;
+            font-size: 16px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .feature-desc {
+            font-size: 14px;
+            color: #888;
+            line-height: 1.6;
+        }
+
+        .how-it-works {
+            margin: 40px 0;
+        }
+
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .step-desc {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .cta-button {
+            display: block;
+            width: 100%;
+            padding: 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 15px;
+            font-size: 22px;
+            font-weight: 600;
+            margin: 40px 0 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
+        }
+
+        .cta-button:active {
+            transform: translateY(-1px);
+        }
+
+        .requirements {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+
+        .requirements-title {
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .requirements-list {
+            color: #856404;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .demo-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .demo-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🧠</div>
+            <h1>AR整理决策教练</h1>
+            <p class="subtitle">
+                不是告诉你往哪放，而是训练你快速决策的能力<br>
+                <strong>培养可迁移到真实生活的整理思维</strong>
+            </p>
+        </div>
+
+        <div class="concept-card">
+            <div class="concept-title">💡 核心理念</div>
+            <div class="concept-desc">
+                从"告诉用户具体往哪放" → "训练用户快速做整理决策的能力"
+                <br><br>
+                ✨ <strong>普适性</strong>：无论在哪里都能使用<br>
+                ✨ <strong>教育性</strong>：训练决策能力而非替代思考<br>
+                ✨ <strong>实用性</strong>：培养可迁移的生活技能
+            </div>
+        </div>
+
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">3秒决策训练</div>
+                <div class="feature-desc">培养快速决策能力，克服选择困难</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <div class="feature-title">4种决策类型</div>
+                <div class="feature-desc">立即/稍后/丢弃/归档，覆盖所有场景</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🧠</div>
+                <div class="feature-title">模式识别</div>
+                <div class="feature-desc">分析你的决策模式，提供个性化建议</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">数据反馈</div>
+                <div class="feature-desc">详细统计报告，追踪进步</div>
+            </div>
+        </div>
+
+        <div class="how-it-works">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #333;">📖 如何使用</h2>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <div class="step-title">环境校准（15秒）</div>
+                        <div class="step-desc">
+                            双手合十扫描桌面，系统自动识别5-7个物品区域
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <div class="step-title">决策训练（60秒）</div>
+                        <div class="step-desc">
+                            每个物品3秒倒计时，用手势快速决策：<br>
+                            👆 立即 | 🖐️ 稍后 | 🤟 丢弃 | ✊ 归档
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <div class="step-title">决策回顾（30秒）</div>
+                        <div class="step-desc">
+                            获得评分、模式分析和个性化建议，<br>
+                            导出Markdown格式待办清单，立即行动！
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a href="ar-decision-trainer.html" class="cta-button">
+            🚀 开始训练决策能力
+        </a>
+
+        <a href="ar-gesture.html" class="demo-link">
+            💎 查看手势识别技术演示
+        </a>
+
+        <div class="requirements">
+            <div class="requirements-title">⚙️ 系统要求</div>
+            <div class="requirements-list">
+                • 现代移动浏览器（Chrome/Safari）<br>
+                • 允许摄像头访问权限<br>
+                • HTTPS安全连接（GitHub Pages自动提供）<br>
+                • 稳定的网络连接（首次加载模型）
+            </div>
+        </div>
+    </div>
+</body>
+</html>
