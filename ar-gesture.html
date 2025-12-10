@@ -1368,16 +1368,13 @@
 
             const config = instructions[stage];
             if (config) {
-                const iconElement = instruction.querySelector('.instruction-icon');
-                const textNode = instruction.childNodes[instruction.childNodes.length - 1];
+                // 清空并重新构建内容
+                instruction.innerHTML = `
+                    <span class="instruction-icon">${config.icon}</span>
+                    ${config.text}
+                `;
 
-                if (iconElement) {
-                    iconElement.textContent = config.icon;
-                }
-                if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-                    textNode.textContent = config.text;
-                }
-
+                // 确保显示提示
                 instruction.classList.remove('hidden');
             }
         }
