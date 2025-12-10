@@ -855,23 +855,57 @@
         }
 
         async function initCamera() {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: 'environment',
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                },
-                audio: false
-            });
+            try {
+                // Check if getUserMedia is supported
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Camera API not supported in this browser');
+                }
 
-            video.srcObject = stream;
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                });
 
-            return new Promise((resolve) => {
-                video.onloadedmetadata = () => {
-                    resizeCanvas();
-                    resolve();
-                };
-            });
+                video.srcObject = stream;
+
+                return new Promise((resolve) => {
+                    video.onloadedmetadata = () => {
+                        resizeCanvas();
+                        resolve();
+                    };
+                });
+            } catch (err) {
+                console.error('Camera initialization error:', err);
+
+                // Provide user-friendly error messages
+                let errorMsg = 'Failed to access camera:\n\n';
+
+                if (err.name === 'NotAllowedError') {
+                    errorMsg += '❌ Permission denied\n';
+                    errorMsg += '→ Please allow camera access in browser settings\n';
+                    errorMsg += '→ Click the 🔒 icon in address bar';
+                } else if (err.name === 'NotFoundError') {
+                    errorMsg += '❌ No camera found\n';
+                    errorMsg += '→ Check if camera is connected\n';
+                    errorMsg += '→ Try another device';
+                } else if (err.name === 'NotReadableError') {
+                    errorMsg += '❌ Camera is busy\n';
+                    errorMsg += '→ Close other apps using camera\n';
+                    errorMsg += '→ Restart browser';
+                } else if (err.name === 'SecurityError') {
+                    errorMsg += '❌ Security error\n';
+                    errorMsg += '→ Must use HTTPS or localhost\n';
+                    errorMsg += '→ Current: ' + window.location.protocol;
+                } else {
+                    errorMsg += '❌ ' + err.message;
+                }
+
+                throw new Error(errorMsg);
+            }
         }
 
         async function initHands() {
