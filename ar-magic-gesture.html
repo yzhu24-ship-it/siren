@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>魔法手势AR决策教练</title>
+    <title>Magic Gesture AR Decision Coach</title>
     <style>
         * {
             margin: 0;
@@ -214,37 +214,37 @@
         <!-- 决策面板画布 -->
         <canvas id="decisionCanvas"></canvas>
 
-        <!-- 状态栏 -->
+        <!-- Status Bar -->
         <div class="status-bar">
-            <div class="mode-indicator">扫描模式</div>
-            <div id="statusText">移动手机扫描物品</div>
+            <div class="mode-indicator">Scanning Mode</div>
+            <div id="statusText">Move camera to scan objects</div>
         </div>
 
-        <!-- 手势提示 -->
+        <!-- Gesture Hint -->
         <div class="gesture-hint" id="gestureHint">
-            👆 指向按钮 + 👌 捏合确认
+            👆 Point at button + 👌 Pinch to confirm
         </div>
 
-        <!-- 统计面板 -->
+        <!-- Stats Panel -->
         <div class="stats-panel">
             <div class="stat-row">
-                <span>已扫描</span>
-                <span class="stat-value"><span id="scanCount">0</span> 个</span>
+                <span>Scanned</span>
+                <span class="stat-value"><span id="scanCount">0</span> items</span>
             </div>
             <div class="stat-row">
-                <span>已决策</span>
-                <span class="stat-value"><span id="decisionCount">0</span> 个</span>
+                <span>Decisions</span>
+                <span class="stat-value"><span id="decisionCount">0</span> items</span>
             </div>
             <div class="stat-row">
-                <span>手势状态</span>
+                <span>Gesture</span>
                 <span class="stat-value" id="gestureStatus">-</span>
             </div>
         </div>
 
-        <!-- 加载屏幕 -->
+        <!-- Loading Screen -->
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <div class="loading-text">正在加载AI模型</div>
+            <div class="loading-text">Loading AI Models</div>
             <div class="loading-progress">TensorFlow.js + MediaPipe Hands</div>
         </div>
     </div>
@@ -821,36 +821,36 @@
 
         async function init() {
             try {
-                console.log('🚀 启动魔法手势AR决策教练');
+                console.log('🚀 Starting Magic Gesture AR Decision Coach');
 
-                // 初始化摄像头
+                // Initialize camera
                 await initCamera();
-                console.log('✅ 摄像头就绪');
+                console.log('✅ Camera ready');
 
-                // 加载COCO-SSD模型
-                document.querySelector('.loading-progress').textContent = '正在加载物品识别模型...';
+                // Load COCO-SSD model
+                document.querySelector('.loading-progress').textContent = 'Loading object detection model...';
                 cocoModel = await cocoSsd.load();
-                console.log('✅ COCO-SSD模型加载完成');
+                console.log('✅ COCO-SSD model loaded');
 
-                // 加载MediaPipe Hands模型
-                document.querySelector('.loading-progress').textContent = '正在加载手势识别模型...';
+                // Load MediaPipe Hands model
+                document.querySelector('.loading-progress').textContent = 'Loading gesture recognition model...';
                 await initHands();
-                console.log('✅ MediaPipe Hands模型加载完成');
+                console.log('✅ MediaPipe Hands model loaded');
 
-                // 初始化魔法系统
+                // Initialize magic system
                 magicRenderer = new MagicEffectRenderer(magicCanvas);
                 gesturePointer = new GesturePointerSystem();
 
-                // 隐藏加载界面
+                // Hide loading screen
                 document.getElementById('loading').style.display = 'none';
 
-                // 开始扫描
+                // Start scanning
                 isScanning = true;
                 mainLoop();
 
             } catch (err) {
-                console.error('❌ 初始化失败:', err);
-                alert('初始化失败：' + err.message);
+                console.error('❌ Initialization failed:', err);
+                alert('Initialization failed: ' + err.message);
             }
         }
 
@@ -903,11 +903,11 @@
         }
 
         function onHandsResults(results) {
-            // 更新手部关键点数据
+            // Update hand landmarks data
             if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                 handLandmarks = results.multiHandLandmarks[0];
 
-                // 绘制手部骨骼（调试）
+                // Draw hand skeleton (debug)
                 drawHandSkeleton(results);
             } else {
                 handLandmarks = null;
@@ -919,9 +919,9 @@
 
             if (results.multiHandLandmarks) {
                 for (const landmarks of results.multiHandLandmarks) {
-                    // 绘制关键点
+                    // Draw keypoints
                     for (const landmark of landmarks) {
-                        const x = (1 - landmark.x) * handCanvas.width; // 镜像
+                        const x = (1 - landmark.x) * handCanvas.width; // Mirror
                         const y = landmark.y * handCanvas.height;
 
                         handCtx.beginPath();
@@ -930,14 +930,14 @@
                         handCtx.fill();
                     }
 
-                    // 绘制连接线
+                    // Draw connections
                     const connections = [
-                        [0, 1], [1, 2], [2, 3], [3, 4], // 拇指
-                        [0, 5], [5, 6], [6, 7], [7, 8], // 食指
-                        [5, 9], [9, 10], [10, 11], [11, 12], // 中指
-                        [9, 13], [13, 14], [14, 15], [15, 16], // 无名指
-                        [13, 17], [17, 18], [18, 19], [19, 20], // 小指
-                        [0, 17] // 手掌
+                        [0, 1], [1, 2], [2, 3], [3, 4], // Thumb
+                        [0, 5], [5, 6], [6, 7], [7, 8], // Index finger
+                        [5, 9], [9, 10], [10, 11], [11, 12], // Middle finger
+                        [9, 13], [13, 14], [14, 15], [15, 16], // Ring finger
+                        [13, 17], [17, 18], [18, 19], [19, 20], // Pinky
+                        [0, 17] // Palm
                     ];
 
                     handCtx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
@@ -1006,7 +1006,7 @@
                 }
 
             } catch (err) {
-                console.error('主循环错误:', err);
+                console.error('Main loop error:', err);
             }
 
             requestAnimationFrame(mainLoop);
@@ -1044,21 +1044,21 @@
 
         function getItemLabel(className) {
             const labels = {
-                'person': '👤 人',
-                'cup': '☕ 杯子',
-                'bottle': '🍾 瓶子',
-                'book': '📖 书',
-                'cell phone': '📱 手机',
-                'laptop': '💻 电脑',
-                'keyboard': '⌨️ 键盘',
-                'mouse': '🖱️ 鼠标',
-                'remote': '📺 遥控器',
-                'clock': '⏰ 时钟',
-                'vase': '🏺 花瓶',
-                'scissors': '✂️ 剪刀',
-                'teddy bear': '🧸 玩具熊',
-                'hair drier': '💨 吹风机',
-                'toothbrush': '🪥 牙刷'
+                'person': '👤 Person',
+                'cup': '☕ Cup',
+                'bottle': '🍾 Bottle',
+                'book': '📖 Book',
+                'cell phone': '📱 Phone',
+                'laptop': '💻 Laptop',
+                'keyboard': '⌨️ Keyboard',
+                'mouse': '🖱️ Mouse',
+                'remote': '📺 Remote',
+                'clock': '⏰ Clock',
+                'vase': '🏺 Vase',
+                'scissors': '✂️ Scissors',
+                'teddy bear': '🧸 Teddy Bear',
+                'hair drier': '💨 Hair Dryer',
+                'toothbrush': '🪥 Toothbrush'
             };
             return labels[className] || '📦 ' + className;
         }
@@ -1093,7 +1093,7 @@
                 if (!focusedObject || focusedObject.class !== newFocus.class) {
                     focusedObject = newFocus;
                     focusStartTime = Date.now();
-                    document.getElementById('statusText').textContent = `聚焦中: ${getItemLabel(newFocus.class)}`;
+                    document.getElementById('statusText').textContent = `Focusing: ${getItemLabel(newFocus.class)}`;
                 } else {
                     const focusDuration = Date.now() - focusStartTime;
                     if (focusDuration >= FOCUS_THRESHOLD) {
@@ -1103,7 +1103,7 @@
             } else {
                 focusedObject = null;
                 focusStartTime = 0;
-                document.getElementById('statusText').textContent = '移动手机扫描物品';
+                document.getElementById('statusText').textContent = 'Move camera to scan objects';
             }
         }
 
@@ -1112,20 +1112,20 @@
         // ==============================================
 
         function enterDecisionMode(object) {
-            console.log(`📍 进入决策模式: ${object.class}`);
+            console.log(`📍 Entering decision mode: ${object.class}`);
 
             isInDecision = true;
-            isScanning = false; // 暂停扫描
+            isScanning = false; // Pause scanning
 
-            // 显示决策面板
+            // Show decision panel
             document.getElementById('decisionCanvas').classList.add('active');
             document.getElementById('gestureHint').classList.add('active');
-            document.getElementById('statusText').textContent = '使用手势做决策...';
+            document.getElementById('statusText').textContent = 'Use gestures to decide...';
 
-            // 创建决策按钮
+            // Create decision buttons
             createDecisionButtons();
 
-            // 开始绘制决策面板
+            // Start drawing decision panel
             drawDecisionPanel();
         }
 
@@ -1137,10 +1137,10 @@
             const startY = 50;
 
             decisionButtons = [
-                new MagicDecisionButton('立即处理', startX, startY, buttonWidth, buttonHeight, 'immediate', 'immediate', '🔥'),
-                new MagicDecisionButton('稍后处理', startX + buttonWidth + gap, startY, buttonWidth, buttonHeight, 'later', 'later', '⏰'),
-                new MagicDecisionButton('丢弃', startX, startY + buttonHeight + gap, buttonWidth, buttonHeight, 'delete', 'delete', '🗑️'),
-                new MagicDecisionButton('归档', startX + buttonWidth + gap, startY + buttonHeight + gap, buttonWidth, buttonHeight, 'archive', 'archive', '📁')
+                new MagicDecisionButton('Do Now', startX, startY, buttonWidth, buttonHeight, 'immediate', 'immediate', '🔥'),
+                new MagicDecisionButton('Do Later', startX + buttonWidth + gap, startY, buttonWidth, buttonHeight, 'later', 'later', '⏰'),
+                new MagicDecisionButton('Delete', startX, startY + buttonHeight + gap, buttonWidth, buttonHeight, 'delete', 'delete', '🗑️'),
+                new MagicDecisionButton('Archive', startX + buttonWidth + gap, startY + buttonHeight + gap, buttonWidth, buttonHeight, 'archive', 'archive', '📁')
             ];
 
             gesturePointer.setButtons(decisionButtons);
@@ -1149,24 +1149,24 @@
         function drawDecisionPanel() {
             if (!isInDecision) return;
 
-            // 清空画布
+            // Clear canvas
             decisionCtx.clearRect(0, 0, decisionCanvas.width, decisionCanvas.height);
 
-            // 绘制半透明背景
+            // Draw semi-transparent background
             const gradient = decisionCtx.createLinearGradient(0, decisionCanvas.height, 0, 0);
             gradient.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
             gradient.addColorStop(1, 'transparent');
             decisionCtx.fillStyle = gradient;
             decisionCtx.fillRect(0, 0, decisionCanvas.width, decisionCanvas.height);
 
-            // 绘制标题
-            const title = `为 ${getItemLabel(focusedObject.class)} 做决策`;
+            // Draw title
+            const title = `Decide for ${getItemLabel(focusedObject.class)}`;
             decisionCtx.font = 'bold 20px Arial';
             decisionCtx.textAlign = 'center';
             decisionCtx.fillStyle = 'white';
             decisionCtx.fillText(title, decisionCanvas.width / 2, 25);
 
-            // 绘制所有按钮
+            // Draw all buttons
             decisionButtons.forEach(btn => btn.draw(decisionCtx));
 
             requestAnimationFrame(drawDecisionPanel);
@@ -1176,12 +1176,12 @@
             isInDecision = false;
             document.getElementById('decisionCanvas').classList.remove('active');
             document.getElementById('gestureHint').classList.remove('active');
-            document.getElementById('statusText').textContent = '移动手机扫描物品';
+            document.getElementById('statusText').textContent = 'Move camera to scan objects';
 
             focusedObject = null;
             focusStartTime = 0;
 
-            // 恢复扫描
+            // Resume scanning
             isScanning = true;
         }
 
@@ -1191,27 +1191,27 @@
 
         function updateMagicInteraction() {
             if (!handLandmarks || !isInDecision) {
-                // 没有手势时，清空魔法效果
+                // Clear magic effects when no gesture
                 magicRenderer.update(null, null, false);
                 document.getElementById('gestureStatus').textContent = '-';
                 return;
             }
 
-            // 获取食指指尖和手腕位置
+            // Get index finger tip and wrist position
             const indexFingerTip = getScreenPos(handLandmarks[8]);
             const wristPos = getScreenPos(handLandmarks[0]);
 
-            // 更新手势指向检测
+            // Update gesture pointing detection
             const pointingResult = gesturePointer.update(indexFingerTip, wristPos);
 
-            // 更新状态显示
+            // Update status display
             if (pointingResult.isPointing && pointingResult.pointedButton) {
-                document.getElementById('gestureStatus').textContent = '指向中';
+                document.getElementById('gestureStatus').textContent = 'Pointing';
             } else {
-                document.getElementById('gestureStatus').textContent = '扫描中';
+                document.getElementById('gestureStatus').textContent = 'Scanning';
             }
 
-            // 更新魔法光效
+            // Update magic effects
             let targetPos = null;
             if (pointingResult.pointedButton) {
                 targetPos = {
@@ -1222,7 +1222,7 @@
 
             magicRenderer.update(indexFingerTip, targetPos, pointingResult.isPointing);
 
-            // 检测捏合手势
+            // Detect pinch gesture
             if (detectPinchGesture() && pointingResult.pointedButton) {
                 confirmDecision(pointingResult.pointedButton);
             }
@@ -1230,7 +1230,7 @@
 
         function getScreenPos(landmark) {
             return {
-                x: (1 - landmark.x) * magicCanvas.width, // 镜像
+                x: (1 - landmark.x) * magicCanvas.width, // Mirror
                 y: landmark.y * magicCanvas.height
             };
         }
@@ -1251,23 +1251,23 @@
         }
 
         function confirmDecision(button) {
-            console.log(`✅ 确认决策: ${button.text}`);
+            console.log(`✅ Confirmed decision: ${button.text}`);
 
-            // 创建爆炸效果
+            // Create explosion effect
             const explosionX = button.centerX;
             const explosionY = decisionCanvas.offsetTop + button.centerY;
             magicRenderer.createExplosion(explosionX, explosionY, button.color + 'FF');
 
-            // 播放确认音效
+            // Play confirmation sound
             playConfirmationSound();
 
-            // 屏幕震动
+            // Screen shake
             createScreenShake();
 
-            // 记录决策
+            // Record decision
             makeDecision(button.action);
 
-            // 延迟退出
+            // Delayed exit
             setTimeout(() => {
                 exitDecisionMode();
             }, 800);
@@ -1285,7 +1285,7 @@
             decisions.push(decision);
             decisionCount++;
 
-            console.log('✅ 决策记录:', decision);
+            console.log('✅ Decision recorded:', decision);
 
             document.getElementById('decisionCount').textContent = decisionCount;
         }
@@ -1340,15 +1340,15 @@
         }
 
         // ==============================================
-        // 导出功能
+        // Export Functions
         // ==============================================
 
         window.exportDecisions = function() {
-            console.log('📊 决策记录:', decisions);
+            console.log('📊 Decision records:', decisions);
             return decisions;
         };
 
-        // 启动应用
+        // Start application
         init();
     </script>
 </body>
