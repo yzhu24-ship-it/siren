@@ -352,10 +352,12 @@
         let arObjects = [];
         let selectedObject = null;
 
-        // 拍手检测状态
-        let lastHandDistance = 0;
+        // 拍手检测状态（阶段2：像素距离判断）
+        let handDistanceHistory = []; // 记录最近3帧的距离
+        const DISTANCE_HISTORY_SIZE = 3; // 连续3帧判断
+        const CLAP_DISTANCE_FAR = 150; // 拍手前的距离阈值（像素）
+        const CLAP_DISTANCE_NEAR = 30; // 拍手时的距离阈值（像素）
         let clapCooldown = false;
-        const CLAP_THRESHOLD = 0.1; // 双手距离阈值
         const CLAP_COOLDOWN_MS = 1000; // 拍手冷却时间
 
         // ==============================================
@@ -509,36 +511,50 @@
         }
 
         // ==============================================
-        // 检测拍手动作
+        // 阶段2：检测拍手动作（连续3帧，像素距离判断）
         // ==============================================
 
         function detectClap() {
+            // 只在等待拍手状态下检测
+            if (currentState !== AppStates.WAITING_CLAP) return;
             if (!handsData.left || !handsData.right || clapCooldown) return;
 
             // 获取双手手掌中心点（关键点9 - 中指根部）
             const leftPalm = handsData.left.landmarks[9];
             const rightPalm = handsData.right.landmarks[9];
 
-            // 计算双手距离
-            const distance = Math.sqrt(
-                Math.pow(leftPalm.x - rightPalm.x, 2) +
-                Math.pow(leftPalm.y - rightPalm.y, 2)
-            );
+            // 计算双手距离（像素值）
+            const distanceX = (leftPalm.x - rightPalm.x) * debugCanvas.width;
+            const distanceY = (leftPalm.y - rightPalm.y) * debugCanvas.height;
+            const distancePixels = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
 
-            // 检测快速接近（拍手）
-            if (lastHandDistance > CLAP_THRESHOLD && distance < CLAP_THRESHOLD) {
-                onClapDetected();
+            // 记录距离历史（保持最近3帧）
+            handDistanceHistory.push(distancePixels);
+            if (handDistanceHistory.length > DISTANCE_HISTORY_SIZE) {
+                handDistanceHistory.shift();
             }
 
-            lastHandDistance = distance;
+            // 需要有完整的3帧数据
+            if (handDistanceHistory.length < DISTANCE_HISTORY_SIZE) return;
+
+            // 判断逻辑：连续3帧内从 >150px 骤降到 <30px
+            const firstFrameDistance = handDistanceHistory[0];
+            const lastFrameDistance = handDistanceHistory[DISTANCE_HISTORY_SIZE - 1];
+
+            // 检查第一帧是否距离较远，最后一帧是否距离很近
+            if (firstFrameDistance > CLAP_DISTANCE_FAR && lastFrameDistance < CLAP_DISTANCE_NEAR) {
+                console.log(`🎯 拍手检测成功！距离变化: ${firstFrameDistance.toFixed(1)}px → ${lastFrameDistance.toFixed(1)}px`);
+                onClapDetected();
+                handDistanceHistory = []; // 清空历史
+            }
         }
 
         // ==============================================
-        // 拍手检测到时的处理
+        // 阶段2：拍手检测到时的处理
         // ==============================================
 
         function onClapDetected() {
-            console.log('检测到拍手！');
+            console.log('📍 阶段2开始：拍手固定背景');
 
             // 设置冷却时间
             clapCooldown = true;
@@ -546,25 +562,24 @@
                 clapCooldown = false;
             }, CLAP_COOLDOWN_MS);
 
-            // 冻结/解冻背景
-            if (!isBackgroundFrozen) {
-                freezeBackground();
-            } else {
-                unfreezeBackground();
-            }
-
             // 显示拍手特效
             showClapEffect();
+
+            // 冻结背景（阶段2核心功能）
+            freezeBackground();
         }
 
         // ==============================================
-        // 冻结背景
+        // 阶段2：固定背景（使用canvas.toDataURL()）
         // ==============================================
 
         function freezeBackground() {
-            isBackgroundFrozen = true;
+            console.log('  1️⃣ 捕获当前摄像头画面...');
 
-            // 捕获当前视频帧
+            isBackgroundFrozen = true;
+            currentState = AppStates.BACKGROUND_FROZEN;
+
+            // 步骤1：使用canvas捕获当前视频帧
             frozenCtx.save();
             frozenCtx.scale(-1, 1); // 镜像翻转
             frozenCtx.drawImage(
@@ -574,19 +589,45 @@
             );
             frozenCtx.restore();
 
-            // 显示冻结画布，隐藏视频
-            frozenCanvas.style.display = 'block';
-            video.style.display = 'none';
+            // 步骤2：将canvas转换为DataURL
+            const backgroundDataURL = frozenCanvas.toDataURL('image/png');
+            console.log('  2️⃣ 已生成背景图片DataURL');
 
-            updateStatus('背景已冻结 - 可以添加AR元素', true);
+            // 步骤3：设置为页面固定背景
+            document.body.style.backgroundImage = `url(${backgroundDataURL})`;
+            document.body.style.backgroundSize = 'cover';
+            document.body.style.backgroundPosition = 'center';
+            document.body.style.backgroundRepeat = 'no-repeat';
+            console.log('  3️⃣ 已设置为固定背景');
+
+            // 步骤4：隐藏真实的摄像头视频流
+            video.style.display = 'none';
+            console.log('  4️⃣ 已隐藏摄像头视频流');
+
+            // 步骤5：显示冻结画布（保持手部骨架绘制）
+            frozenCanvas.style.display = 'block';
+            // 手部骨架会继续绘制在debugCanvas上，叠加在固定背景上
+
+            // 步骤6：更新UI提示
+            updateStatus('背景已固定', true);
+            updateInstruction('background_frozen');
+
+            console.log('  ✅ 阶段2完成：背景已固定！');
+            console.log('📍 提示：现在手部骨架会绘制在固定背景上');
         }
 
         // ==============================================
-        // 解冻背景
+        // 解冻背景（重置功能）
         // ==============================================
 
         function unfreezeBackground() {
+            console.log('🔄 重置：解冻背景');
+
             isBackgroundFrozen = false;
+            currentState = AppStates.WAITING_CLAP;
+
+            // 清除固定背景
+            document.body.style.backgroundImage = 'none';
 
             frozenCanvas.style.display = 'none';
             video.style.display = 'block';
@@ -595,7 +636,13 @@
             arObjects = [];
             selectedObject = null;
 
-            updateStatus('背景已解冻', true);
+            // 清除距离历史
+            handDistanceHistory = [];
+
+            updateStatus('系统就绪', true);
+            updateInstruction('waiting_clap');
+
+            console.log('✅ 已重置，等待下一次拍手');
         }
 
         // ==============================================
@@ -740,6 +787,42 @@
                 statusIndicator.classList.add('active');
             } else {
                 statusIndicator.classList.remove('active');
+            }
+        }
+
+        // ==============================================
+        // 更新指示文字（根据不同阶段）
+        // ==============================================
+
+        function updateInstruction(stage) {
+            const instructions = {
+                'waiting_clap': {
+                    icon: '🙏',
+                    text: '请双手合十，拍手固定背景'
+                },
+                'background_frozen': {
+                    icon: '✅',
+                    text: '背景已固定！现在请尝试手势交互'
+                },
+                'ar_active': {
+                    icon: '🎯',
+                    text: '用手势拖动AR元素'
+                }
+            };
+
+            const config = instructions[stage];
+            if (config) {
+                const iconElement = instruction.querySelector('.instruction-icon');
+                const textNode = instruction.childNodes[instruction.childNodes.length - 1];
+
+                if (iconElement) {
+                    iconElement.textContent = config.icon;
+                }
+                if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+                    textNode.textContent = config.text;
+                }
+
+                instruction.classList.remove('hidden');
             }
         }
 
