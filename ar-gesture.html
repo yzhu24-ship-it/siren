@@ -1170,7 +1170,9 @@
             });
 
             updateStatus('背景已固定', true);
-            updateInstruction('background_frozen');
+
+            // 取消模式后，隐藏提示文字（不再重复显示"背景已固定"）
+            instruction.classList.add('hidden');
 
             // 显示取消提示
             cancelHint.style.display = 'none';
