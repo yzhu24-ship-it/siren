@@ -390,8 +390,8 @@
                     <span id="modeText">等待手势...</span>
                 </div>
                 <div class="gesture-list">
-                    <div class="gesture-list-item">👌 捏合 → 变色模式</div>
-                    <div class="gesture-list-item">✊ 握拳 → 虚拟化模式</div>
+                    <div class="gesture-list-item">✊ 握拳 → 变色模式</div>
+                    <div class="gesture-list-item">👌 捏合 → 虚拟化模式</div>
                     <div class="gesture-list-item">🤟 摇滚 → 消失模式</div>
                     <div class="gesture-list-item">🖐️ 展开 → 信息模式</div>
                     <div class="gesture-list-item">👆 指向 → 互换模式</div>
@@ -1070,13 +1070,13 @@
                 Math.pow((thumb_tip.y - index_tip.y) * debugCanvas.height, 2)
             );
 
-            // 1. 👌 捏合手势（拇指+食指接近，其他手指弯曲）
-            if (thumbIndexDistance < 40 && !isMiddleStraight && !isRingStraight) {
+            // 1. ✊ 握拳手势（所有手指弯曲）→ 变色模式
+            if (!isIndexStraight && !isMiddleStraight && !isRingStraight && !isPinkyStraight) {
                 return GestureModes.COLOR_CHANGE;
             }
 
-            // 2. ✊ 握拳手势（所有手指弯曲）
-            if (!isIndexStraight && !isMiddleStraight && !isRingStraight && !isPinkyStraight) {
+            // 2. 👌 捏合手势（拇指+食指接近，其他手指弯曲）→ 虚拟化模式
+            if (thumbIndexDistance < 40 && !isMiddleStraight && !isRingStraight) {
                 return GestureModes.VIRTUALIZE;
             }
 
@@ -1118,8 +1118,8 @@
 
             // 根据模式显示提示
             const modeNames = {
-                [GestureModes.COLOR_CHANGE]: '👌 变色模式已激活',
-                [GestureModes.VIRTUALIZE]: '✊ 虚拟化模式已激活',
+                [GestureModes.COLOR_CHANGE]: '✊ 变色模式已激活',
+                [GestureModes.VIRTUALIZE]: '👌 虚拟化模式已激活',
                 [GestureModes.DISAPPEAR]: '🤟 消失模式已激活',
                 [GestureModes.INFO]: '🖐️ 信息模式已激活',
                 [GestureModes.SWAP]: '👆 互换模式已激活'
@@ -1130,8 +1130,8 @@
 
             // 更新手势模式指示器
             const modeIcons = {
-                [GestureModes.COLOR_CHANGE]: '👌',
-                [GestureModes.VIRTUALIZE]: '✊',
+                [GestureModes.COLOR_CHANGE]: '✊',
+                [GestureModes.VIRTUALIZE]: '👌',
                 [GestureModes.DISAPPEAR]: '🤟',
                 [GestureModes.INFO]: '🖐️',
                 [GestureModes.SWAP]: '👆'
