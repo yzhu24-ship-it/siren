@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魔法手势AR决策教练 - 指尖的魔法</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* 魔法背景粒子 */
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .magic-particle {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: float 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 50px;
+            max-width: 800px;
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+            animation: shimmer 3s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .logo {
+            font-size: 100px;
+            margin-bottom: 20px;
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5)); }
+            50% { filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.9)); }
+        }
+
+        h1 {
+            font-size: 42px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            font-size: 20px;
+            color: #666;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            border-radius: 20px;
+            padding: 30px 20px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: default;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(255, 215, 0, 0.5);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 56px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .feature-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .feature-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .magic-flow {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            border-radius: 25px;
+            padding: 40px;
+            margin: 40px 0;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .magic-flow::before {
+            content: '✨';
+            position: absolute;
+            font-size: 200px;
+            top: -50px;
+            right: -50px;
+            opacity: 0.1;
+        }
+
+        .flow-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .flow-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .flow-step {
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+            position: relative;
+        }
+
+        .flow-step-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .flow-step-text {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .flow-arrow {
+            font-size: 32px;
+            opacity: 0.5;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+
+        .tech-stack {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .tech-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .tech-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .tech-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+            transition: all 0.3s;
+        }
+
+        .tech-item:hover {
+            border-color: #667eea;
+            transform: scale(1.05);
+            color: #667eea;
+        }
+
+        .cta-button {
+            display: block;
+            width: 100%;
+            padding: 30px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 20px;
+            font-size: 24px;
+            font-weight: 700;
+            margin: 40px 0 20px;
+            transition: all 0.3s;
+            box-shadow: 0 10px 40px rgba(255, 215, 0, 0.5);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .cta-button:hover::before {
+            left: 100%;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 60px rgba(255, 215, 0, 0.7);
+        }
+
+        .requirements {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .requirements-title {
+            font-weight: 700;
+            color: #856404;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .requirements-list {
+            color: #856404;
+            font-size: 14px;
+            line-height: 2;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 32px;
+            }
+
+            .subtitle {
+                font-size: 16px;
+            }
+
+            .flow-steps {
+                flex-direction: column;
+            }
+
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 魔法背景粒子 -->
+    <script>
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'magic-particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 3 + 's';
+            document.body.appendChild(particle);
+        }
+    </script>
+
+    <div class="container">
+        <div class="header">
+            <div class="badge">✨ Magic Gesture System</div>
+            <div class="logo">🪄</div>
+            <h1>魔法手势AR决策教练</h1>
+            <p class="subtitle">
+                用<span class="highlight">指尖的魔法</span>控制决策流程<br>
+                光效粒子 + 手势识别 = 极致沉浸式体验
+            </p>
+        </div>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <span class="feature-icon">✨</span>
+                <div class="feature-title">魔法光效</div>
+                <div class="feature-desc">从指尖流向按钮的发光粒子轨迹</div>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">👆</span>
+                <div class="feature-title">手势指向</div>
+                <div class="feature-desc">食指精准指向检测，自然交互</div>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">👌</span>
+                <div class="feature-title">捏合确认</div>
+                <div class="feature-desc">拇指+食指捏合完成决策</div>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">💥</span>
+                <div class="feature-title">爆炸粒子</div>
+                <div class="feature-desc">确认时的震撼视觉反馈</div>
+            </div>
+        </div>
+
+        <div class="magic-flow">
+            <div class="flow-title">🎯 魔法交互流程</div>
+            <div class="flow-steps">
+                <div class="flow-step">
+                    <span class="flow-step-icon">📱</span>
+                    <div class="flow-step-text">扫描物品<br>AI自动识别</div>
+                </div>
+
+                <div class="flow-arrow">→</div>
+
+                <div class="flow-step">
+                    <span class="flow-step-icon">👆</span>
+                    <div class="flow-step-text">食指指向<br>魔法光流</div>
+                </div>
+
+                <div class="flow-arrow">→</div>
+
+                <div class="flow-step">
+                    <span class="flow-step-icon">👌</span>
+                    <div class="flow-step-text">捏合确认<br>粒子爆炸</div>
+                </div>
+
+                <div class="flow-arrow">→</div>
+
+                <div class="flow-step">
+                    <span class="flow-step-icon">✅</span>
+                    <div class="flow-step-text">决策完成<br>继续扫描</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tech-stack">
+            <div class="tech-title">🛠️ 技术栈</div>
+            <div class="tech-items">
+                <div class="tech-item">MediaPipe Hands</div>
+                <div class="tech-item">TensorFlow.js</div>
+                <div class="tech-item">COCO-SSD</div>
+                <div class="tech-item">Canvas 2D</div>
+                <div class="tech-item">贝塞尔曲线</div>
+                <div class="tech-item">粒子系统</div>
+                <div class="tech-item">Web Audio API</div>
+            </div>
+        </div>
+
+        <a href="ar-magic-gesture.html" class="cta-button">
+            🪄 开启魔法体验
+        </a>
+
+        <div class="requirements">
+            <div class="requirements-title">
+                <span>⚠️</span> 使用要求
+            </div>
+            <div class="requirements-list">
+                • 支持WebGL的现代浏览器（Chrome 90+ / Safari 14+）<br>
+                • 允许摄像头访问权限<br>
+                • 稳定的网络连接（加载AI模型约8MB）<br>
+                • 充足的光线环境（手势识别准确度）<br>
+                • 建议使用移动设备后置摄像头
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; color: #888; font-size: 14px;">
+            <p>💡 提示：确保手部在摄像头视野内，保持适当距离</p>
+            <p style="margin-top: 10px;">
+                <a href="index-dynamic.html" style="color: #667eea; text-decoration: none;">← 返回标准版本</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

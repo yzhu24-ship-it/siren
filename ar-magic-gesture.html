@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>魔法手势AR决策教练</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* 视频流 */
+        #video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+            z-index: 0;
+        }
+
+        /* AR叠加层 */
+        #arCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* 魔法效果层 */
+        #magicCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* 手部骨骼调试层（可选） */
+        #handCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 4;
+            opacity: 0.6;
+        }
+
+        /* 状态栏 */
+        .status-bar {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-radius: 25px;
+            color: white;
+            font-size: 16px;
+            z-index: 10;
+            text-align: center;
+        }
+
+        .mode-indicator {
+            font-size: 14px;
+            color: #4ecdc4;
+            margin-bottom: 5px;
+        }
+
+        /* 决策面板（Canvas绘制模式） */
+        #decisionCanvas {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 300px;
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
+
+        #decisionCanvas.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* 统计面板 */
+        .stats-panel {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-radius: 15px;
+            color: white;
+            font-size: 14px;
+            z-index: 10;
+            min-width: 150px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+        }
+
+        .stat-value {
+            color: #4ecdc4;
+            font-weight: bold;
+        }
+
+        /* 手势提示 */
+        .gesture-hint {
+            position: absolute;
+            bottom: 320px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 20px;
+            color: white;
+            font-size: 14px;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .gesture-hint.active {
+            opacity: 1;
+        }
+
+        /* 加载屏幕 */
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 100;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .loading-progress {
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <!-- 视频流 -->
+        <video id="video" autoplay playsinline></video>
+
+        <!-- AR画布 -->
+        <canvas id="arCanvas"></canvas>
+
+        <!-- 魔法效果画布 -->
+        <canvas id="magicCanvas"></canvas>
+
+        <!-- 手部骨骼画布（调试） -->
+        <canvas id="handCanvas"></canvas>
+
+        <!-- 决策面板画布 -->
+        <canvas id="decisionCanvas"></canvas>
+
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <div class="mode-indicator">扫描模式</div>
+            <div id="statusText">移动手机扫描物品</div>
+        </div>
+
+        <!-- 手势提示 -->
+        <div class="gesture-hint" id="gestureHint">
+            👆 指向按钮 + 👌 捏合确认
+        </div>
+
+        <!-- 统计面板 -->
+        <div class="stats-panel">
+            <div class="stat-row">
+                <span>已扫描</span>
+                <span class="stat-value"><span id="scanCount">0</span> 个</span>
+            </div>
+            <div class="stat-row">
+                <span>已决策</span>
+                <span class="stat-value"><span id="decisionCount">0</span> 个</span>
+            </div>
+            <div class="stat-row">
+                <span>手势状态</span>
+                <span class="stat-value" id="gestureStatus">-</span>
+            </div>
+        </div>
+
+        <!-- 加载屏幕 -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div class="loading-text">正在加载AI模型</div>
+            <div class="loading-progress">TensorFlow.js + MediaPipe Hands</div>
+        </div>
+    </div>
+
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3"></script>
+
+    <!-- MediaPipe Hands -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js"></script>
+
+    <script>
+        // ==============================================
+        // 魔法配色方案
+        // ==============================================
+
+        const MAGIC_COLORS = {
+            fingerGlow: {
+                inner: '#FFD700',
+                outer: '#00FFFF',
+                alpha: 0.8
+            },
+            particleFlow: {
+                start: '#FFD700',
+                end: '#00BFFF',
+                trail: '#87CEEB'
+            },
+            buttonFeedback: {
+                immediate: '#FF6B6B',
+                later: '#4ECDC4',
+                delete: '#95A5A6',
+                archive: '#1DD1A1'
+            },
+            energyField: {
+                base: '#00BFFF',
+                pulse: '#00FFFF',
+                alpha: 0.05
+            }
+        };
+
+        // ==============================================
+        // 魔法光效渲染器类
+        // ==============================================
+
+        class MagicEffectRenderer {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.particles = [];
+                this.explosionParticles = [];
+                this.lastParticleTime = 0;
+                this.particleInterval = 30; // 每30ms生成一个粒子
+                this.maxParticles = 100; // 最大粒子数量（性能优化）
+                this.glowPhase = 0;
+            }
+
+            /**
+             * 更新并渲染所有魔法效果
+             */
+            update(fingerTipPos, targetButtonPos, isPointing) {
+                // 清空画布
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // 更新全局动画相位
+                this.glowPhase += 0.1;
+                if (this.glowPhase > Math.PI * 2) this.glowPhase = 0;
+
+                // 绘制能量场（背景效果）
+                this.drawEnergyField();
+
+                if (isPointing && fingerTipPos && targetButtonPos) {
+                    // 绘制指尖光晕
+                    this.drawFingerGlow(fingerTipPos);
+
+                    // 绘制粒子流动
+                    this.drawParticleFlow(fingerTipPos, targetButtonPos);
+                }
+
+                // 更新和绘制爆炸粒子
+                this.updateExplosionParticles();
+            }
+
+            /**
+             * 绘制指尖光晕效果
+             */
+            drawFingerGlow(pos) {
+                // 主光晕
+                const gradient = this.ctx.createRadialGradient(
+                    pos.x, pos.y, 5,
+                    pos.x, pos.y, 20
+                );
+                gradient.addColorStop(0, MAGIC_COLORS.fingerGlow.inner + 'E6'); // 90% 不透明
+                gradient.addColorStop(0.5, MAGIC_COLORS.fingerGlow.outer + '80'); // 50% 不透明
+                gradient.addColorStop(1, MAGIC_COLORS.fingerGlow.outer + '00'); // 完全透明
+
+                this.ctx.beginPath();
+                this.ctx.arc(pos.x, pos.y, 20, 0, Math.PI * 2);
+                this.ctx.fillStyle = gradient;
+                this.ctx.fill();
+
+                // 脉动光环
+                const pulseRadius = 25 + Math.sin(this.glowPhase) * 3;
+                this.ctx.beginPath();
+                this.ctx.arc(pos.x, pos.y, pulseRadius, 0, Math.PI * 2);
+                this.ctx.strokeStyle = `rgba(0, 255, 255, ${0.3 + 0.2 * Math.sin(this.glowPhase)})`;
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+
+                // 内核光点
+                this.ctx.beginPath();
+                this.ctx.arc(pos.x, pos.y, 3, 0, Math.PI * 2);
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                this.ctx.fill();
+            }
+
+            /**
+             * 绘制粒子流动效果（贝塞尔曲线路径）
+             */
+            drawParticleFlow(startPos, endPos) {
+                const currentTime = Date.now();
+
+                // 生成新粒子（控制数量）
+                if (currentTime - this.lastParticleTime > this.particleInterval &&
+                    this.particles.length < this.maxParticles) {
+                    this.particles.push({
+                        progress: 0,
+                        size: Math.random() * 3 + 2,
+                        speed: Math.random() * 0.02 + 0.03,
+                        hue: Math.random() * 60 + 180, // 青色系
+                        alpha: 0.8 + Math.random() * 0.2
+                    });
+                    this.lastParticleTime = currentTime;
+                }
+
+                // 更新和绘制所有粒子
+                this.particles = this.particles.filter(particle => {
+                    particle.progress += particle.speed;
+
+                    if (particle.progress >= 1) {
+                        return false; // 移除到达终点的粒子
+                    }
+
+                    // 计算贝塞尔曲线上的位置
+                    const t = particle.progress;
+                    const controlX1 = startPos.x + (endPos.x - startPos.x) * 0.25;
+                    const controlY1 = startPos.y - 50; // 向上弯曲
+                    const controlX2 = startPos.x + (endPos.x - startPos.x) * 0.75;
+                    const controlY2 = endPos.y + 30; // 向下弯曲
+
+                    // 三次贝塞尔曲线公式
+                    const x = Math.pow(1 - t, 3) * startPos.x +
+                             3 * Math.pow(1 - t, 2) * t * controlX1 +
+                             3 * (1 - t) * Math.pow(t, 2) * controlX2 +
+                             Math.pow(t, 3) * endPos.x;
+
+                    const y = Math.pow(1 - t, 3) * startPos.y +
+                             3 * Math.pow(1 - t, 2) * t * controlY1 +
+                             3 * (1 - t) * Math.pow(t, 2) * controlY2 +
+                             Math.pow(t, 3) * endPos.y;
+
+                    // 粒子颜色（渐变）
+                    const color = `hsla(${particle.hue}, 100%, 60%, ${particle.alpha * (1 - t * 0.5)})`;
+
+                    // 绘制粒子主体
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, particle.size, 0, Math.PI * 2);
+                    this.ctx.fillStyle = color;
+                    this.ctx.fill();
+
+                    // 绘制粒子拖尾
+                    const trailColor = `hsla(${particle.hue}, 100%, 70%, ${particle.alpha * 0.3 * (1 - t)})`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, particle.size * 1.5, 0, Math.PI * 2);
+                    this.ctx.fillStyle = trailColor;
+                    this.ctx.fill();
+
+                    return true;
+                });
+            }
+
+            /**
+             * 绘制能量场背景效果
+             */
+            drawEnergyField() {
+                const time = Date.now() * 0.001;
+                const amplitude = 0.5 + Math.sin(time * 2) * 0.2;
+
+                this.ctx.globalCompositeOperation = 'lighter';
+                this.ctx.fillStyle = `rgba(0, 150, 255, ${MAGIC_COLORS.energyField.alpha * amplitude})`;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.globalCompositeOperation = 'source-over';
+            }
+
+            /**
+             * 创建爆炸粒子效果
+             */
+            createExplosion(x, y, color) {
+                for (let i = 0; i < 30; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 8 + 3;
+
+                    this.explosionParticles.push({
+                        x: x,
+                        y: y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        life: 1.0,
+                        decay: 0.02 + Math.random() * 0.03,
+                        size: Math.random() * 5 + 2,
+                        color: color
+                    });
+                }
+            }
+
+            /**
+             * 更新爆炸粒子
+             */
+            updateExplosionParticles() {
+                this.explosionParticles = this.explosionParticles.filter(p => {
+                    // 更新位置
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.3; // 重力效果
+                    p.life -= p.decay;
+
+                    if (p.life <= 0) return false;
+
+                    // 绘制粒子
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                    this.ctx.fillStyle = p.color.replace('1)', `${p.life})`);
+                    this.ctx.fill();
+
+                    // 发光效果
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.size * p.life * 1.5, 0, Math.PI * 2);
+                    this.ctx.fillStyle = p.color.replace('1)', `${p.life * 0.3})`);
+                    this.ctx.fill();
+
+                    return true;
+                });
+            }
+        }
+
+        // ==============================================
+        // 魔法决策按钮类
+        // ==============================================
+
+        class MagicDecisionButton {
+            constructor(text, x, y, width, height, colorKey, action, icon) {
+                this.text = text;
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.colorKey = colorKey;
+                this.color = MAGIC_COLORS.buttonFeedback[colorKey];
+                this.action = action;
+                this.icon = icon;
+
+                // 按钮中心
+                this.centerX = x + width / 2;
+                this.centerY = y + height / 2;
+
+                // 魔法状态
+                this.isPointed = false;
+                this.pointedIntensity = 0;
+                this.glowPhase = 0;
+            }
+
+            /**
+             * 绘制魔法按钮
+             */
+            draw(ctx) {
+                this.updateMagicState();
+
+                // 被指向时的外发光
+                if (this.isPointed && this.pointedIntensity > 0.1) {
+                    const glowRadius = Math.max(this.width, this.height) / 2 + 20 * this.pointedIntensity;
+                    const gradient = ctx.createRadialGradient(
+                        this.centerX, this.centerY, 0,
+                        this.centerX, this.centerY, glowRadius
+                    );
+
+                    gradient.addColorStop(0, this.color + 'CC');
+                    gradient.addColorStop(0.5, this.color + '66');
+                    gradient.addColorStop(1, this.color + '00');
+
+                    ctx.beginPath();
+                    ctx.arc(this.centerX, this.centerY, glowRadius, 0, Math.PI * 2);
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                }
+
+                // 按钮主体
+                ctx.fillStyle = this.color + (this.isPointed ? 'DD' : '99');
+                ctx.beginPath();
+                this.roundRect(ctx, this.x, this.y, this.width, this.height, 15);
+                ctx.fill();
+
+                // 按钮边框（魔法能量）
+                const borderAlpha = this.isPointed ?
+                    0.8 + 0.2 * Math.sin(this.glowPhase) : 0.3;
+                ctx.strokeStyle = `rgba(255, 255, 255, ${borderAlpha})`;
+                ctx.lineWidth = this.isPointed ? 3 : 1;
+                ctx.beginPath();
+                this.roundRect(ctx, this.x, this.y, this.width, this.height, 15);
+                ctx.stroke();
+
+                // 图标
+                ctx.font = '32px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = 'white';
+                ctx.fillText(this.icon, this.centerX, this.centerY - 15);
+
+                // 文字
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText(this.text, this.centerX, this.centerY + 20);
+
+                // 能量波纹（强烈指向时）
+                if (this.isPointed && this.pointedIntensity > 0.7) {
+                    const rippleRadius = 8 + 6 * Math.sin(this.glowPhase);
+                    ctx.beginPath();
+                    ctx.arc(this.centerX, this.centerY, rippleRadius, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${0.8 * Math.sin(this.glowPhase)})`;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+
+            /**
+             * 圆角矩形辅助函数
+             */
+            roundRect(ctx, x, y, width, height, radius) {
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + width - radius, y);
+                ctx.arcTo(x + width, y, x + width, y + radius, radius);
+                ctx.lineTo(x + width, y + height - radius);
+                ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
+                ctx.lineTo(x + radius, y + height);
+                ctx.arcTo(x, y + height, x, y + height - radius, radius);
+                ctx.lineTo(x, y + radius);
+                ctx.arcTo(x, y, x + radius, y, radius);
+                ctx.closePath();
+            }
+
+            /**
+             * 更新魔法状态
+             */
+            updateMagicState() {
+                // 平滑过渡指向强度
+                if (this.isPointed) {
+                    this.pointedIntensity = Math.min(1, this.pointedIntensity + 0.1);
+                } else {
+                    this.pointedIntensity = Math.max(0, this.pointedIntensity - 0.05);
+                }
+
+                // 更新发光相位
+                this.glowPhase += 0.15;
+                if (this.glowPhase > Math.PI * 2) this.glowPhase = 0;
+            }
+
+            /**
+             * 检查点是否在按钮内
+             */
+            containsPoint(x, y) {
+                return x >= this.x && x <= this.x + this.width &&
+                       y >= this.y && y <= this.y + this.height;
+            }
+
+            /**
+             * 按钮被指向时调用
+             */
+            onPointed() {
+                this.isPointed = true;
+            }
+
+            /**
+             * 停止指向
+             */
+            onPointingEnd() {
+                this.isPointed = false;
+            }
+        }
+
+        // ==============================================
+        // 手势指向检测系统类
+        // ==============================================
+
+        class GesturePointerSystem {
+            constructor() {
+                this.buttons = [];
+                this.currentPointedButton = null;
+                this.pointingThreshold = 0.6; // 指向判定阈值
+                this.isPointing = false;
+                this.pointingStartTime = 0;
+                this.pointingDuration = 0;
+            }
+
+            /**
+             * 设置决策按钮
+             */
+            setButtons(buttons) {
+                this.buttons = buttons;
+            }
+
+            /**
+             * 检测食指指向哪个按钮
+             */
+            detectPointing(indexFingerTip, wristPos) {
+                if (!indexFingerTip || !wristPos) return null;
+
+                let bestMatch = null;
+                let highestScore = 0;
+
+                // 计算食指方向向量
+                const fingerDirection = {
+                    x: indexFingerTip.x - wristPos.x,
+                    y: indexFingerTip.y - wristPos.y
+                };
+
+                // 归一化
+                const fingerLength = Math.sqrt(
+                    fingerDirection.x * fingerDirection.x +
+                    fingerDirection.y * fingerDirection.y
+                );
+
+                if (fingerLength === 0) return null;
+
+                const normalizedDirection = {
+                    x: fingerDirection.x / fingerLength,
+                    y: fingerDirection.y / fingerLength
+                };
+
+                // 检查每个按钮
+                this.buttons.forEach(button => {
+                    // 计算从指尖到按钮中心的向量
+                    const toButton = {
+                        x: button.centerX - indexFingerTip.x,
+                        y: button.centerY - indexFingerTip.y
+                    };
+
+                    const toButtonLength = Math.sqrt(
+                        toButton.x * toButton.x + toButton.y * toButton.y
+                    );
+
+                    if (toButtonLength === 0) return;
+
+                    const normalizedToButton = {
+                        x: toButton.x / toButtonLength,
+                        y: toButton.y / toButtonLength
+                    };
+
+                    // 方向一致性（点积）
+                    const directionScore = Math.max(0,
+                        normalizedDirection.x * normalizedToButton.x +
+                        normalizedDirection.y * normalizedToButton.y
+                    );
+
+                    // 距离分数
+                    const distanceScore = Math.max(0, 1 - (toButtonLength / 400));
+
+                    // 综合分数
+                    const totalScore = directionScore * 0.7 + distanceScore * 0.3;
+
+                    if (totalScore > this.pointingThreshold && totalScore > highestScore) {
+                        highestScore = totalScore;
+                        bestMatch = button;
+                    }
+                });
+
+                return bestMatch;
+            }
+
+            /**
+             * 更新指向状态
+             */
+            update(indexFingerTip, wristPos) {
+                const pointedButton = this.detectPointing(indexFingerTip, wristPos);
+
+                // 清除所有按钮的指向状态
+                this.buttons.forEach(btn => btn.onPointingEnd());
+
+                if (pointedButton) {
+                    if (pointedButton !== this.currentPointedButton) {
+                        // 开始指向新按钮
+                        this.currentPointedButton = pointedButton;
+                        this.pointingStartTime = Date.now();
+                        this.playPointingSound();
+                    }
+
+                    this.isPointing = true;
+                    this.pointingDuration = Date.now() - this.pointingStartTime;
+
+                    // 标记按钮为被指向
+                    pointedButton.onPointed();
+                } else {
+                    this.isPointing = false;
+                    this.currentPointedButton = null;
+                    this.pointingDuration = 0;
+                }
+
+                return {
+                    isPointing: this.isPointing,
+                    pointedButton: this.currentPointedButton,
+                    pointingDuration: this.pointingDuration
+                };
+            }
+
+            /**
+             * 播放指向音效
+             */
+            playPointingSound() {
+                try {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+
+                    gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.3);
+                } catch (e) {
+                    // 音频可能被浏览器阻止
+                }
+            }
+        }
+
+        // ==============================================
+        // 全局变量
+        // ==============================================
+
+        const video = document.getElementById('video');
+        const arCanvas = document.getElementById('arCanvas');
+        const arCtx = arCanvas.getContext('2d');
+        const magicCanvas = document.getElementById('magicCanvas');
+        const handCanvas = document.getElementById('handCanvas');
+        const handCtx = handCanvas.getContext('2d');
+        const decisionCanvas = document.getElementById('decisionCanvas');
+        const decisionCtx = decisionCanvas.getContext('2d');
+
+        let cocoModel = null;
+        let handsModel = null;
+        let isScanning = false;
+        let detectedObjects = [];
+        let focusedObject = null;
+        let focusStartTime = 0;
+        const FOCUS_THRESHOLD = 1000;
+
+        let scanCount = 0;
+        let decisionCount = 0;
+        let decisions = [];
+
+        // 魔法系统
+        let magicRenderer = null;
+        let gesturePointer = null;
+        let decisionButtons = [];
+        let isInDecision = false;
+
+        // 手部数据
+        let handLandmarks = null;
+
+        // ==============================================
+        // 初始化
+        // ==============================================
+
+        async function init() {
+            try {
+                console.log('🚀 启动魔法手势AR决策教练');
+
+                // 初始化摄像头
+                await initCamera();
+                console.log('✅ 摄像头就绪');
+
+                // 加载COCO-SSD模型
+                document.querySelector('.loading-progress').textContent = '正在加载物品识别模型...';
+                cocoModel = await cocoSsd.load();
+                console.log('✅ COCO-SSD模型加载完成');
+
+                // 加载MediaPipe Hands模型
+                document.querySelector('.loading-progress').textContent = '正在加载手势识别模型...';
+                await initHands();
+                console.log('✅ MediaPipe Hands模型加载完成');
+
+                // 初始化魔法系统
+                magicRenderer = new MagicEffectRenderer(magicCanvas);
+                gesturePointer = new GesturePointerSystem();
+
+                // 隐藏加载界面
+                document.getElementById('loading').style.display = 'none';
+
+                // 开始扫描
+                isScanning = true;
+                mainLoop();
+
+            } catch (err) {
+                console.error('❌ 初始化失败:', err);
+                alert('初始化失败：' + err.message);
+            }
+        }
+
+        async function initCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: 'environment',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
+            });
+
+            video.srcObject = stream;
+
+            return new Promise((resolve) => {
+                video.onloadedmetadata = () => {
+                    resizeCanvas();
+                    resolve();
+                };
+            });
+        }
+
+        async function initHands() {
+            handsModel = new Hands({
+                locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${file}`;
+                }
+            });
+
+            handsModel.setOptions({
+                maxNumHands: 1,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.7,
+                minTrackingConfidence: 0.7
+            });
+
+            handsModel.onResults(onHandsResults);
+
+            // 启动手部检测
+            const camera = new Camera(video, {
+                onFrame: async () => {
+                    await handsModel.send({ image: video });
+                },
+                width: 1280,
+                height: 720
+            });
+
+            camera.start();
+        }
+
+        function onHandsResults(results) {
+            // 更新手部关键点数据
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                handLandmarks = results.multiHandLandmarks[0];
+
+                // 绘制手部骨骼（调试）
+                drawHandSkeleton(results);
+            } else {
+                handLandmarks = null;
+            }
+        }
+
+        function drawHandSkeleton(results) {
+            handCtx.clearRect(0, 0, handCanvas.width, handCanvas.height);
+
+            if (results.multiHandLandmarks) {
+                for (const landmarks of results.multiHandLandmarks) {
+                    // 绘制关键点
+                    for (const landmark of landmarks) {
+                        const x = (1 - landmark.x) * handCanvas.width; // 镜像
+                        const y = landmark.y * handCanvas.height;
+
+                        handCtx.beginPath();
+                        handCtx.arc(x, y, 5, 0, 2 * Math.PI);
+                        handCtx.fillStyle = 'rgba(0, 255, 0, 0.8)';
+                        handCtx.fill();
+                    }
+
+                    // 绘制连接线
+                    const connections = [
+                        [0, 1], [1, 2], [2, 3], [3, 4], // 拇指
+                        [0, 5], [5, 6], [6, 7], [7, 8], // 食指
+                        [5, 9], [9, 10], [10, 11], [11, 12], // 中指
+                        [9, 13], [13, 14], [14, 15], [15, 16], // 无名指
+                        [13, 17], [17, 18], [18, 19], [19, 20], // 小指
+                        [0, 17] // 手掌
+                    ];
+
+                    handCtx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
+                    handCtx.lineWidth = 2;
+
+                    for (const [start, end] of connections) {
+                        const startPoint = landmarks[start];
+                        const endPoint = landmarks[end];
+
+                        const x1 = (1 - startPoint.x) * handCanvas.width;
+                        const y1 = startPoint.y * handCanvas.height;
+                        const x2 = (1 - endPoint.x) * handCanvas.width;
+                        const y2 = endPoint.y * handCanvas.height;
+
+                        handCtx.beginPath();
+                        handCtx.moveTo(x1, y1);
+                        handCtx.lineTo(x2, y2);
+                        handCtx.stroke();
+                    }
+                }
+            }
+        }
+
+        function resizeCanvas() {
+            arCanvas.width = window.innerWidth;
+            arCanvas.height = window.innerHeight;
+            magicCanvas.width = window.innerWidth;
+            magicCanvas.height = window.innerHeight;
+            handCanvas.width = window.innerWidth;
+            handCanvas.height = window.innerHeight;
+            decisionCanvas.width = window.innerWidth;
+            decisionCanvas.height = 300;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // ==============================================
+        // 主循环
+        // ==============================================
+
+        async function mainLoop() {
+            try {
+                if (isScanning) {
+                    // 物品检测
+                    const predictions = await cocoModel.detect(video);
+                    detectedObjects = predictions.filter(p => p.score > 0.6);
+
+                    // 清除AR画布
+                    arCtx.clearRect(0, 0, arCanvas.width, arCanvas.height);
+
+                    // 绘制AR标签
+                    drawARLabels();
+
+                    // 检查聚焦（如果不在决策模式）
+                    if (!isInDecision) {
+                        checkFocus();
+                    }
+
+                    // 更新统计
+                    document.getElementById('scanCount').textContent = detectedObjects.length;
+                }
+
+                // 处理魔法交互（如果在决策模式）
+                if (isInDecision) {
+                    updateMagicInteraction();
+                }
+
+            } catch (err) {
+                console.error('主循环错误:', err);
+            }
+
+            requestAnimationFrame(mainLoop);
+        }
+
+        // ==============================================
+        // AR标签绘制
+        // ==============================================
+
+        function drawARLabels() {
+            detectedObjects.forEach(obj => {
+                const [x, y, width, height] = obj.bbox;
+                const mirroredX = arCanvas.width - x - width;
+
+                const isFocused = focusedObject &&
+                                 focusedObject.class === obj.class &&
+                                 Math.abs(focusedObject.bbox[0] - obj.bbox[0]) < 50;
+
+                arCtx.strokeStyle = isFocused ? '#4ecdc4' : 'rgba(255, 255, 255, 0.6)';
+                arCtx.lineWidth = isFocused ? 4 : 2;
+                arCtx.strokeRect(mirroredX, y, width, height);
+
+                const label = getItemLabel(obj.class);
+                const labelWidth = arCtx.measureText(label).width + 20;
+                const labelHeight = 30;
+
+                arCtx.fillStyle = isFocused ? 'rgba(78, 205, 196, 0.9)' : 'rgba(0, 0, 0, 0.7)';
+                arCtx.fillRect(mirroredX, y - labelHeight, labelWidth, labelHeight);
+
+                arCtx.fillStyle = 'white';
+                arCtx.font = '16px Arial';
+                arCtx.fillText(label, mirroredX + 10, y - 10);
+            });
+        }
+
+        function getItemLabel(className) {
+            const labels = {
+                'person': '👤 人',
+                'cup': '☕ 杯子',
+                'bottle': '🍾 瓶子',
+                'book': '📖 书',
+                'cell phone': '📱 手机',
+                'laptop': '💻 电脑',
+                'keyboard': '⌨️ 键盘',
+                'mouse': '🖱️ 鼠标',
+                'remote': '📺 遥控器',
+                'clock': '⏰ 时钟',
+                'vase': '🏺 花瓶',
+                'scissors': '✂️ 剪刀',
+                'teddy bear': '🧸 玩具熊',
+                'hair drier': '💨 吹风机',
+                'toothbrush': '🪥 牙刷'
+            };
+            return labels[className] || '📦 ' + className;
+        }
+
+        // ==============================================
+        // 聚焦检测
+        // ==============================================
+
+        function checkFocus() {
+            const focusArea = {
+                x: arCanvas.width / 2 - 100,
+                y: arCanvas.height / 2 - 100,
+                width: 200,
+                height: 200
+            };
+
+            const objectsInFocus = detectedObjects.filter(obj => {
+                const [x, y, width, height] = obj.bbox;
+                const mirroredX = arCanvas.width - x - width;
+                const centerX = mirroredX + width / 2;
+                const centerY = y + height / 2;
+
+                return centerX >= focusArea.x &&
+                       centerX <= focusArea.x + focusArea.width &&
+                       centerY >= focusArea.y &&
+                       centerY <= focusArea.y + focusArea.height;
+            });
+
+            if (objectsInFocus.length > 0) {
+                const newFocus = objectsInFocus[0];
+
+                if (!focusedObject || focusedObject.class !== newFocus.class) {
+                    focusedObject = newFocus;
+                    focusStartTime = Date.now();
+                    document.getElementById('statusText').textContent = `聚焦中: ${getItemLabel(newFocus.class)}`;
+                } else {
+                    const focusDuration = Date.now() - focusStartTime;
+                    if (focusDuration >= FOCUS_THRESHOLD) {
+                        enterDecisionMode(focusedObject);
+                    }
+                }
+            } else {
+                focusedObject = null;
+                focusStartTime = 0;
+                document.getElementById('statusText').textContent = '移动手机扫描物品';
+            }
+        }
+
+        // ==============================================
+        // 决策模式
+        // ==============================================
+
+        function enterDecisionMode(object) {
+            console.log(`📍 进入决策模式: ${object.class}`);
+
+            isInDecision = true;
+            isScanning = false; // 暂停扫描
+
+            // 显示决策面板
+            document.getElementById('decisionCanvas').classList.add('active');
+            document.getElementById('gestureHint').classList.add('active');
+            document.getElementById('statusText').textContent = '使用手势做决策...';
+
+            // 创建决策按钮
+            createDecisionButtons();
+
+            // 开始绘制决策面板
+            drawDecisionPanel();
+        }
+
+        function createDecisionButtons() {
+            const buttonWidth = 180;
+            const buttonHeight = 80;
+            const gap = 20;
+            const startX = (decisionCanvas.width - (buttonWidth * 2 + gap)) / 2;
+            const startY = 50;
+
+            decisionButtons = [
+                new MagicDecisionButton('立即处理', startX, startY, buttonWidth, buttonHeight, 'immediate', 'immediate', '🔥'),
+                new MagicDecisionButton('稍后处理', startX + buttonWidth + gap, startY, buttonWidth, buttonHeight, 'later', 'later', '⏰'),
+                new MagicDecisionButton('丢弃', startX, startY + buttonHeight + gap, buttonWidth, buttonHeight, 'delete', 'delete', '🗑️'),
+                new MagicDecisionButton('归档', startX + buttonWidth + gap, startY + buttonHeight + gap, buttonWidth, buttonHeight, 'archive', 'archive', '📁')
+            ];
+
+            gesturePointer.setButtons(decisionButtons);
+        }
+
+        function drawDecisionPanel() {
+            if (!isInDecision) return;
+
+            // 清空画布
+            decisionCtx.clearRect(0, 0, decisionCanvas.width, decisionCanvas.height);
+
+            // 绘制半透明背景
+            const gradient = decisionCtx.createLinearGradient(0, decisionCanvas.height, 0, 0);
+            gradient.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
+            gradient.addColorStop(1, 'transparent');
+            decisionCtx.fillStyle = gradient;
+            decisionCtx.fillRect(0, 0, decisionCanvas.width, decisionCanvas.height);
+
+            // 绘制标题
+            const title = `为 ${getItemLabel(focusedObject.class)} 做决策`;
+            decisionCtx.font = 'bold 20px Arial';
+            decisionCtx.textAlign = 'center';
+            decisionCtx.fillStyle = 'white';
+            decisionCtx.fillText(title, decisionCanvas.width / 2, 25);
+
+            // 绘制所有按钮
+            decisionButtons.forEach(btn => btn.draw(decisionCtx));
+
+            requestAnimationFrame(drawDecisionPanel);
+        }
+
+        function exitDecisionMode() {
+            isInDecision = false;
+            document.getElementById('decisionCanvas').classList.remove('active');
+            document.getElementById('gestureHint').classList.remove('active');
+            document.getElementById('statusText').textContent = '移动手机扫描物品';
+
+            focusedObject = null;
+            focusStartTime = 0;
+
+            // 恢复扫描
+            isScanning = true;
+        }
+
+        // ==============================================
+        // 魔法交互
+        // ==============================================
+
+        function updateMagicInteraction() {
+            if (!handLandmarks || !isInDecision) {
+                // 没有手势时，清空魔法效果
+                magicRenderer.update(null, null, false);
+                document.getElementById('gestureStatus').textContent = '-';
+                return;
+            }
+
+            // 获取食指指尖和手腕位置
+            const indexFingerTip = getScreenPos(handLandmarks[8]);
+            const wristPos = getScreenPos(handLandmarks[0]);
+
+            // 更新手势指向检测
+            const pointingResult = gesturePointer.update(indexFingerTip, wristPos);
+
+            // 更新状态显示
+            if (pointingResult.isPointing && pointingResult.pointedButton) {
+                document.getElementById('gestureStatus').textContent = '指向中';
+            } else {
+                document.getElementById('gestureStatus').textContent = '扫描中';
+            }
+
+            // 更新魔法光效
+            let targetPos = null;
+            if (pointingResult.pointedButton) {
+                targetPos = {
+                    x: pointingResult.pointedButton.centerX,
+                    y: decisionCanvas.offsetTop + pointingResult.pointedButton.centerY
+                };
+            }
+
+            magicRenderer.update(indexFingerTip, targetPos, pointingResult.isPointing);
+
+            // 检测捏合手势
+            if (detectPinchGesture() && pointingResult.pointedButton) {
+                confirmDecision(pointingResult.pointedButton);
+            }
+        }
+
+        function getScreenPos(landmark) {
+            return {
+                x: (1 - landmark.x) * magicCanvas.width, // 镜像
+                y: landmark.y * magicCanvas.height
+            };
+        }
+
+        function detectPinchGesture() {
+            if (!handLandmarks) return false;
+
+            const indexTip = handLandmarks[8];
+            const thumbTip = handLandmarks[4];
+
+            const distance = Math.sqrt(
+                Math.pow(indexTip.x - thumbTip.x, 2) +
+                Math.pow(indexTip.y - thumbTip.y, 2) +
+                Math.pow(indexTip.z - thumbTip.z, 2)
+            );
+
+            return distance < 0.05;
+        }
+
+        function confirmDecision(button) {
+            console.log(`✅ 确认决策: ${button.text}`);
+
+            // 创建爆炸效果
+            const explosionX = button.centerX;
+            const explosionY = decisionCanvas.offsetTop + button.centerY;
+            magicRenderer.createExplosion(explosionX, explosionY, button.color + 'FF');
+
+            // 播放确认音效
+            playConfirmationSound();
+
+            // 屏幕震动
+            createScreenShake();
+
+            // 记录决策
+            makeDecision(button.action);
+
+            // 延迟退出
+            setTimeout(() => {
+                exitDecisionMode();
+            }, 800);
+        }
+
+        function makeDecision(decisionType) {
+            const decision = {
+                timestamp: Date.now(),
+                item: focusedObject.class,
+                itemLabel: getItemLabel(focusedObject.class),
+                decision: decisionType,
+                confidence: focusedObject.score
+            };
+
+            decisions.push(decision);
+            decisionCount++;
+
+            console.log('✅ 决策记录:', decision);
+
+            document.getElementById('decisionCount').textContent = decisionCount;
+        }
+
+        function playConfirmationSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.15);
+
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.4);
+            } catch (e) {
+                // 音频可能被阻止
+            }
+        }
+
+        function createScreenShake() {
+            let intensity = 8;
+            let shakes = 0;
+            const maxShakes = 10;
+
+            const shake = () => {
+                if (shakes >= maxShakes) {
+                    document.body.style.transform = '';
+                    return;
+                }
+
+                const x = (Math.random() - 0.5) * intensity * 2;
+                const y = (Math.random() - 0.5) * intensity * 2;
+
+                document.body.style.transform = `translate(${x}px, ${y}px)`;
+
+                intensity *= 0.85;
+                shakes++;
+
+                setTimeout(shake, 40);
+            };
+
+            shake();
+        }
+
+        // ==============================================
+        // 导出功能
+        // ==============================================
+
+        window.exportDecisions = function() {
+            console.log('📊 决策记录:', decisions);
+            return decisions;
+        };
+
+        // 启动应用
+        init();
+    </script>
+</body>
+</html>
