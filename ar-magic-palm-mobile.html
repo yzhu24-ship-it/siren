@@ -392,62 +392,109 @@
             <span id="hint-text">Open palm to start</span>
         </div>
 
-        <!-- Progress Bar -->
+        <!-- Progress Bar (Modern Style) -->
         <div id="magic-progress-container" style="
             position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            width: 80%;
-            max-width: 500px;
+            width: 85%;
+            max-width: 550px;
             z-index: 900;
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 20px;
-            padding: 12px 15px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
         ">
             <div style="
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 8px;
+                margin-bottom: 10px;
                 color: white;
-                font-size: 13px;
+                font-size: 14px;
+                font-weight: 600;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.3);
             ">
                 <span>Progress</span>
-                <span id="magic-progress-text" style="color: #4ecdc4; font-weight: bold;">0/10</span>
+                <span id="magic-progress-count" style="color: #4ecdc4;">0/10</span>
             </div>
-            <div id="magic-progress-bar" style="
-                width: 100%;
-                height: 8px;
-                background: rgba(255, 255, 255, 0.15);
-                border-radius: 4px;
-                overflow: hidden;
-                position: relative;
-            " role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                <div id="magic-progress-fill" style="
-                    width: 0%;
-                    height: 100%;
-                    background: linear-gradient(90deg, #667eea, #764ba2);
-                    border-radius: 4px;
-                    transition: width 0.5s cubic-bezier(0.2, 0.8, 0.3, 1);
-                    position: relative;
+            <div style="position: relative;">
+                <div id="magic-progress-bar" style="
+                    width: 100%;
+                    height: 28px;
+                    background: linear-gradient(135deg, #1a1f3a 0%, #0f1628 100%);
+                    border-radius: 50px;
                     overflow: hidden;
-                ">
-                    <div style="
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
+                    position: relative;
+                    box-shadow:
+                        inset 0 2px 8px rgba(0,0,0,0.5),
+                        0 4px 15px rgba(0,0,0,0.4);
+                    border: 2px solid rgba(255,255,255,0.1);
+                " role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <div id="magic-progress-fill" style="
+                        width: 0%;
                         height: 100%;
                         background: linear-gradient(90deg,
-                            rgba(255, 255, 255, 0) 0%,
-                            rgba(255, 255, 255, 0.3) 50%,
-                            rgba(255, 255, 255, 0) 100%);
-                        animation: shimmer 2s infinite;
-                    "></div>
+                            #00d4ff 0%,
+                            #4facfe 25%,
+                            #667eea 50%,
+                            #764ba2 75%,
+                            #5f3d7a 100%);
+                        border-radius: 50px;
+                        transition: width 0.6s cubic-bezier(0.2, 0.8, 0.3, 1);
+                        position: relative;
+                        overflow: hidden;
+                        box-shadow: 0 0 20px rgba(78, 205, 196, 0.6);
+                    ">
+                        <!-- Diagonal stripes pattern -->
+                        <div style="
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background: repeating-linear-gradient(
+                                45deg,
+                                transparent,
+                                transparent 10px,
+                                rgba(255, 255, 255, 0.1) 10px,
+                                rgba(255, 255, 255, 0.1) 20px
+                            );
+                        "></div>
+                        <!-- Shimmer effect -->
+                        <div style="
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background: linear-gradient(90deg,
+                                rgba(255, 255, 255, 0) 0%,
+                                rgba(255, 255, 255, 0.3) 50%,
+                                rgba(255, 255, 255, 0) 100%);
+                            animation: shimmer 2s infinite;
+                        "></div>
+                    </div>
                 </div>
+                <!-- Percentage circle indicator -->
+                <div id="magic-progress-percentage" style="
+                    position: absolute;
+                    right: 4px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 42px;
+                    height: 42px;
+                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-size: 11px;
+                    font-weight: 700;
+                    box-shadow:
+                        0 4px 12px rgba(118, 75, 162, 0.5),
+                        inset 0 -2px 4px rgba(0,0,0,0.2);
+                    border: 3px solid rgba(255,255,255,0.2);
+                    transition: all 0.3s;
+                ">0%</div>
             </div>
         </div>
     </div>
@@ -671,44 +718,180 @@
                     top: 50%;
                     left: 50%;
                     transform: translate(-50%, -50%);
-                    background: rgba(0, 0, 0, 0.9);
-                    color: white;
-                    padding: 25px 40px;
-                    border-radius: 20px;
-                    text-align: center;
                     z-index: 10001;
-                    border: 2px solid #764ba2;
-                    box-shadow: 0 0 40px rgba(118, 75, 162, 0.6);
-                    animation: popIn 0.3s ease-out;
+                    animation: medalDrop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
                 `;
 
                 message.innerHTML = `
-                    <div style="font-size: 48px; margin-bottom: 15px;">✨</div>
-                    <div style="font-size: 20px; font-weight: bold; margin-bottom: 8px;">
-                        Round Complete!
-                    </div>
-                    <div style="font-size: 15px; opacity: 0.9;">
-                        Organized 10 items successfully
+                    <!-- Background overlay -->
+                    <div style="
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100vw;
+                        height: 100vh;
+                        background: rgba(0, 0, 0, 0.7);
+                        z-index: -1;
+                    "></div>
+
+                    <!-- Decorative stars -->
+                    <div style="position: absolute; top: -40px; left: -40px; font-size: 24px; opacity: 0.8; animation: twinkle 1.5s infinite;">✨</div>
+                    <div style="position: absolute; top: -30px; right: -30px; font-size: 20px; opacity: 0.6; animation: twinkle 1.5s 0.3s infinite;">⭐</div>
+                    <div style="position: absolute; bottom: 30px; left: -50px; font-size: 18px; opacity: 0.7; animation: twinkle 1.5s 0.6s infinite;">✨</div>
+                    <div style="position: absolute; bottom: 40px; right: -40px; font-size: 22px; opacity: 0.8; animation: twinkle 1.5s 0.9s infinite;">⭐</div>
+
+                    <!-- Main medal container -->
+                    <div style="
+                        position: relative;
+                        width: 200px;
+                        height: 250px;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                    ">
+                        <!-- Purple ribbons -->
+                        <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 1;">
+                            <div style="
+                                width: 20px;
+                                height: 100px;
+                                background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+                                clip-path: polygon(0 0, 100% 0, 50% 100%);
+                                transform: translateX(-15px) rotate(-10deg);
+                                box-shadow: -2px 4px 8px rgba(0,0,0,0.3);
+                            "></div>
+                            <div style="
+                                width: 20px;
+                                height: 100px;
+                                background: linear-gradient(135deg, #a569bd 0%, #9b59b6 100%);
+                                clip-path: polygon(0 0, 100% 0, 50% 100%);
+                                transform: translateX(15px) rotate(10deg);
+                                box-shadow: 2px 4px 8px rgba(0,0,0,0.3);
+                            "></div>
+                        </div>
+
+                        <!-- Gold medal circle -->
+                        <div style="
+                            position: relative;
+                            width: 140px;
+                            height: 140px;
+                            background: linear-gradient(135deg, #f9d71c 0%, #f4a000 50%, #d68400 100%);
+                            border-radius: 50%;
+                            box-shadow:
+                                0 8px 20px rgba(244, 160, 0, 0.6),
+                                inset 0 -8px 15px rgba(0,0,0,0.2),
+                                inset 0 8px 15px rgba(255,255,255,0.4);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            z-index: 2;
+                            animation: medalRotate 2s ease-in-out infinite;
+                            border: 5px solid #f4c542;
+                        ">
+                            <!-- Inner circle -->
+                            <div style="
+                                width: 110px;
+                                height: 110px;
+                                background: linear-gradient(135deg, #ffd700 0%, #ffb700 100%);
+                                border-radius: 50%;
+                                box-shadow: inset 0 4px 10px rgba(0,0,0,0.15);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                border: 3px solid #f9d71c;
+                            ">
+                                <!-- Star icon -->
+                                <div style="
+                                    font-size: 56px;
+                                    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+                                    animation: starPulse 1.5s ease-in-out infinite;
+                                ">⭐</div>
+                            </div>
+                        </div>
+
+                        <!-- Text below medal -->
+                        <div style="
+                            margin-top: 25px;
+                            text-align: center;
+                            color: white;
+                        ">
+                            <div style="
+                                font-size: 24px;
+                                font-weight: 800;
+                                margin-bottom: 8px;
+                                text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+                                letter-spacing: 1px;
+                            ">ROUND COMPLETE!</div>
+                            <div style="
+                                font-size: 16px;
+                                opacity: 0.95;
+                                text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                            ">10 items organized ✓</div>
+                        </div>
                     </div>
                 `;
 
-                // Add animation
+                // Add animations
                 const style = document.createElement('style');
                 style.textContent = `
-                    @keyframes popIn {
-                        0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-                        100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+                    @keyframes medalDrop {
+                        0% {
+                            transform: translate(-50%, -150%);
+                            opacity: 0;
+                        }
+                        60% {
+                            transform: translate(-50%, -45%);
+                        }
+                        80% {
+                            transform: translate(-50%, -55%);
+                        }
+                        100% {
+                            transform: translate(-50%, -50%);
+                            opacity: 1;
+                        }
+                    }
+
+                    @keyframes medalRotate {
+                        0%, 100% {
+                            transform: rotate(-5deg);
+                        }
+                        50% {
+                            transform: rotate(5deg);
+                        }
+                    }
+
+                    @keyframes starPulse {
+                        0%, 100% {
+                            transform: scale(1);
+                        }
+                        50% {
+                            transform: scale(1.1);
+                        }
+                    }
+
+                    @keyframes twinkle {
+                        0%, 100% {
+                            opacity: 0.3;
+                            transform: scale(1);
+                        }
+                        50% {
+                            opacity: 1;
+                            transform: scale(1.2);
+                        }
                     }
                 `;
                 document.head.appendChild(style);
 
                 document.body.appendChild(message);
 
-                // Remove after 3 seconds
+                // Remove after 3.5 seconds
                 setTimeout(() => {
-                    if (message.parentNode) message.parentNode.removeChild(message);
-                    if (style.parentNode) style.parentNode.removeChild(style);
-                }, 3000);
+                    message.style.animation = 'medalDrop 0.4s reverse';
+                    setTimeout(() => {
+                        if (message.parentNode) message.parentNode.removeChild(message);
+                        if (style.parentNode) style.parentNode.removeChild(style);
+                    }, 400);
+                }, 3500);
             }
 
             /**
@@ -768,15 +951,23 @@
              */
             updateUI() {
                 const progressFill = document.getElementById('magic-progress-fill');
-                const progressText = document.getElementById('magic-progress-text');
+                const progressCount = document.getElementById('magic-progress-count');
+                const progressPercentage = document.getElementById('magic-progress-percentage');
                 const progressBar = document.getElementById('magic-progress-bar');
 
-                if (progressFill && progressText && progressBar) {
+                if (progressFill && progressCount && progressPercentage && progressBar) {
                     const percentage = (this.currentProgress / this.maxProgress) * 100;
 
                     progressFill.style.width = `${percentage}%`;
-                    progressText.textContent = `${this.currentProgress}/${this.maxProgress}`;
+                    progressCount.textContent = `${this.currentProgress}/${this.maxProgress}`;
+                    progressPercentage.textContent = `${Math.round(percentage)}%`;
                     progressBar.setAttribute('aria-valuenow', percentage);
+
+                    // Scale up percentage circle when progress increases
+                    progressPercentage.style.transform = 'translateY(-50%) scale(1.15)';
+                    setTimeout(() => {
+                        progressPercentage.style.transform = 'translateY(-50%) scale(1)';
+                    }, 200);
                 }
             }
 
