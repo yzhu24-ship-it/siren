@@ -114,7 +114,7 @@
         /* Gesture hint */
         #gesture-hint {
             position: fixed;
-            bottom: 30px;
+            bottom: 90px;  /* Above decision bar (70px + 20px margin) */
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.85);
@@ -125,7 +125,7 @@
             font-size: 16px;
             display: none;
             align-items: center;
-            z-index: 100;
+            z-index: 1001;  /* Above decision bar */
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
