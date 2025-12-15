@@ -141,100 +141,86 @@
         }
 
         /* Decision UI */
+        /* Decision UI - Bottom Bar (Always Visible) */
         #decision-ui {
-            display: none;
             position: fixed;
-            top: 0;
+            bottom: 0;
             left: 0;
             width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(5px);
             z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #decision-ui.active {
-            display: flex;
+            pointer-events: auto;
         }
 
         .decision-panel {
-            background: rgba(0, 0, 0, 0.92);
-            border-radius: 25px;
-            padding: 30px;
-            color: white;
-            text-align: center;
-            min-width: 320px;
-            max-width: 500px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-        }
-
-        .decision-title {
-            font-size: 20px;
-            margin-bottom: 10px;
-        }
-
-        .item-name {
-            color: #4ecdc4;
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 25px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(15px);
+            padding: 0;
+            display: flex;
+            align-items: stretch;
+            height: 70px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .decision-buttons {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            display: flex;
+            width: 100%;
+            gap: 0;
         }
 
         .decision-btn {
-            width: 100%;
-            min-height: 100px;
+            flex: 1;
             border: none;
-            border-radius: 20px;
+            background: transparent;
             color: white;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 8px;
             transition: all 0.2s;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0.5;
+            pointer-events: none;
         }
 
-        .decision-btn:active {
+        .decision-btn:last-child {
+            border-right: none;
+        }
+
+        .decision-btn.enabled {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .decision-btn.enabled:active {
             transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.1);
         }
 
-        .decision-btn.immediate {
-            background: linear-gradient(135deg, #FF6B6B, #EE5A52);
+        .decision-btn.immediate.enabled {
+            color: #FF6B6B;
         }
 
-        .decision-btn.later {
-            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+        .decision-btn.later.enabled {
+            color: #4ECDC4;
         }
 
-        .decision-btn.delete {
-            background: linear-gradient(135deg, #95A5A6, #7F8C8D);
+        .decision-btn.delete.enabled {
+            color: #95A5A6;
         }
 
-        .decision-btn.archive {
-            background: linear-gradient(135deg, #1DD1A1, #10AC84);
+        .decision-btn.archive.enabled {
+            color: #1DD1A1;
         }
 
-        .btn-emoji {
-            font-size: 36px;
-        }
-
+        /* Remove unused styles */
+        .decision-title,
+        .item-name,
+        .btn-emoji,
         .gesture-tip {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-top: 5px;
+            display: none;
         }
 
         /* Stats panel */
@@ -499,33 +485,14 @@
         </div>
     </div>
 
-    <!-- Decision UI -->
+    <!-- Decision UI - Bottom Bar -->
     <div id="decision-ui">
         <div class="decision-panel">
-            <div class="decision-title">What to do with</div>
-            <div class="item-name" id="item-name">Object</div>
-
             <div class="decision-buttons">
-                <button class="decision-btn immediate" data-action="immediate">
-                    <span class="btn-emoji">🔥</span>
-                    <span>Do Now</span>
-                </button>
-                <button class="decision-btn later" data-action="later">
-                    <span class="btn-emoji">⏰</span>
-                    <span>Do Later</span>
-                </button>
-                <button class="decision-btn delete" data-action="delete">
-                    <span class="btn-emoji">🗑️</span>
-                    <span>Delete</span>
-                </button>
-                <button class="decision-btn archive" data-action="archive">
-                    <span class="btn-emoji">📁</span>
-                    <span>Archive</span>
-                </button>
-            </div>
-
-            <div class="gesture-tip">
-                👆 Point + 👌 Pinch to confirm<br>or tap button directly
+                <button class="decision-btn immediate" data-action="immediate">Do Now</button>
+                <button class="decision-btn later" data-action="later">Do Later</button>
+                <button class="decision-btn delete" data-action="delete">Delete</button>
+                <button class="decision-btn archive" data-action="archive">Archive</button>
             </div>
         </div>
     </div>
@@ -1343,10 +1310,11 @@
             }
 
             showDecisionUI(item) {
-                document.getElementById('item-name').textContent = this.getItemLabel(item.class);
-                document.getElementById('decision-ui').classList.add('active');
-                document.getElementById('gesture-hint').style.display = 'none';
-                document.getElementById('statusText').textContent = 'Choose action...';
+                // Enable decision buttons
+                const buttons = document.querySelectorAll('.decision-btn');
+                buttons.forEach(btn => btn.classList.add('enabled'));
+
+                document.getElementById('statusText').textContent = `Decide: ${this.getItemLabel(item.class)}`;
             }
 
             completeDecision(action) {
@@ -1366,15 +1334,15 @@
                 // Play confirmation sound
                 this.playConfirmationSound();
 
-                // Hide decision UI
+                // Disable decision buttons
                 setTimeout(() => {
-                    document.getElementById('decision-ui').classList.remove('active');
+                    const buttons = document.querySelectorAll('.decision-btn');
+                    buttons.forEach(btn => btn.classList.remove('enabled'));
 
                     // Return to scanning
                     setTimeout(() => {
                         this.isProcessingItem = false;
                         this.currentFocusItem = null;
-                        document.getElementById('gesture-hint').style.display = 'flex';
                         document.getElementById('statusText').textContent = 'Open palm to summon decision';
                     }, 500);
                 }, 300);
