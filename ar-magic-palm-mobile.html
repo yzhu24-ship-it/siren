@@ -1723,6 +1723,20 @@
                     this.currentFocusItem = focusItem;
                     this.processedItems.add(this.getItemId(focusItem));
 
+                    // Collect item immediately upon identification
+                    const collectionResult = this.collectionSystem.collectItem(
+                        focusItem.class,
+                        focusItem
+                    );
+
+                    // Update progress bar
+                    this.progressSystem.updateProgress();
+
+                    // Log collection
+                    if (collectionResult.success) {
+                        console.log(`✅ Collected: ${focusItem.class} → ${collectionResult.current}/${collectionResult.max}`);
+                    }
+
                     // Play trigger sound
                     this.playTriggerSound();
 
@@ -1749,20 +1763,6 @@
                     item: this.currentFocusItem.class,
                     action: action
                 });
-
-                // Try to collect the item
-                const collectionResult = this.collectionSystem.collectItem(
-                    this.currentFocusItem.class,
-                    this.currentFocusItem
-                );
-
-                // If collection successful, show special feedback
-                if (collectionResult.success) {
-                    console.log(`✅ Collected: ${this.currentFocusItem.class} (${collectionResult.current}/${collectionResult.max})`);
-                }
-
-                // Update progress bar
-                this.progressSystem.updateProgress();
 
                 // Show feedback
                 this.showFeedback(action);
