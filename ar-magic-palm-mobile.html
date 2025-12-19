@@ -1109,34 +1109,26 @@
 
             /**
              * Normalize item type to geometric shapes (cuboid, cylinder, etc.)
+             * ALL objects will be classified as either cuboid or cylinder
              */
             normalizeItemType(itemType) {
                 const type = itemType.toLowerCase();
 
-                // Map objects to CUBOID (rectangular/box-shaped objects)
-                const cuboidItems = ['box', 'book', 'suitcase', 'laptop', 'keyboard', 'microwave',
-                                    'oven', 'refrigerator', 'remote', 'cell phone', 'tv', 'clock',
-                                    'carton', 'package', 'toaster', 'suitcase'];
-
                 // Map objects to CYLINDER (cylindrical/round objects)
                 const cylinderItems = ['bottle', 'cup', 'wine glass', 'vase', 'bowl', 'mug',
-                                      'can', 'glass', 'jar'];
+                                      'can', 'glass', 'jar', 'person', 'sports ball', 'orange',
+                                      'apple', 'donut', 'cake'];
 
-                // Check if item matches cuboid shapes
-                for (const item of cuboidItems) {
-                    if (type.includes(item)) {
-                        return 'cuboid';
-                    }
-                }
-
-                // Check if item matches cylinder shapes
+                // Check if item matches cylinder shapes (prioritize cylinder check first)
                 for (const item of cylinderItems) {
                     if (type.includes(item)) {
                         return 'cylinder';
                     }
                 }
 
-                return null;
+                // ALL other objects default to CUBOID
+                // This includes: box, book, laptop, phone, tv, car, chair, table, etc.
+                return 'cuboid';
             }
 
             /**
