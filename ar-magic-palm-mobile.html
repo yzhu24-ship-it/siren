@@ -512,8 +512,8 @@
         ">🎯 Collection Quest</div>
 
         <div style="display: flex; gap: 10px; justify-content: space-around;">
-            <!-- Box Collection -->
-            <div class="collection-item" data-item="box" style="
+            <!-- Cuboid Collection -->
+            <div class="collection-item" data-item="cuboid" style="
                 flex: 1;
                 background: linear-gradient(135deg, rgba(255, 107, 107, 0.15), rgba(255, 107, 107, 0.05));
                 border: 2px solid rgba(255, 107, 107, 0.3);
@@ -522,9 +522,9 @@
                 text-align: center;
                 transition: all 0.3s;
             ">
-                <div style="font-size: 28px; margin-bottom: 5px;">📦</div>
-                <div style="color: white; font-size: 12px; font-weight: 600; margin-bottom: 5px;">Box</div>
-                <div id="collection-box-count" style="
+                <div style="font-size: 28px; margin-bottom: 5px;">🔲</div>
+                <div style="color: white; font-size: 12px; font-weight: 600; margin-bottom: 5px;">Cuboid</div>
+                <div id="collection-cuboid-count" style="
                     color: #FF6B6B;
                     font-size: 18px;
                     font-weight: 700;
@@ -532,8 +532,8 @@
                 ">[0/5]</div>
             </div>
 
-            <!-- Cup Collection -->
-            <div class="collection-item" data-item="cup" style="
+            <!-- Cylinder Collection -->
+            <div class="collection-item" data-item="cylinder" style="
                 flex: 1;
                 background: linear-gradient(135deg, rgba(78, 205, 196, 0.15), rgba(78, 205, 196, 0.05));
                 border: 2px solid rgba(78, 205, 196, 0.3);
@@ -542,9 +542,9 @@
                 text-align: center;
                 transition: all 0.3s;
             ">
-                <div style="font-size: 28px; margin-bottom: 5px;">☕</div>
-                <div style="color: white; font-size: 12px; font-weight: 600; margin-bottom: 5px;">Cup</div>
-                <div id="collection-cup-count" style="
+                <div style="font-size: 28px; margin-bottom: 5px;">⭕</div>
+                <div style="color: white; font-size: 12px; font-weight: 600; margin-bottom: 5px;">Cylinder</div>
+                <div id="collection-cylinder-count" style="
                     color: #4ECDC4;
                     font-size: 18px;
                     font-weight: 700;
@@ -1040,13 +1040,13 @@
         class CollectionSystem {
             constructor() {
                 this.collections = {
-                    box: {
+                    cuboid: {
                         current: 0,
                         max: 5,
                         items: [],  // Store collected item details
                         completed: false
                     },
-                    cup: {
+                    cylinder: {
                         current: 0,
                         max: 5,
                         items: [],
@@ -1108,17 +1108,32 @@
             }
 
             /**
-             * Normalize item type (box, cup, etc.)
+             * Normalize item type to geometric shapes (cuboid, cylinder, etc.)
              */
             normalizeItemType(itemType) {
                 const type = itemType.toLowerCase();
 
-                // Map various names to collection types
-                if (type.includes('box') || type.includes('package') || type.includes('carton')) {
-                    return 'box';
+                // Map objects to CUBOID (rectangular/box-shaped objects)
+                const cuboidItems = ['box', 'book', 'suitcase', 'laptop', 'keyboard', 'microwave',
+                                    'oven', 'refrigerator', 'remote', 'cell phone', 'tv', 'clock',
+                                    'carton', 'package', 'toaster', 'suitcase'];
+
+                // Map objects to CYLINDER (cylindrical/round objects)
+                const cylinderItems = ['bottle', 'cup', 'wine glass', 'vase', 'bowl', 'mug',
+                                      'can', 'glass', 'jar'];
+
+                // Check if item matches cuboid shapes
+                for (const item of cuboidItems) {
+                    if (type.includes(item)) {
+                        return 'cuboid';
+                    }
                 }
-                if (type.includes('cup') || type.includes('mug') || type.includes('glass')) {
-                    return 'cup';
+
+                // Check if item matches cylinder shapes
+                for (const item of cylinderItems) {
+                    if (type.includes(item)) {
+                        return 'cylinder';
+                    }
                 }
 
                 return null;
@@ -1145,7 +1160,7 @@
                 // Highlight the collection item
                 if (itemElement) {
                     itemElement.style.transform = 'scale(1.05)';
-                    itemElement.style.boxShadow = type === 'box'
+                    itemElement.style.boxShadow = type === 'cuboid'
                         ? '0 0 20px rgba(255, 107, 107, 0.6)'
                         : '0 0 20px rgba(78, 205, 196, 0.6)';
 
@@ -1203,7 +1218,7 @@
              * Create particle effect for collection
              */
             createCollectionParticles(x, y, type) {
-                const color = type === 'box' ? '#FF6B6B' : '#4ECDC4';
+                const color = type === 'cuboid' ? '#FF6B6B' : '#4ECDC4';
                 const particles = 12;
 
                 for (let i = 0; i < particles; i++) {
@@ -1245,8 +1260,8 @@
              * Handle category completion
              */
             onCategoryComplete(type) {
-                const emoji = type === 'box' ? '📦' : '☕';
-                const color = type === 'box' ? '#FF6B6B' : '#4ECDC4';
+                const emoji = type === 'cuboid' ? '🔲' : '⭕';
+                const color = type === 'cuboid' ? '#FF6B6B' : '#4ECDC4';
                 const name = type.charAt(0).toUpperCase() + type.slice(1);
 
                 // Show completion message
@@ -1335,7 +1350,7 @@
                         ALL COLLECTIONS COMPLETE!
                     </div>
                     <div style="color: white; font-size: 18px; opacity: 0.95;">
-                        📦 Boxes: 5/5 • ☕ Cups: 5/5
+                        🔲 Cuboids: 5/5 • ⭕ Cylinders: 5/5
                     </div>
                 `;
 
